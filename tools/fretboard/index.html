@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Fretboard Lab v6</title>
+<style>
+body{margin:0;font-family:Arial;background:#eef0f2;display:flex;justify-content:center;align-items:center;height:100vh;}
+.container{background:white;padding:40px;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.15);width:1300px;position:relative;}
+h1{text-align:center;font-family:Georgia;}
+.tabs{text-align:center;margin:15px 0;}
+.tab{padding:8px 16px;margin:4px;border-radius:6px;border:1px solid #999;background:#ddd;cursor:pointer;font-weight:bold;}
+.tab.active{background:#111;color:white;}
+#controls{text-align:center;margin-bottom:10px;}
+input,select{padding:8px;font-size:16px;}
+button{padding:8px 14px;margin-left:6px;border:none;border-radius:6px;background:#555;color:white;cursor:pointer;font-weight:bold;}
+button:hover{background:#111;}
+#chordInfo{text-align:center;margin:8px 0 12px;font-size:16px;color:#333;}
+.board{display:grid;grid-template-columns:50px 10px repeat(12,95px);grid-template-rows:repeat(6,45px);background:#4a2e1e;padding:10px;border-radius:10px;margin-bottom:20px;}
+.string-label{display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;}
+.nut{background:#ddd;}
+.cell{position:relative;border-right:4px solid #bbb;cursor:pointer;}
+.cell::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:#bbb;transform:translateY(-50%);}
+[data-string="6"]::before{height:3px}[data-string="5"]::before{height:2.6px}[data-string="4"]::before{height:2.3px}
+[data-string="3"]::before{height:2px}[data-string="2"]::before{height:1.7px}[data-string="1"]::before{height:1.4px}
+.marker{position:absolute;top:50%;left:50%;width:10px;height:10px;background:#ddd;border-radius:50%;transform:translate(-50%,-50%);}
+.double-marker{display:flex;gap:6px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.double-marker div{width:8px;height:8px;background:#ddd;border-radius:50%;}
+.note{width:18px;height:18px;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+.root{background:#e53935}.third{background:#1e88e5}.fifth{background:#757575}.seventh{background:#fdd835}
+.correct{background:#4CAF50}.wrong{background:#e53935}
+.legend{position:absolute;right:25px;bottom:25px;font-size:12px;color:#555;line-height:1.6;}
+#question{text-align:center;margin:10px;font-size:18px;}
+#score{text-align:center;font-size:14px;margin-top:4px;}
+#library{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px;}
+.chordBtn{padding:8px 14px;background:#ddd;border-radius:6px;cursor:pointer;font-weight:bold;}
+.chordBtn:hover{background:#bbb;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Fretboard Lab</h1>
+
+<div class="tabs">
+<button class="tab active" onclick="setMode('explorer',this)">Explorer</button>
+<button class="tab" onclick="setMode('trainer',this)">Trainer</button>
+<button class="tab" onclick="setMode('library',this)">Chord Library</button>
+</div>
+
+<div id="controls"></div>
+<div id="chordInfo"></div>
+<div id="question"></div>
+<div id="board" class="board"></div>
+<div id="library"></div>
+<div id="score"></div>
+
+<div class="legend">
+<span style="color:#e53935">●</span> Root<br>
+<span style="color:#1e88e5">●</span> 3rd<br>
+<span style="color:#757575">●</span> 5th<br>
+<span style="color:#fdd835">●</span> 7th
+</div>
+
+</div>
+
+<script>
+
+const tuning={1:"E",2:"B",3:"G",4:"D",5:"A",6:"E"};
+const notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+const chordFormulas={
+maj7:[0,4,7,11],
+m7:[0,3,7,10],
+7:[0,4,7,10],
+m:[0,3,7],
+maj:[0,4,7]
+};
+
+const keyChords={
+C:["Cmaj7","Dm7","Em7","Fmaj7","G7","Am7"],
+G:["Gmaj7","Am7","Bm7","Cmaj7","D7","Em7"],
+F:["Fmaj7","Gm7","Am7","Bbmaj7","C7","Dm7"]
+};
+
+let mode="explorer";
+let chordNotes=[];
+let targetNote=null;
+let score=0;
+let total=0;
+
+function setMode(m,btn){
+mode=m;
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+btn.classList.add("active");
+
+document.getElementById("library").innerHTML="";
+document.getElementById("question").innerText="";
+document.getElementById("score").innerText="";
+document.getElementById("chordInfo").innerText="";
+clearNotes();
+
+if(mode==="explorer"){
+document.getElementById("controls").innerHTML=
+'<input id="chordInput" placeholder="Chord e.g. Fmaj7">'+
+'<button onclick="showChord()">Show</button>'+
+'<button onclick="highlightGuide()">Guide Tones</button>';
+}
+
+if(mode==="trainer"){
+document.getElementById("controls").innerHTML=
+'<button onclick="newQuestion()">Note Quiz</button>'+
+'<button onclick="newChordQuestion()">Chord Tone Quiz</button>';
+newQuestion();
+}
+
+if(mode==="library"){
+document.getElementById("controls").innerHTML=
+'<select id="keySelect" onchange="buildLibrary()">'+
+'<option value="C">Key C</option>'+
+'<option value="G">Key G</option>'+
+'<option value="F">Key F</option>'+
+'</select>';
+buildLibrary();
+}
+}
+
+function buildLibrary(){
+const key=document.getElementById("keySelect").value;
+const chords=keyChords[key];
+const container=document.getElementById("library");
+container.innerHTML="";
+
+chords.forEach(chord=>{
+let div=document.createElement("div");
+div.className="chordBtn";
+div.innerText=chord;
+div.onclick=()=>loadLibraryChord(chord);
+container.appendChild(div);
+});
+}
+
+function loadLibraryChord(chord){
+document.getElementById("chordInfo").innerText=chord;
+let root=chord[0];
+let type=chord.slice(1);
+if(type==="") type="maj7";
+chordNotes=getChordNotes(root,type);
+drawChord();
+}
+
+function getNote(open,fret){
+let i=notes.indexOf(open);
+return notes[(i+fret)%12];
+}
+
+function getChordNotes(root,type){
+let rootIndex=notes.indexOf(root);
+let formula=chordFormulas[type];
+return formula.map(i=>notes[(rootIndex+i)%12]);
+}
+
+function drawChord(){
+clearNotes();
+document.querySelectorAll(".cell").forEach(cell=>{
+let s=cell.dataset.string;
+let f=cell.dataset.fret;
+let note=getNote(tuning[s],f);
+
+if(chordNotes.includes(note)){
+let dot=document.createElement("div");
+dot.className="note";
+let idx=chordNotes.indexOf(note);
+
+if(idx===0) dot.classList.add("root");
+if(idx===1) dot.classList.add("third");
+if(idx===2) dot.classList.add("fifth");
+if(idx===3) dot.classList.add("seventh");
+
+cell.appendChild(dot);
+}
+});
+}
+
+function highlightGuide(){
+clearNotes();
+let third=chordNotes[1];
+let seventh=chordNotes[3];
+
+document.querySelectorAll(".cell").forEach(cell=>{
+let s=cell.dataset.string;
+let f=cell.dataset.fret;
+let note=getNote(tuning[s],f);
+
+if(note===third){
+let dot=document.createElement("div");
+dot.className="note third";
+cell.appendChild(dot);
+}
+
+if(note===seventh){
+let dot=document.createElement("div");
+dot.className="note seventh";
+cell.appendChild(dot);
+}
+});
+}
+
+function newQuestion(){
+clearNotes();
+targetNote=notes[Math.floor(Math.random()*12)];
+document.getElementById("question").innerText="Find note: "+targetNote;
+}
+
+function newChordQuestion(){
+clearNotes();
+let roots=["C","D","E","F","G","A","B"];
+let root=roots[Math.floor(Math.random()*roots.length)];
+let notesArr=getChordNotes(root,"7");
+targetNote=notesArr[1];
+document.getElementById("question").innerText="Chord: "+root+"7  Find: 3rd";
+}
+
+function handleClick(cell){
+let s=parseInt(cell.dataset.string);
+let f=parseInt(cell.dataset.fret);
+let note=getNote(tuning[s],f);
+
+if(mode==="trainer"){
+let dot=document.createElement("div");
+dot.className="note";
+total++;
+
+if(note===targetNote){
+dot.classList.add("correct");
+score++;
+}else{
+dot.classList.add("wrong");
+}
+
+cell.appendChild(dot);
+document.getElementById("score").innerText="Score: "+score+" / "+total;
+}
+}
+
+function clearNotes(){
+document.querySelectorAll(".note").forEach(n=>n.remove());
+}
+
+function buildBoard(){
+const board=document.getElementById("board");
+
+for(let string=1;string<=6;string++){
+let label=document.createElement("div");
+label.className="string-label";
+label.innerText=string;
+board.appendChild(label);
+
+let nut=document.createElement("div");
+nut.className="nut";
+board.appendChild(nut);
+
+for(let fret=1;fret<=12;fret++){
+let cell=document.createElement("div");
+cell.className="cell";
+cell.dataset.string=string;
+cell.dataset.fret=fret;
+cell.onclick=()=>handleClick(cell);
+
+if([3,5,7,9].includes(fret) && string===3){
+let marker=document.createElement("div");
+marker.className="marker";
+cell.appendChild(marker);
+}
+
+if(fret===12 && string===3){
+let m=document.createElement("div");
+m.className="double-marker";
+m.innerHTML="<div></div><div></div>";
+cell.appendChild(m);
+}
+
+board.appendChild(cell);
+}
+}
+}
+
+buildBoard();
+setMode("explorer",document.querySelector(".tab"));
+
+</script>
+</body>
+</html>
