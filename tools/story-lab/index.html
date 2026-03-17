@@ -2,109 +2,83 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Story Lab</title>
+<title>Story Lab v0.5</title>
 
 <style>
-body{
-    background:#0a0a0a;
-    color:#e8e8e8;
-    font-family:system-ui;
-    padding:40px;
-}
-
-h1{font-size:28px;}
-textarea{
-    width:100%;
-    height:80px;
-    background:#111;
-    color:white;
-    border:1px solid #333;
-    padding:10px;
-    margin-top:10px;
-}
-
-button{
-    margin-top:20px;
-    padding:10px 20px;
-    background:#222;
-    color:white;
-    border:1px solid #444;
-    cursor:pointer;
-}
-
-button:hover{
-    border-color:#00ffff;
-}
-
-.result{
-    margin-top:30px;
-    padding:20px;
-    background:#111;
-    border:1px solid #222;
-}
-
-.style{
-    margin-top:20px;
-}
+body{background:#0a0a0a;color:#e8e8e8;font-family:system-ui;padding:40px;}
+textarea{width:100%;height:100px;background:#111;color:#fff;border:1px solid #333;padding:10px;}
+.tag{display:inline-block;padding:6px 12px;border:1px solid #333;margin:5px;cursor:pointer;}
+.tag.active{border-color:#00ffff;}
+button{margin-top:20px;padding:10px 20px;background:#222;color:#fff;border:1px solid #444;}
+.results{margin-top:30px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.card{background:#111;border:1px solid #222;padding:15px;}
+.line{margin-bottom:8px;line-height:1.5;}
 </style>
 </head>
 
 <body>
 
-<h1>Story Lab</h1>
-<p>Generate short stories from ideas</p>
+<h2>Story Lab v0.5</h2>
 
 <textarea id="seed" placeholder="输入一个想法..."></textarea>
 
-<div class="style">
-<label><input type="checkbox" value="冷幽默+反转"> 冷幽默（星新一）</label><br>
-<label><input type="checkbox" value="孤独+冷感+都市"> 冷感孤独（浅野一二〇）</label><br>
-<label><input type="checkbox" value="温柔+日常+轻微情绪"> 温柔日常（细川貂々）</label>
-</div>
+<div id="styles"></div>
 
 <button onclick="generate()">Generate</button>
 
-<div id="results"></div>
+<div id="results" class="results"></div>
 
 <script>
 
-const API_KEY = "替换成你的key";
+// ===== 你的API KEY =====
+const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
-async function generate(){
+// ===== 风格 =====
+const styles = [
+    {id:"孤独"},
+    {id:"温柔"},
+    {id:"荒诞"},
+    {id:"反转"},
+    {id:"对话"},
+    {id:"极简"}
+];
 
-    const seed = document.getElementById("seed").value;
-    const styles = [...document.querySelectorAll("input:checked")].map(i=>i.value);
+let selected = [];
 
-    document.getElementById("results").innerHTML = "Generating...";
+const container = document.getElementById("styles");
 
-    const prompt = `
-你是一个短篇漫画故事生成器。
+styles.forEach(s=>{
+    const el=document.createElement("div");
+    el.className="tag";
+    el.innerText=s.id;
 
-seed idea:
-${seed}
+    el.onclick=()=>{
+        if(selected.includes(s.id)){
+            selected=selected.filter(i=>i!==s.id);
+            el.classList.remove("active");
+        }else{
+            if(selected.length>=2){alert("最多2个");return;}
+            selected.push(s.id);
+            el.classList.add("active");
+        }
+    };
 
-风格：
-${styles.join(" + ")}
+    container.appendChild(el);
+});
 
-要求：
-- 5到8句
-- 日常→异常→反应→收尾
-- 每句简短
-- 有轻微反转或情绪收尾
-
-输出：
-每行一句
-`;
+// ===== 核心：调用API =====
+async function callAI(prompt){
 
     const res = await fetch("https://api.deepseek.com/v1/chat/completions",{
         method:"POST",
         headers:{
             "Content-Type":"application/json",
-            "Authorization":"Bearer " + API_KEY
+            "Authorization":"Bearer "+API_KEY
         },
         body:JSON.stringify({
             model:"deepseek-chat",
             messages:[
+                {role:"system",content:"你是一个擅长写极短漫画故事的作家，语言自然，有画面感"},
                 {role:"user",content:prompt}
             ],
             temperature:0.9
@@ -112,14 +86,74 @@ ${styles.join(" + ")}
     });
 
     const data = await res.json();
+    return data.choices[0].message.content;
+}
 
-    const text = data.choices[0].message.content;
+// ===== 构建prompt（最关键）=====
+function buildPrompt(seed,style){
 
-    document.getElementById("results").innerHTML = `
-        <div class="result">
-            ${text.replace(/\n/g,"<br>")}
+    return `
+写一个短故事。
+
+主题：${seed}
+风格：${style}
+
+要求：
+- 5到15句
+- 每句像一个镜头
+- 结构必须：
+日常 → 异常 → 放大 → 观察 → 收尾
+
+- 不要解释
+- 不要总结
+- 要有画面细节
+- 语言自然
+
+直接输出，每行一句。
+`;
+}
+
+// ===== 生成 =====
+async function generate(){
+
+    const seed=document.getElementById("seed").value;
+
+    if(selected.length===0){
+        alert("选风格");
+        return;
+    }
+
+    document.getElementById("results").innerHTML="Generating...";
+
+    let outputs=[];
+
+    if(selected.length===1){
+
+        for(let i=0;i<3;i++){
+            const text = await callAI(buildPrompt(seed,selected[0]));
+            outputs.push({title:"A"+i,content:text});
+        }
+    }
+
+    if(selected.length===2){
+
+        const A = await callAI(buildPrompt(seed,selected[0]));
+        const B = await callAI(buildPrompt(seed,selected[1]));
+        const MIX = await callAI(buildPrompt(seed,selected.join("+")));
+
+        outputs=[
+            {title:"A",content:A},
+            {title:"B",content:B},
+            {title:"Mix",content:MIX}
+        ];
+    }
+
+    document.getElementById("results").innerHTML = outputs.map(o=>`
+        <div class="card">
+            <div>${o.title}</div>
+            ${o.content.split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
         </div>
-    `;
+    `).join("");
 }
 
 </script>
