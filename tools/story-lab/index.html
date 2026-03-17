@@ -13,7 +13,6 @@ body{
 }
 
 h2{margin-bottom:5px;}
-
 .desc{color:#888;margin-bottom:10px;}
 .flow{color:#555;margin-bottom:20px;font-size:13px;}
 
@@ -24,6 +23,26 @@ textarea{
     color:#fff;
     border:1px solid #333;
     padding:10px;
+}
+
+/* 历史 */
+.history{
+    margin-bottom:20px;
+}
+
+.history span{
+    display:inline-block;
+    padding:6px 12px;
+    border:1px solid #333;
+    margin-right:8px;
+    cursor:pointer;
+    font-size:12px;
+    color:#aaa;
+}
+
+.history span:hover{
+    border-color:#00ffff;
+    color:#fff;
 }
 
 .tag{
@@ -64,7 +83,15 @@ button{
     padding:15px;
 }
 
+.line{margin-bottom:6px;}
+
 .recommend{color:#00ffff;margin-top:10px;}
+
+.comment{
+    color:#aaa;
+    margin-top:10px;
+    font-size:13px;
+}
 
 .output{
     margin-top:30px;
@@ -94,6 +121,8 @@ button{
 日常 → 偏差 → 放大 → 观察 → 收尾
 </div>
 
+<div id="history" class="history"></div>
+
 <textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
 
 <div id="styles"></div>
@@ -109,6 +138,7 @@ button{
 
 const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
+// ===== 风格 =====
 const templates = {
     "观察": {desc:"压抑日常",prompt:`细节多，情绪不说`},
     "日常": {desc:"轻微偏移",prompt:`从日常开始，异常很小`},
@@ -118,7 +148,7 @@ const templates = {
 let selected = ["观察"];
 let currentStory = null;
 
-// UI
+// ===== UI =====
 const container = document.getElementById("styles");
 
 Object.keys(templates).forEach(name=>{
@@ -162,13 +192,18 @@ function buildShotPrompt(story){
 return `
 你是导演。
 
-输出 JSON 数组：
+输出 JSON：
 
-[
- { "shot":1,"intent":"","type":"","camera":"","visual":"","sound":"" }
-]
+{
+ "shot":1,
+ "intent":"",
+ "type":"",
+ "camera":"",
+ "visual":"",
+ "sound":""
+}
 
-每个镜头必须增加信息，不复述原文。
+不要解释。
 
 故事：
 ${story}
@@ -179,7 +214,7 @@ function buildJudge(A,B,C){
 return `
 选最自然的一个
 
-输出：
+输出两行：
 A/B/C
 一句短评
 
@@ -224,24 +259,34 @@ async function generate(){
     ]);
 
     const judge = await callAI(buildJudge(A,B,C));
-    const pick = judge.split("\n")[0].trim();
+    const lines = judge.split("\n");
 
-    currentStory = {A,B,C,pick};
+    const pick = lines[0].trim();
+    const comment = lines[1] || "";
 
-    renderStories();
+    currentStory = {
+        id: Date.now(),
+        seed,A,B,C,pick,comment,shots:""
+    };
+
+    saveStory(currentStory);
+    renderStories(currentStory);
+    renderHistory();
 }
 
-function renderStories(){
+// ===== 渲染 =====
+function renderStories(data){
 
-    const map = currentStory;
+    const map = {A:data.A,B:data.B,C:data.C};
 
     document.getElementById("results").innerHTML =
-    ["A","B","C"].map(k=>`
-    <div class="card">
-        ${map[k].replace(/\n/g,"<br>")}
-        ${map.pick===k?`<div class="recommend">⭐ 孔老六选</div>`:""}
-        <button onclick="makeShots('${k}')">分镜</button>
-    </div>`).join("");
+        ["A","B","C"].map(k=>`
+        <div class="card">
+            ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
+            ${data.pick===k?`<div class="recommend">⭐ 孔老六选</div>`:""}
+            <button onclick="makeShots('${k}')">分镜</button>
+        </div>
+    `).join("") + `<div class="comment">孔老六：${data.comment}</div>`;
 }
 
 // ===== 分镜 =====
@@ -249,23 +294,69 @@ async function makeShots(key){
 
     const raw = await callAI(buildShotPrompt(currentStory[key]));
 
-    let shots;
+    let shot;
 
     try{
-        shots = JSON.parse(raw);
+        shot = JSON.parse(raw);
     }catch{
         alert("JSON失败");
+        console.log(raw);
         return;
     }
 
-    const videoScript = shots.map(s=>({
-        shot:s.shot,
-        prompt: s.visual,
-        duration:2
-    }));
+    const shots = [shot];
 
     document.getElementById("shots").innerText =
-        JSON.stringify(videoScript,null,2);
+        JSON.stringify(shots,null,2);
+
+    currentStory.shots = shots;
+    updateCurrent();
+}
+
+// ===== 历史 =====
+function saveStory(story){
+
+    let arr = JSON.parse(localStorage.getItem("stories")||"[]");
+
+    arr.push(story);
+    arr = arr.slice(-3);
+
+    localStorage.setItem("stories", JSON.stringify(arr));
+}
+
+function updateCurrent(){
+
+    let arr = JSON.parse(localStorage.getItem("stories")||"[]");
+
+    arr = arr.map(s=>s.id===currentStory.id?currentStory:s);
+
+    localStorage.setItem("stories", JSON.stringify(arr));
+}
+
+function renderHistory(){
+
+    const arr = JSON.parse(localStorage.getItem("stories")||"[]");
+
+    document.getElementById("history").innerHTML =
+        arr.map((s,i)=>`
+            <span onclick="loadStory(${i})">
+            ${s.seed.slice(0,10)}
+            </span>
+        `).join("");
+}
+
+function loadStory(index){
+
+    const arr = JSON.parse(localStorage.getItem("stories")||"[]");
+    const s = arr[index];
+
+    currentStory = s;
+
+    document.getElementById("seed").value = s.seed;
+
+    renderStories(s);
+
+    document.getElementById("shots").innerText = s.shots || "";
 }
 
 // ===== 复制 =====
@@ -275,6 +366,11 @@ function copyShots(){
     );
     alert("已复制");
 }
+
+// 初始化
+window.onload = function(){
+    renderHistory();
+};
 
 </script>
 
