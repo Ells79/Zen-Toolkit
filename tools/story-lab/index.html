@@ -12,6 +12,9 @@ body{
     padding:40px;
 }
 
+h2{margin-bottom:5px;}
+.desc{color:#888;margin-bottom:20px;}
+
 textarea{
     width:100%;
     height:100px;
@@ -27,6 +30,12 @@ textarea{
     border:1px solid #333;
     margin:5px;
     cursor:pointer;
+}
+
+.tag small{
+    display:block;
+    font-size:11px;
+    color:#666;
 }
 
 .tag.active{border-color:#00ffff;}
@@ -57,6 +66,12 @@ button{
 
 .recommend{color:#00ffff;margin-top:10px;}
 
+.comment{
+    color:#aaa;
+    margin-top:10px;
+    font-size:13px;
+}
+
 .shotBtn{
     margin-top:10px;
     font-size:12px;
@@ -70,14 +85,23 @@ button{
     border:1px solid #222;
     white-space:pre-wrap;
 }
+
+.copyBtn{
+    margin-top:10px;
+    font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab v0.8</h2>
+<h2>Story Lab v0.8.2</h2>
 
-<textarea id="seed" placeholder="输入一个想法"></textarea>
+<div class="desc">
+输入一个想法 → 选择写作方式（最多2个） → 生成 → 选择 → 分镜
+</div>
+
+<textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
 
 <div id="styles"></div>
 
@@ -86,6 +110,9 @@ button{
 <div id="results" class="results"></div>
 
 <div id="shots" class="output"></div>
+<button id="copyBtn" class="copyBtn" onclick="copyShots()" style="display:none;">
+复制分镜 JSON
+</button>
 
 <script>
 
@@ -93,25 +120,48 @@ const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
 // ===== 风格 =====
 const templates = {
-    "观察": `细节多，情绪不说`,
-    "日常": `从日常开始，轻微异常`,
-    "冷静": `像记录，不解释`
+    "观察": {
+        desc:"压抑日常",
+        prompt:`细节多，情绪不说`
+    },
+    "日常": {
+        desc:"轻微偏移",
+        prompt:`从日常开始，异常很小`
+    },
+    "冷静": {
+        desc:"像记录",
+        prompt:`像记录，不解释`
+    }
 };
 
 let selected = ["观察"];
 
-// UI
+// ===== UI =====
 const container = document.getElementById("styles");
 
 Object.keys(templates).forEach(name=>{
+    const t = templates[name];
+
     const el=document.createElement("div");
-    el.className="tag active";
-    el.innerText=name;
+    el.className="tag";
+    el.innerHTML = `${name}<small>${t.desc}</small>`;
+
+    if(name==="观察") el.classList.add("active");
+
     el.onclick=()=>{
-        selected=[name];
-        document.querySelectorAll(".tag").forEach(t=>t.classList.remove("active"));
-        el.classList.add("active");
+        if(selected.includes(name)){
+            selected = selected.filter(i=>i!==name);
+            el.classList.remove("active");
+        }else{
+            if(selected.length>=2){
+                alert("最多选2个");
+                return;
+            }
+            selected.push(name);
+            el.classList.add("active");
+        }
     };
+
     container.appendChild(el);
 });
 
@@ -122,7 +172,8 @@ return `
 
 主题：${seed}
 
-规则：${style}
+规则：
+${style}
 
 结构：
 日常 → 异常 → 放大 → 观察 → 收尾
@@ -131,29 +182,24 @@ return `
 - 6~12句
 - 每句像镜头
 - 不解释
-
-输出：每行一句
+- 不总结
+- 不哲理
 `;
 }
 
-// ===== 分镜 Prompt =====
+// ===== 分镜 =====
 function buildShotPrompt(story){
 return `
-把下面故事转成分镜JSON
+把故事转成分镜JSON
 
-要求：
-- 每句 = 一个镜头
-- 不改写内容
-- 每个镜头包含：
+每句=一个镜头
 
 {
-  "shot":编号,
-  "text":原句,
-  "type":景别（特写/中景/远景）,
-  "visual":画面描述
+"shot":编号,
+"text":原句,
+"type":景别（特写/中景/远景）,
+"visual":画面描述
 }
-
-输出JSON数组
 
 故事：
 ${story}
@@ -163,9 +209,13 @@ ${story}
 // ===== 孔老六 =====
 function buildJudge(A,B,C){
 return `
-选最自然的一个
+你是孔老六。
 
-输出 A / B / C
+选一个最自然、不刻意的。
+
+输出两行：
+第一行：A/B/C
+第二行：一句话点评（不超过15字）
 
 A:
 ${A}
@@ -205,37 +255,75 @@ async function generate(){
 
     const seed=document.getElementById("seed").value;
 
+    if(selected.length===0){
+        alert("请至少选择一个风格");
+        return;
+    }
+
     document.getElementById("results").innerHTML="Generating...";
+    document.getElementById("shots").innerText="";
+    document.getElementById("copyBtn").style.display="none";
 
-    const style = templates[selected[0]];
+    let A,B,C;
 
-    const A = await callAI(buildPrompt(seed,style));
-    const B = await callAI(buildPrompt(seed,style));
-    const C = await callAI(buildPrompt(seed,style));
+    if(selected.length===1){
+        const style = templates[selected[0]].prompt;
 
-    const pick = (await callAI(buildJudge(A,B,C))).trim();
+        A = await callAI(buildPrompt(seed,style));
+        B = await callAI(buildPrompt(seed,style));
+        C = await callAI(buildPrompt(seed,style));
+
+    }else{
+        const s1 = templates[selected[0]].prompt;
+        const s2 = templates[selected[1]].prompt;
+        const mix = s1 + "\n" + s2;
+
+        A = await callAI(buildPrompt(seed,s1));
+        B = await callAI(buildPrompt(seed,s2));
+        C = await callAI(buildPrompt(seed,mix));
+    }
+
+    const judge = await callAI(buildJudge(A,B,C));
+    const lines = judge.split("\n");
+
+    const pick = lines[0].trim();
+    const comment = lines[1] || "";
 
     const map = {A,B,C};
 
     document.getElementById("results").innerHTML = ["A","B","C"].map(k=>`
         <div class="card">
+            <div style="color:#888;margin-bottom:8px;">${k}</div>
             ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
-            ${pick===k?`<div class="recommend">⭐ 孔老六选这个</div>`:""}
+            ${pick===k?`<div class="recommend">⭐ 孔老六选了这个</div>`:""}
             <button class="shotBtn" onclick="makeShots(\`${map[k]}\`)">
                 用这个做分镜
             </button>
         </div>
-    `).join("");
+    `).join("") + `
+        <div class="comment">
+        孔老六：${comment}
+        </div>
+    `;
 }
 
 // ===== 分镜生成 =====
 async function makeShots(story){
 
     document.getElementById("shots").innerText="生成分镜中...";
+    document.getElementById("copyBtn").style.display="none";
 
     const json = await callAI(buildShotPrompt(story));
 
     document.getElementById("shots").innerText=json;
+    document.getElementById("copyBtn").style.display="block";
+}
+
+// ===== 复制 =====
+function copyShots(){
+    const text = document.getElementById("shots").innerText;
+    navigator.clipboard.writeText(text);
+    alert("已复制");
 }
 
 </script>
