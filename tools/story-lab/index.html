@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Story Lab</title>
+<title>Story Lab v1.0</title>
 
 <style>
 body{
@@ -17,11 +17,31 @@ h2{margin-bottom:5px;}
 
 textarea{
     width:100%;
-    height:100px;
+    height:80px;
     background:#111;
     color:#fff;
     border:1px solid #333;
     padding:10px;
+}
+
+/* 历史 */
+.history{
+    margin-bottom:20px;
+}
+
+.history span{
+    display:inline-block;
+    padding:6px 12px;
+    border:1px solid #333;
+    margin-right:8px;
+    cursor:pointer;
+    font-size:12px;
+    color:#aaa;
+}
+
+.history span:hover{
+    border-color:#00ffff;
+    color:#fff;
 }
 
 .tag{
@@ -41,8 +61,8 @@ textarea{
 .tag.active{border-color:#00ffff;}
 
 button{
-    margin-top:20px;
-    padding:10px 20px;
+    margin-top:15px;
+    padding:8px 18px;
     background:#222;
     color:#fff;
     border:1px solid #444;
@@ -72,12 +92,6 @@ button{
     font-size:13px;
 }
 
-.shotBtn{
-    margin-top:10px;
-    font-size:12px;
-    padding:6px 10px;
-}
-
 .output{
     margin-top:30px;
     background:#111;
@@ -85,21 +99,19 @@ button{
     border:1px solid #222;
     white-space:pre-wrap;
 }
-
-.copyBtn{
-    margin-top:10px;
-    font-size:12px;
-}
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab v0.9</h2>
+<h2>Story Lab v1.0</h2>
 
 <div class="desc">
-输入一个想法 → 选择写作方式（最多2个） → 生成 → 选择 → 导演分镜
+想法 → 故事 → 选择 → 分镜 → 积累
 </div>
+
+<!-- 历史 -->
+<div id="history" class="history"></div>
 
 <textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
 
@@ -110,9 +122,6 @@ button{
 <div id="results" class="results"></div>
 
 <div id="shots" class="output"></div>
-<button id="copyBtn" class="copyBtn" onclick="copyShots()" style="display:none;">
-复制分镜 JSON
-</button>
 
 <script>
 
@@ -126,6 +135,7 @@ const templates = {
 };
 
 let selected = ["观察"];
+let currentStory = null;
 
 // ===== UI =====
 const container = document.getElementById("styles");
@@ -142,10 +152,7 @@ Object.keys(templates).forEach(name=>{
             selected = selected.filter(i=>i!==name);
             el.classList.remove("active");
         }else{
-            if(selected.length>=2){
-                alert("最多选2个");
-                return;
-            }
+            if(selected.length>=2){alert("最多选2个");return;}
             selected.push(name);
             el.classList.add("active");
         }
@@ -170,33 +177,26 @@ ${style}
 - 6~12句
 - 每句像镜头
 - 不解释
-- 不总结
 `;
 }
 
-// ===== 导演分镜（关键升级）=====
+// ===== 导演分镜 =====
 function buildShotPrompt(story){
 return `
 你是导演。
 
-任务：
-把故事改写为分镜，而不是复述。
+不要复述文本，而是重构画面。
 
-规则：
-1. 不要逐句翻译
-2. 每个镜头必须增加信息（光/构图/动作/氛围）
-3. 可以删除或合并句子
-4. 控制节奏（有快有慢）
+每个镜头必须增加信息。
 
 输出JSON：
-
 {
-"shot":1,
-"intent":"这一镜的目的",
-"type":"特写/中景/远景",
-"camera":"推/拉/静止/跟随",
-"visual":"画面",
-"sound":"声音（可选）"
+shot,
+intent,
+type,
+camera,
+visual,
+sound
 }
 
 故事：
@@ -207,22 +207,15 @@ ${story}
 // ===== 孔老六 =====
 function buildJudge(A,B,C){
 return `
-你是孔老六。
-
-选一个最像人写的。
+选最自然的一个
 
 输出两行：
-第一行：A/B/C
-第二行：一句短评（不超过12字）
+A/B/C
+一句短评
 
-A:
-${A}
-
-B:
-${B}
-
-C:
-${C}
+A:${A}
+B:${B}
+C:${C}
 `;
 }
 
@@ -245,38 +238,20 @@ async function callAI(prompt){
     return data.choices[0].message.content;
 }
 
-// ===== 主流程（并发优化）=====
+// ===== 生成 =====
 async function generate(){
 
     const seed=document.getElementById("seed").value;
 
-    if(selected.length===0){
-        alert("请选择风格");
-        return;
-    }
+    const s1 = templates[selected[0]].prompt;
+    const s2 = templates[selected[1]]?.prompt;
+    const mix = s2 ? s1+"\n"+s2 : s1;
 
-    document.getElementById("results").innerHTML="Generating...";
-    document.getElementById("shots").innerText="";
-    document.getElementById("copyBtn").style.display="none";
-
-    let pA,pB,pC;
-
-    if(selected.length===1){
-        const s = templates[selected[0]].prompt;
-        pA = callAI(buildPrompt(seed,s));
-        pB = callAI(buildPrompt(seed,s));
-        pC = callAI(buildPrompt(seed,s));
-    }else{
-        const s1 = templates[selected[0]].prompt;
-        const s2 = templates[selected[1]].prompt;
-        const mix = s1+"\n"+s2;
-
-        pA = callAI(buildPrompt(seed,s1));
-        pB = callAI(buildPrompt(seed,s2));
-        pC = callAI(buildPrompt(seed,mix));
-    }
-
-    const [A,B,C] = await Promise.all([pA,pB,pC]);
+    const [A,B,C] = await Promise.all([
+        callAI(buildPrompt(seed,s1)),
+        callAI(buildPrompt(seed,s2||s1)),
+        callAI(buildPrompt(seed,mix))
+    ]);
 
     const judge = await callAI(buildJudge(A,B,C));
     const lines = judge.split("\n");
@@ -284,64 +259,95 @@ async function generate(){
     const pick = lines[0].trim();
     const comment = lines[1] || "";
 
-    const map = {A,B,C};
+    currentStory = {
+        id: Date.now(),
+        seed,A,B,C,pick,comment,shots:""
+    };
 
-    document.getElementById("results").innerHTML = ["A","B","C"].map(k=>`
+    saveStory(currentStory);
+    renderStories(currentStory);
+    renderHistory();
+}
+
+// ===== 渲染故事 =====
+function renderStories(data){
+
+    const map = {A:data.A,B:data.B,C:data.C};
+
+    document.getElementById("results").innerHTML =
+        ["A","B","C"].map(k=>`
         <div class="card">
-            <div style="color:#888">${k}</div>
             ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
-            ${pick===k?`<div class="recommend">⭐ 孔老六选这个</div>`:""}
-            <button class="shotBtn" onclick="makeShots(\`${map[k]}\`)">
-                用这个做分镜
-            </button>
+            ${data.pick===k?`<div class="recommend">⭐ 孔老六选</div>`:""}
+            <button onclick="makeShots('${k}')">分镜</button>
         </div>
-    `).join("") + `
-        <div class="comment">孔老六：${comment}</div>
-    `;
-
-    // 自动保存
-    localStorage.setItem("storyLabData", JSON.stringify({
-        seed:seed,
-        results:document.getElementById("results").innerHTML
-    }));
+    `).join("") + `<div class="comment">孔老六：${data.comment}</div>`;
 }
 
 // ===== 分镜 =====
-async function makeShots(story){
+async function makeShots(key){
 
-    document.getElementById("shots").innerText="生成分镜中...";
-    document.getElementById("copyBtn").style.display="none";
+    const story = currentStory[key];
 
     const json = await callAI(buildShotPrompt(story));
 
-    document.getElementById("shots").innerText=json;
-    document.getElementById("copyBtn").style.display="block";
+    document.getElementById("shots").innerText = json;
 
-    localStorage.setItem("storyLabShots", json);
+    currentStory.shots = json;
+    updateCurrent();
 }
 
-// ===== 复制 =====
-function copyShots(){
-    navigator.clipboard.writeText(document.getElementById("shots").innerText);
-    alert("已复制");
+// ===== 存储 =====
+function saveStory(story){
+
+    let arr = JSON.parse(localStorage.getItem("stories")||"[]");
+
+    arr.push(story);
+    arr = arr.slice(-3);
+
+    localStorage.setItem("stories", JSON.stringify(arr));
 }
 
-// ===== 恢复 =====
+function updateCurrent(){
+
+    let arr = JSON.parse(localStorage.getItem("stories")||"[]");
+
+    arr = arr.map(s=>s.id===currentStory.id?currentStory:s);
+
+    localStorage.setItem("stories", JSON.stringify(arr));
+}
+
+// ===== 历史 =====
+function renderHistory(){
+
+    const arr = JSON.parse(localStorage.getItem("stories")||"[]");
+
+    document.getElementById("history").innerHTML =
+        arr.map((s,i)=>`
+            <span onclick="loadStory(${i})">
+            ${s.seed.slice(0,10)}
+            </span>
+        `).join("");
+}
+
+function loadStory(index){
+
+    const arr = JSON.parse(localStorage.getItem("stories")||"[]");
+    const s = arr[index];
+
+    currentStory = s;
+
+    document.getElementById("seed").value = s.seed;
+
+    renderStories(s);
+
+    document.getElementById("shots").innerText = s.shots || "";
+}
+
+// ===== 初始化 =====
 window.onload = function(){
-
-    const data = localStorage.getItem("storyLabData");
-    if(data){
-        const obj = JSON.parse(data);
-        document.getElementById("seed").value = obj.seed;
-        document.getElementById("results").innerHTML = obj.results;
-    }
-
-    const shots = localStorage.getItem("storyLabShots");
-    if(shots){
-        document.getElementById("shots").innerText = shots;
-        document.getElementById("copyBtn").style.display="block";
-    }
-}
+    renderHistory();
+};
 
 </script>
 
