@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Story Lab v1.0 Stable</title>
+<title>Story Lab v1.0</title>
 
 <style>
 body{
@@ -13,8 +13,7 @@ body{
 }
 
 h2{margin-bottom:5px;}
-.desc{color:#888;margin-bottom:10px;}
-.flow{color:#555;margin-bottom:20px;font-size:13px;}
+.desc{color:#888;margin-bottom:20px;}
 
 textarea{
     width:100%;
@@ -62,8 +61,8 @@ textarea{
 .tag.active{border-color:#00ffff;}
 
 button{
-    margin-top:10px;
-    padding:8px 16px;
+    margin-top:15px;
+    padding:8px 18px;
     background:#222;
     color:#fff;
     border:1px solid #444;
@@ -83,7 +82,7 @@ button{
     padding:15px;
 }
 
-.line{margin-bottom:6px;}
+.line{margin-bottom:8px;}
 
 .recommend{color:#00ffff;margin-top:10px;}
 
@@ -100,27 +99,18 @@ button{
     border:1px solid #222;
     white-space:pre-wrap;
 }
-
-.copy-btn{
-    margin-top:10px;
-    color:#00ffff;
-    cursor:pointer;
-}
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab v1.0 Stable</h2>
+<h2>Story Lab v1.0</h2>
 
 <div class="desc">
-想法 → 故事 → 选择 → 分镜 → 视频
+想法 → 故事 → 选择 → 分镜 → 积累
 </div>
 
-<div class="flow">
-日常 → 偏差 → 放大 → 观察 → 收尾
-</div>
-
+<!-- 历史 -->
 <div id="history" class="history"></div>
 
 <textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
@@ -132,7 +122,6 @@ button{
 <div id="results" class="results"></div>
 
 <div id="shots" class="output"></div>
-<div class="copy-btn" onclick="copyShots()">复制 JSON</div>
 
 <script>
 
@@ -154,15 +143,16 @@ const container = document.getElementById("styles");
 Object.keys(templates).forEach(name=>{
     const t = templates[name];
     const el=document.createElement("div");
-    el.className="tag active";
+    el.className="tag";
     el.innerHTML = `${name}<small>${t.desc}</small>`;
+    if(name==="观察") el.classList.add("active");
 
     el.onclick=()=>{
         if(selected.includes(name)){
             selected = selected.filter(i=>i!==name);
             el.classList.remove("active");
         }else{
-            if(selected.length>=2)return;
+            if(selected.length>=2){alert("最多选2个");return;}
             selected.push(name);
             el.classList.add("active");
         }
@@ -177,39 +167,44 @@ return `
 
 主题：${seed}
 
-风格：
+规则：
 ${style}
 
 结构：
 日常 → 异常 → 放大 → 观察 → 收尾
 
 要求：
-6~10句，每句像镜头，不解释
+- 6~12句
+- 每句像镜头
+- 不解释
 `;
 }
 
+// ===== 导演分镜 =====
 function buildShotPrompt(story){
 return `
 你是导演。
 
-输出 JSON：
+不要复述文本，而是重构画面。
 
+每个镜头必须增加信息。
+
+输出JSON：
 {
- "shot":1,
- "intent":"",
- "type":"",
- "camera":"",
- "visual":"",
- "sound":""
+shot,
+intent,
+type,
+camera,
+visual,
+sound
 }
-
-不要解释。
 
 故事：
 ${story}
 `;
 }
 
+// ===== 孔老六 =====
 function buildJudge(A,B,C){
 return `
 选最自然的一个
@@ -243,7 +238,7 @@ async function callAI(prompt){
     return data.choices[0].message.content;
 }
 
-// ===== Generate =====
+// ===== 生成 =====
 async function generate(){
 
     const seed=document.getElementById("seed").value;
@@ -274,7 +269,7 @@ async function generate(){
     renderHistory();
 }
 
-// ===== 渲染 =====
+// ===== 渲染故事 =====
 function renderStories(data){
 
     const map = {A:data.A,B:data.B,C:data.C};
@@ -292,28 +287,17 @@ function renderStories(data){
 // ===== 分镜 =====
 async function makeShots(key){
 
-    const raw = await callAI(buildShotPrompt(currentStory[key]));
+    const story = currentStory[key];
 
-    let shot;
+    const json = await callAI(buildShotPrompt(story));
 
-    try{
-        shot = JSON.parse(raw);
-    }catch{
-        alert("JSON失败");
-        console.log(raw);
-        return;
-    }
+    document.getElementById("shots").innerText = json;
 
-    const shots = [shot];
-
-    document.getElementById("shots").innerText =
-        JSON.stringify(shots,null,2);
-
-    currentStory.shots = shots;
+    currentStory.shots = json;
     updateCurrent();
 }
 
-// ===== 历史 =====
+// ===== 存储 =====
 function saveStory(story){
 
     let arr = JSON.parse(localStorage.getItem("stories")||"[]");
@@ -333,6 +317,7 @@ function updateCurrent(){
     localStorage.setItem("stories", JSON.stringify(arr));
 }
 
+// ===== 历史 =====
 function renderHistory(){
 
     const arr = JSON.parse(localStorage.getItem("stories")||"[]");
@@ -359,15 +344,7 @@ function loadStory(index){
     document.getElementById("shots").innerText = s.shots || "";
 }
 
-// ===== 复制 =====
-function copyShots(){
-    navigator.clipboard.writeText(
-        document.getElementById("shots").innerText
-    );
-    alert("已复制");
-}
-
-// 初始化
+// ===== 初始化 =====
 window.onload = function(){
     renderHistory();
 };
