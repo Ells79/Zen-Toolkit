@@ -12,9 +12,6 @@ body{
     padding:40px;
 }
 
-h2{margin-bottom:5px;}
-.desc{color:#888;margin-bottom:20px;}
-
 textarea{
     width:100%;
     height:100px;
@@ -30,18 +27,9 @@ textarea{
     border:1px solid #333;
     margin:5px;
     cursor:pointer;
-    font-size:14px;
 }
 
-.tag small{
-    display:block;
-    color:#666;
-    font-size:11px;
-}
-
-.tag.active{
-    border-color:#00ffff;
-}
+.tag.active{border-color:#00ffff;}
 
 button{
     margin-top:20px;
@@ -65,37 +53,31 @@ button{
     padding:15px;
 }
 
-.line{
-    margin-bottom:8px;
-    line-height:1.5;
-}
+.line{margin-bottom:8px;}
 
-.title{
-    color:#888;
-    margin-bottom:10px;
-}
+.recommend{color:#00ffff;margin-top:10px;}
 
-.recommend{
-    color:#00ffff;
+.shotBtn{
     margin-top:10px;
+    font-size:12px;
+    padding:6px 10px;
 }
 
-.comment{
-    color:#aaa;
-    margin-top:5px;
-    font-size:13px;
+.output{
+    margin-top:30px;
+    background:#111;
+    padding:20px;
+    border:1px solid #222;
+    white-space:pre-wrap;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab v0.7</h2>
-<div class="desc">
-输入一个想法 → 选择写作方式 → 生成短故事
-</div>
+<h2>Story Lab v0.8</h2>
 
-<textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
+<textarea id="seed" placeholder="输入一个想法"></textarea>
 
 <div id="styles"></div>
 
@@ -103,124 +85,95 @@ button{
 
 <div id="results" class="results"></div>
 
+<div id="shots" class="output"></div>
+
 <script>
 
 const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
 // ===== 风格 =====
 const templates = {
-    "冷静": {
-        label:"冷静",
-        desc:"像记录",
-        prompt:`
-语气冷静。
-不解释。
-不抒情。
-`
-    },
-    "观察": {
-        label:"观察",
-        desc:"压抑日常",
-        prompt:`
-多细节。
-人物反应迟缓。
-情绪不说。
-`
-    },
-    "日常": {
-        label:"日常",
-        desc:"轻微偏移",
-        prompt:`
-从日常开始。
-异常很小。
-不戏剧化。
-`
-    }
+    "观察": `细节多，情绪不说`,
+    "日常": `从日常开始，轻微异常`,
+    "冷静": `像记录，不解释`
 };
 
-let selected = [];
+let selected = ["观察"];
 
 // UI
 const container = document.getElementById("styles");
 
 Object.keys(templates).forEach(name=>{
-    const t = templates[name];
     const el=document.createElement("div");
-
-    el.className="tag";
-    el.innerHTML = `${t.label}<small>${t.desc}</small>`;
-
+    el.className="tag active";
+    el.innerText=name;
     el.onclick=()=>{
-        if(selected.includes(name)){
-            selected=selected.filter(i=>i!==name);
-            el.classList.remove("active");
-        }else{
-            if(selected.length>=2){alert("最多选2个");return;}
-            selected.push(name);
-            el.classList.add("active");
-        }
+        selected=[name];
+        document.querySelectorAll(".tag").forEach(t=>t.classList.remove("active"));
+        el.classList.add("active");
     };
-
     container.appendChild(el);
 });
 
-// 默认
-selected=["观察"];
-container.children[1].classList.add("active");
-
 // ===== Prompt =====
-function buildPrompt(seed,styleText){
+function buildPrompt(seed,style){
 return `
 写短故事
 
 主题：${seed}
 
-规则：
-${styleText}
+规则：${style}
 
 结构：
 日常 → 异常 → 放大 → 观察 → 收尾
 
 要求：
 - 6~12句
-- 每句具体
+- 每句像镜头
 - 不解释
-- 不总结
-- 不哲理
-- 不使用“突然”“仿佛”
 
 输出：每行一句
 `;
 }
 
-// ===== 孔老六评审 =====
-function buildJudgePrompt(A,B,C){
+// ===== 分镜 Prompt =====
+function buildShotPrompt(story){
 return `
-你是编辑“孔老六”。
+把下面故事转成分镜JSON
 
-下面三个故事，选一个最像人写的。
+要求：
+- 每句 = 一个镜头
+- 不改写内容
+- 每个镜头包含：
 
-标准：
-- 不刻意
-- 不解释
-- 有余味
-- 克制
+{
+  "shot":编号,
+  "text":原句,
+  "type":景别（特写/中景/远景）,
+  "visual":画面描述
+}
 
-不要分析。
+输出JSON数组
 
-输出：
-第一行：A 或 B 或 C
-第二行：一句点评（不超过15字）
+故事：
+${story}
+`;
+}
 
----
+// ===== 孔老六 =====
+function buildJudge(A,B,C){
+return `
+选最自然的一个
 
-A：
+输出 A / B / C
+
+A:
 ${A}
 
-B：
+B:
 ${B}
 
-C：
+C:
 ${C}
 `;
 }
@@ -237,7 +190,6 @@ async function callAI(prompt){
         body:JSON.stringify({
             model:"deepseek-chat",
             messages:[
-                {role:"system",content:"你是小说作者"},
                 {role:"user",content:prompt}
             ],
             temperature:0.85
@@ -252,43 +204,38 @@ async function callAI(prompt){
 async function generate(){
 
     const seed=document.getElementById("seed").value;
+
     document.getElementById("results").innerHTML="Generating...";
 
-    let A,B,C;
+    const style = templates[selected[0]];
 
-    if(selected.length===2){
-        const mix = templates[selected[0]].prompt + templates[selected[1]].prompt;
+    const A = await callAI(buildPrompt(seed,style));
+    const B = await callAI(buildPrompt(seed,style));
+    const C = await callAI(buildPrompt(seed,style));
 
-        A = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
-        B = await callAI(buildPrompt(seed,templates[selected[1]].prompt));
-        C = await callAI(buildPrompt(seed,mix));
+    const pick = (await callAI(buildJudge(A,B,C))).trim();
 
-    }else{
-        A = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
-        B = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
-        C = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
-    }
-
-    // 👉 孔老六
-    const judge = await callAI(buildJudgePrompt(A,B,C));
-
-    const lines = judge.split("\n");
-    const pick = lines[0].trim();
-    const comment = lines[1] || "";
-
-    const map = {A:A,B:B,C:C};
+    const map = {A,B,C};
 
     document.getElementById("results").innerHTML = ["A","B","C"].map(k=>`
         <div class="card">
-            <div class="title">${k}</div>
             ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
-            ${pick===k?`<div class="recommend">⭐ 孔老六选了这个</div>`:""}
+            ${pick===k?`<div class="recommend">⭐ 孔老六选这个</div>`:""}
+            <button class="shotBtn" onclick="makeShots(\`${map[k]}\`)">
+                用这个做分镜
+            </button>
         </div>
-    `).join("") + `
-        <div style="grid-column:1/4" class="comment">
-        孔老六：${comment}
-        </div>
-    `;
+    `).join("");
+}
+
+// ===== 分镜生成 =====
+async function makeShots(story){
+
+    document.getElementById("shots").innerText="生成分镜中...";
+
+    const json = await callAI(buildShotPrompt(story));
+
+    document.getElementById("shots").innerText=json;
 }
 
 </script>
