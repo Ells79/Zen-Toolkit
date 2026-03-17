@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Story Lab v1.0</title>
+<title>Story Lab v1.0 Stable</title>
 
 <style>
 body{
@@ -13,7 +13,9 @@ body{
 }
 
 h2{margin-bottom:5px;}
-.desc{color:#888;margin-bottom:20px;}
+
+.desc{color:#888;margin-bottom:10px;}
+.flow{color:#555;margin-bottom:20px;font-size:13px;}
 
 textarea{
     width:100%;
@@ -22,26 +24,6 @@ textarea{
     color:#fff;
     border:1px solid #333;
     padding:10px;
-}
-
-/* 历史 */
-.history{
-    margin-bottom:20px;
-}
-
-.history span{
-    display:inline-block;
-    padding:6px 12px;
-    border:1px solid #333;
-    margin-right:8px;
-    cursor:pointer;
-    font-size:12px;
-    color:#aaa;
-}
-
-.history span:hover{
-    border-color:#00ffff;
-    color:#fff;
 }
 
 .tag{
@@ -61,8 +43,8 @@ textarea{
 .tag.active{border-color:#00ffff;}
 
 button{
-    margin-top:15px;
-    padding:8px 18px;
+    margin-top:10px;
+    padding:8px 16px;
     background:#222;
     color:#fff;
     border:1px solid #444;
@@ -82,15 +64,7 @@ button{
     padding:15px;
 }
 
-.line{margin-bottom:8px;}
-
 .recommend{color:#00ffff;margin-top:10px;}
-
-.comment{
-    color:#aaa;
-    margin-top:10px;
-    font-size:13px;
-}
 
 .output{
     margin-top:30px;
@@ -99,19 +73,26 @@ button{
     border:1px solid #222;
     white-space:pre-wrap;
 }
+
+.copy-btn{
+    margin-top:10px;
+    color:#00ffff;
+    cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab v1.0</h2>
+<h2>Story Lab v1.0 Stable</h2>
 
 <div class="desc">
-想法 → 故事 → 选择 → 分镜 → 积累
+想法 → 故事 → 选择 → 分镜 → 视频
 </div>
 
-<!-- 历史 -->
-<div id="history" class="history"></div>
+<div class="flow">
+日常 → 偏差 → 放大 → 观察 → 收尾
+</div>
 
 <textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
 
@@ -122,12 +103,12 @@ button{
 <div id="results" class="results"></div>
 
 <div id="shots" class="output"></div>
+<div class="copy-btn" onclick="copyShots()">复制 JSON</div>
 
 <script>
 
 const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
-// ===== 风格 =====
 const templates = {
     "观察": {desc:"压抑日常",prompt:`细节多，情绪不说`},
     "日常": {desc:"轻微偏移",prompt:`从日常开始，异常很小`},
@@ -137,22 +118,21 @@ const templates = {
 let selected = ["观察"];
 let currentStory = null;
 
-// ===== UI =====
+// UI
 const container = document.getElementById("styles");
 
 Object.keys(templates).forEach(name=>{
     const t = templates[name];
     const el=document.createElement("div");
-    el.className="tag";
+    el.className="tag active";
     el.innerHTML = `${name}<small>${t.desc}</small>`;
-    if(name==="观察") el.classList.add("active");
 
     el.onclick=()=>{
         if(selected.includes(name)){
             selected = selected.filter(i=>i!==name);
             el.classList.remove("active");
         }else{
-            if(selected.length>=2){alert("最多选2个");return;}
+            if(selected.length>=2)return;
             selected.push(name);
             el.classList.add("active");
         }
@@ -167,49 +147,39 @@ return `
 
 主题：${seed}
 
-规则：
+风格：
 ${style}
 
 结构：
 日常 → 异常 → 放大 → 观察 → 收尾
 
 要求：
-- 6~12句
-- 每句像镜头
-- 不解释
+6~10句，每句像镜头，不解释
 `;
 }
 
-// ===== 导演分镜 =====
 function buildShotPrompt(story){
 return `
 你是导演。
 
-不要复述文本，而是重构画面。
+输出 JSON 数组：
 
-每个镜头必须增加信息。
+[
+ { "shot":1,"intent":"","type":"","camera":"","visual":"","sound":"" }
+]
 
-输出JSON：
-{
-shot,
-intent,
-type,
-camera,
-visual,
-sound
-}
+每个镜头必须增加信息，不复述原文。
 
 故事：
 ${story}
 `;
 }
 
-// ===== 孔老六 =====
 function buildJudge(A,B,C){
 return `
 选最自然的一个
 
-输出两行：
+输出：
 A/B/C
 一句短评
 
@@ -238,7 +208,7 @@ async function callAI(prompt){
     return data.choices[0].message.content;
 }
 
-// ===== 生成 =====
+// ===== Generate =====
 async function generate(){
 
     const seed=document.getElementById("seed").value;
@@ -254,100 +224,57 @@ async function generate(){
     ]);
 
     const judge = await callAI(buildJudge(A,B,C));
-    const lines = judge.split("\n");
+    const pick = judge.split("\n")[0].trim();
 
-    const pick = lines[0].trim();
-    const comment = lines[1] || "";
+    currentStory = {A,B,C,pick};
 
-    currentStory = {
-        id: Date.now(),
-        seed,A,B,C,pick,comment,shots:""
-    };
-
-    saveStory(currentStory);
-    renderStories(currentStory);
-    renderHistory();
+    renderStories();
 }
 
-// ===== 渲染故事 =====
-function renderStories(data){
+function renderStories(){
 
-    const map = {A:data.A,B:data.B,C:data.C};
+    const map = currentStory;
 
     document.getElementById("results").innerHTML =
-        ["A","B","C"].map(k=>`
-        <div class="card">
-            ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
-            ${data.pick===k?`<div class="recommend">⭐ 孔老六选</div>`:""}
-            <button onclick="makeShots('${k}')">分镜</button>
-        </div>
-    `).join("") + `<div class="comment">孔老六：${data.comment}</div>`;
+    ["A","B","C"].map(k=>`
+    <div class="card">
+        ${map[k].replace(/\n/g,"<br>")}
+        ${map.pick===k?`<div class="recommend">⭐ 孔老六选</div>`:""}
+        <button onclick="makeShots('${k}')">分镜</button>
+    </div>`).join("");
 }
 
 // ===== 分镜 =====
 async function makeShots(key){
 
-    const story = currentStory[key];
+    const raw = await callAI(buildShotPrompt(currentStory[key]));
 
-    const json = await callAI(buildShotPrompt(story));
+    let shots;
 
-    document.getElementById("shots").innerText = json;
+    try{
+        shots = JSON.parse(raw);
+    }catch{
+        alert("JSON失败");
+        return;
+    }
 
-    currentStory.shots = json;
-    updateCurrent();
+    const videoScript = shots.map(s=>({
+        shot:s.shot,
+        prompt: s.visual,
+        duration:2
+    }));
+
+    document.getElementById("shots").innerText =
+        JSON.stringify(videoScript,null,2);
 }
 
-// ===== 存储 =====
-function saveStory(story){
-
-    let arr = JSON.parse(localStorage.getItem("stories")||"[]");
-
-    arr.push(story);
-    arr = arr.slice(-3);
-
-    localStorage.setItem("stories", JSON.stringify(arr));
+// ===== 复制 =====
+function copyShots(){
+    navigator.clipboard.writeText(
+        document.getElementById("shots").innerText
+    );
+    alert("已复制");
 }
-
-function updateCurrent(){
-
-    let arr = JSON.parse(localStorage.getItem("stories")||"[]");
-
-    arr = arr.map(s=>s.id===currentStory.id?currentStory:s);
-
-    localStorage.setItem("stories", JSON.stringify(arr));
-}
-
-// ===== 历史 =====
-function renderHistory(){
-
-    const arr = JSON.parse(localStorage.getItem("stories")||"[]");
-
-    document.getElementById("history").innerHTML =
-        arr.map((s,i)=>`
-            <span onclick="loadStory(${i})">
-            ${s.seed.slice(0,10)}
-            </span>
-        `).join("");
-}
-
-function loadStory(index){
-
-    const arr = JSON.parse(localStorage.getItem("stories")||"[]");
-    const s = arr[index];
-
-    currentStory = s;
-
-    document.getElementById("seed").value = s.seed;
-
-    renderStories(s);
-
-    document.getElementById("shots").innerText = s.shots || "";
-}
-
-// ===== 初始化 =====
-window.onload = function(){
-    renderHistory();
-};
 
 </script>
 
