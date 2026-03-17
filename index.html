@@ -1,18 +1,133 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Zen Toolkit</title>
+<meta charset="UTF-8">
+<title>zen Toolkit</title>
+
+<style>
+
+body{
+    background:#0a0a0a;
+    color:#e8e8e8;
+    font-family:-apple-system, BlinkMacSystemFont, system-ui;
+    margin:0;
+    padding:60px;
+}
+
+/* Header */
+
+.header{
+    margin-bottom:60px;
+}
+
+.title{
+    font-size:40px;
+    font-weight:600;
+}
+
+.subtitle{
+    color:#777;
+    margin-top:8px;
+}
+
+/* Section */
+
+.section{
+    margin-top:50px;
+}
+
+.section-title{
+    font-size:18px;
+    color:#aaa;
+    margin-bottom:20px;
+}
+
+/* Tool Grid */
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:20px;
+}
+
+/* Tool Card */
+
+.card{
+    padding:20px;
+    border-radius:12px;
+    background:#141414;
+    border:1px solid #222;
+    text-decoration:none;
+    color:white;
+    transition:0.25s;
+}
+
+.card:hover{
+    border-color:#3bd3ff;
+    box-shadow:
+        0 0 8px rgba(0,255,255,0.4),
+        0 0 18px rgba(0,255,255,0.15);
+}
+
+.card-title{
+    font-size:16px;
+    margin-bottom:6px;
+}
+
+.card-desc{
+    font-size:13px;
+    color:#888;
+}
+
+.footer{
+    margin-top:80px;
+    color:#555;
+    font-size:13px;
+}
+
+</style>
 </head>
 
-<body style="font-family:Arial;text-align:center;margin-top:80px">
+<body>
 
-<h1>Zen Toolkit</h1>
+<div class="header">
+<div class="title">Zen Toolkit</div>
+<div class="subtitle">A personal learning laboratory</div>
+</div>
 
-<p>Personal Interactive Tools</p>
 
-<a href="fretboard_lab_v6.html">
-Open Fretboard Lab
+<div class="section">
+<div class="section-title">TOOLS</div>
+
+<div class="grid">
+
+<a class="card" href="tools/fretboard/">
+<div class="card-title">Fretboard Lab</div>
+<div class="card-desc">Guitar fretboard visualization</div>
 </a>
+
+<a class="card" href="#">
+<div class="card-title">Scale Trainer</div>
+<div class="card-desc">Understand scale structure</div>
+</a>
+
+<a class="card" href="#">
+<div class="card-title">Timeline Tool</div>
+<div class="card-desc">Interactive history timeline</div>
+</a>
+
+<a class="card" href="#">
+<div class="card-title">First Principle Board</div>
+<div class="card-desc">Structure thinking</div>
+</a>
+
+</div>
+</div>
+
+
+<div class="footer">
+Zen Toolkit · Personal learning tools
+</div>
 
 </body>
 </html>
