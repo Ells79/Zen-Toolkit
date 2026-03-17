@@ -95,10 +95,10 @@ button{
 
 <body>
 
-<h2>Story Lab v0.8.2</h2>
+<h2>Story Lab v0.9</h2>
 
 <div class="desc">
-输入一个想法 → 选择写作方式（最多2个） → 生成 → 选择 → 分镜
+输入一个想法 → 选择写作方式（最多2个） → 生成 → 选择 → 导演分镜
 </div>
 
 <textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
@@ -120,18 +120,9 @@ const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
 // ===== 风格 =====
 const templates = {
-    "观察": {
-        desc:"压抑日常",
-        prompt:`细节多，情绪不说`
-    },
-    "日常": {
-        desc:"轻微偏移",
-        prompt:`从日常开始，异常很小`
-    },
-    "冷静": {
-        desc:"像记录",
-        prompt:`像记录，不解释`
-    }
+    "观察": {desc:"压抑日常",prompt:`细节多，情绪不说`},
+    "日常": {desc:"轻微偏移",prompt:`从日常开始，异常很小`},
+    "冷静": {desc:"像记录",prompt:`像记录，不解释`}
 };
 
 let selected = ["观察"];
@@ -141,11 +132,9 @@ const container = document.getElementById("styles");
 
 Object.keys(templates).forEach(name=>{
     const t = templates[name];
-
     const el=document.createElement("div");
     el.className="tag";
     el.innerHTML = `${name}<small>${t.desc}</small>`;
-
     if(name==="观察") el.classList.add("active");
 
     el.onclick=()=>{
@@ -161,7 +150,6 @@ Object.keys(templates).forEach(name=>{
             el.classList.add("active");
         }
     };
-
     container.appendChild(el);
 });
 
@@ -183,22 +171,32 @@ ${style}
 - 每句像镜头
 - 不解释
 - 不总结
-- 不哲理
 `;
 }
 
-// ===== 分镜 =====
+// ===== 导演分镜（关键升级）=====
 function buildShotPrompt(story){
 return `
-把故事转成分镜JSON
+你是导演。
 
-每句=一个镜头
+任务：
+把故事改写为分镜，而不是复述。
+
+规则：
+1. 不要逐句翻译
+2. 每个镜头必须增加信息（光/构图/动作/氛围）
+3. 可以删除或合并句子
+4. 控制节奏（有快有慢）
+
+输出JSON：
 
 {
-"shot":编号,
-"text":原句,
-"type":景别（特写/中景/远景）,
-"visual":画面描述
+"shot":1,
+"intent":"这一镜的目的",
+"type":"特写/中景/远景",
+"camera":"推/拉/静止/跟随",
+"visual":"画面",
+"sound":"声音（可选）"
 }
 
 故事：
@@ -211,11 +209,11 @@ function buildJudge(A,B,C){
 return `
 你是孔老六。
 
-选一个最自然、不刻意的。
+选一个最像人写的。
 
 输出两行：
 第一行：A/B/C
-第二行：一句话点评（不超过15字）
+第二行：一句短评（不超过12字）
 
 A:
 ${A}
@@ -230,7 +228,6 @@ ${C}
 
 // ===== API =====
 async function callAI(prompt){
-
     const res = await fetch("https://api.deepseek.com/v1/chat/completions",{
         method:"POST",
         headers:{
@@ -239,9 +236,7 @@ async function callAI(prompt){
         },
         body:JSON.stringify({
             model:"deepseek-chat",
-            messages:[
-                {role:"user",content:prompt}
-            ],
+            messages:[{role:"user",content:prompt}],
             temperature:0.85
         })
     });
@@ -250,13 +245,13 @@ async function callAI(prompt){
     return data.choices[0].message.content;
 }
 
-// ===== 主流程 =====
+// ===== 主流程（并发优化）=====
 async function generate(){
 
     const seed=document.getElementById("seed").value;
 
     if(selected.length===0){
-        alert("请至少选择一个风格");
+        alert("请选择风格");
         return;
     }
 
@@ -264,24 +259,24 @@ async function generate(){
     document.getElementById("shots").innerText="";
     document.getElementById("copyBtn").style.display="none";
 
-    let A,B,C;
+    let pA,pB,pC;
 
     if(selected.length===1){
-        const style = templates[selected[0]].prompt;
-
-        A = await callAI(buildPrompt(seed,style));
-        B = await callAI(buildPrompt(seed,style));
-        C = await callAI(buildPrompt(seed,style));
-
+        const s = templates[selected[0]].prompt;
+        pA = callAI(buildPrompt(seed,s));
+        pB = callAI(buildPrompt(seed,s));
+        pC = callAI(buildPrompt(seed,s));
     }else{
         const s1 = templates[selected[0]].prompt;
         const s2 = templates[selected[1]].prompt;
-        const mix = s1 + "\n" + s2;
+        const mix = s1+"\n"+s2;
 
-        A = await callAI(buildPrompt(seed,s1));
-        B = await callAI(buildPrompt(seed,s2));
-        C = await callAI(buildPrompt(seed,mix));
+        pA = callAI(buildPrompt(seed,s1));
+        pB = callAI(buildPrompt(seed,s2));
+        pC = callAI(buildPrompt(seed,mix));
     }
+
+    const [A,B,C] = await Promise.all([pA,pB,pC]);
 
     const judge = await callAI(buildJudge(A,B,C));
     const lines = judge.split("\n");
@@ -293,21 +288,25 @@ async function generate(){
 
     document.getElementById("results").innerHTML = ["A","B","C"].map(k=>`
         <div class="card">
-            <div style="color:#888;margin-bottom:8px;">${k}</div>
+            <div style="color:#888">${k}</div>
             ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
-            ${pick===k?`<div class="recommend">⭐ 孔老六选了这个</div>`:""}
+            ${pick===k?`<div class="recommend">⭐ 孔老六选这个</div>`:""}
             <button class="shotBtn" onclick="makeShots(\`${map[k]}\`)">
                 用这个做分镜
             </button>
         </div>
     `).join("") + `
-        <div class="comment">
-        孔老六：${comment}
-        </div>
+        <div class="comment">孔老六：${comment}</div>
     `;
+
+    // 自动保存
+    localStorage.setItem("storyLabData", JSON.stringify({
+        seed:seed,
+        results:document.getElementById("results").innerHTML
+    }));
 }
 
-// ===== 分镜生成 =====
+// ===== 分镜 =====
 async function makeShots(story){
 
     document.getElementById("shots").innerText="生成分镜中...";
@@ -317,13 +316,31 @@ async function makeShots(story){
 
     document.getElementById("shots").innerText=json;
     document.getElementById("copyBtn").style.display="block";
+
+    localStorage.setItem("storyLabShots", json);
 }
 
 // ===== 复制 =====
 function copyShots(){
-    const text = document.getElementById("shots").innerText;
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(document.getElementById("shots").innerText);
     alert("已复制");
+}
+
+// ===== 恢复 =====
+window.onload = function(){
+
+    const data = localStorage.getItem("storyLabData");
+    if(data){
+        const obj = JSON.parse(data);
+        document.getElementById("seed").value = obj.seed;
+        document.getElementById("results").innerHTML = obj.results;
+    }
+
+    const shots = localStorage.getItem("storyLabShots");
+    if(shots){
+        document.getElementById("shots").innerText = shots;
+        document.getElementById("copyBtn").style.display="block";
+    }
 }
 
 </script>
