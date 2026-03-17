@@ -2,10 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Story Lab v1.1.1</title>
+<title>Story Lab v1.1.2</title>
 
 <style>
 body{background:#0a0a0a;color:#e8e8e8;font-family:system-ui;padding:40px;}
+
 textarea{width:100%;background:#111;color:#fff;border:1px solid #333;padding:10px;}
 #seed{height:80px;}
 #jsonEditor{height:220px;margin-top:20px;}
@@ -17,11 +18,17 @@ textarea{width:100%;background:#111;color:#fff;border:1px solid #333;padding:10p
 }
 .history span:hover{border-color:#00ffff;color:#fff;}
 
-.tag{display:inline-block;padding:8px 14px;border:1px solid #333;margin:5px;cursor:pointer;}
+.tag{
+    display:inline-block;padding:8px 14px;border:1px solid #333;
+    margin:5px;cursor:pointer;
+}
 .tag small{display:block;font-size:11px;color:#666;}
 .tag.active{border-color:#00ffff;}
 
-button{margin-top:10px;padding:8px 16px;background:#222;color:#fff;border:1px solid #444;cursor:pointer;}
+button{
+    margin-top:10px;padding:8px 16px;
+    background:#222;color:#fff;border:1px solid #444;cursor:pointer;
+}
 
 .results{
     margin-top:30px;
@@ -39,14 +46,28 @@ button{margin-top:10px;padding:8px 16px;background:#222;color:#fff;border:1px so
 
 <body>
 
-<h2>Story Lab v1.1.1</h2>
+<h2>Story Lab v1.1.2</h2>
 <div style="color:#888;margin-bottom:20px;">Story → Shot → Edit → Prompt → Image</div>
 
 <div id="history" class="history"></div>
 
 <textarea id="seed" placeholder="输入一个想法..."></textarea>
 
-<input placeholder="输入API Key（只需一次）" onblur="saveKey(this.value)" style="width:100%;margin-top:10px;background:#111;color:#fff;border:1px solid #333;padding:8px;"/>
+<!-- API KEY -->
+<div id="apiBox">
+  <input 
+    id="apiInput"
+    placeholder="输入 API Key（仅首次）"
+    oninput="saveKey(this.value)"
+    style="width:100%;margin-top:10px;background:#111;color:#fff;border:1px solid #333;padding:8px;"
+  />
+</div>
+
+<div style="text-align:right;margin-top:6px;">
+  <span onclick="editKey()" style="color:#666;cursor:pointer;font-size:12px;">
+    修改API Key
+  </span>
+</div>
 
 <div id="styles"></div>
 
@@ -69,11 +90,20 @@ button{margin-top:10px;padding:8px 16px;background:#222;color:#fff;border:1px so
 
 <script>
 
-let API_KEY = localStorage.getItem("sk-fedd40541f68477f83cb3827ceec4abd") || "";
+let API_KEY = localStorage.getItem("apiKey") || "";
 
 function saveKey(v){
     localStorage.setItem("apiKey", v);
     API_KEY = v;
+
+    if(v.length > 10){
+        document.getElementById("apiBox").style.display = "none";
+    }
+}
+
+function editKey(){
+    document.getElementById("apiBox").style.display = "block";
+    document.getElementById("apiInput").focus();
 }
 
 // ===== 风格 =====
@@ -123,18 +153,17 @@ ${seed}
 
 function buildShotPrompt(story){
 return `
-生成6-8个分镜，JSON数组：
+生成6-8个分镜JSON数组：
 
 [
- { "shot":1, "intent":"", "type":"", "camera":"", "visual":"", "sound":"" },
- { "shot":2, ... }
+ { "shot":1, "intent":"", "type":"", "camera":"", "visual":"", "sound":"" }
 ]
 
 要求：
 - 必须数组
+- 至少6条
 - 不要markdown
 - intent简短
-- 每条不超过2句
 
 故事：
 ${story}
@@ -174,6 +203,11 @@ async function callAI(prompt){
 // ===== 生成 =====
 async function generate(){
 
+    if(!API_KEY){
+        alert("请先输入 API Key");
+        return;
+    }
+
     const seed=document.getElementById("seed").value;
 
     const s1=templates[selected[0]].prompt;
@@ -202,7 +236,7 @@ function renderStories(data){
     document.getElementById("results").innerHTML=
     ["A","B","C"].map(k=>`
         <div class="card">
-            ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
+            ${map[k].split("\\n").map(l=>`<div class="line">${l}</div>`).join("")}
             ${data.pick===k?`<div class="recommend">⭐孔老六</div>`:""}
             <button onclick="makeShots('${k}')">分镜</button>
         </div>
@@ -211,6 +245,12 @@ function renderStories(data){
 
 // ===== 分镜 =====
 async function makeShots(key){
+
+    if(!API_KEY){
+        alert("请先输入 API Key");
+        return;
+    }
+
     const story=currentStory[key];
     let json=await callAI(buildShotPrompt(story));
 
@@ -243,7 +283,7 @@ shot ${s.shot},
 ${s.type}, ${s.camera},
 ${s.visual},
 cinematic lighting, shallow depth of field, 35mm film, soft grain, moody atmosphere
-`).join("\n");
+`).join("\\n");
 
     document.getElementById("promptOutput").value=prompt;
 }
@@ -284,7 +324,18 @@ function loadStory(i){
 }
 
 // ===== init =====
-window.onload=renderHistory;
+window.onload = () => {
+
+    renderHistory();
+
+    const key = localStorage.getItem("apiKey");
+
+    if(key){
+        API_KEY = key;
+        document.getElementById("apiInput").value = key;
+        document.getElementById("apiBox").style.display = "none";
+    }
+};
 
 </script>
 
