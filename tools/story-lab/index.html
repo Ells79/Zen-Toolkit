@@ -74,12 +74,23 @@ button{
     color:#888;
     margin-bottom:10px;
 }
+
+.recommend{
+    color:#00ffff;
+    margin-top:10px;
+}
+
+.comment{
+    color:#aaa;
+    margin-top:5px;
+    font-size:13px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab</h2>
+<h2>Story Lab v0.7</h2>
 <div class="desc">
 输入一个想法 → 选择写作方式 → 生成短故事
 </div>
@@ -94,60 +105,50 @@ button{
 
 <script>
 
-// ===== API KEY =====
 const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
-// ===== 作者模板 =====
+// ===== 风格 =====
 const templates = {
     "冷静": {
         label:"冷静",
-        desc:"像记录，不解释",
+        desc:"像记录",
         prompt:`
-语气冷静，像记录。
-每句推进信息。
-不解释情绪。
+语气冷静。
+不解释。
 不抒情。
-不比喻。
 `
     },
     "观察": {
         label:"观察",
         desc:"压抑日常",
         prompt:`
-语气平静但压抑。
-多写身体和环境细节。
-人物反应迟钝。
-情绪通过动作体现。
-少形容词。
+多细节。
+人物反应迟缓。
+情绪不说。
 `
     },
     "日常": {
         label:"日常",
         desc:"轻微偏移",
         prompt:`
-语气温和。
 从日常开始。
 异常很小。
 不戏剧化。
-轻微偏移收尾。
 `
     }
 };
 
 let selected = [];
 
-// ===== UI =====
+// UI
 const container = document.getElementById("styles");
 
 Object.keys(templates).forEach(name=>{
     const t = templates[name];
-
     const el=document.createElement("div");
+
     el.className="tag";
-    el.innerHTML = `
-        ${t.label}
-        <small>${t.desc}</small>
-    `;
+    el.innerHTML = `${t.label}<small>${t.desc}</small>`;
 
     el.onclick=()=>{
         if(selected.includes(name)){
@@ -163,42 +164,64 @@ Object.keys(templates).forEach(name=>{
     container.appendChild(el);
 });
 
-// 👉 默认选中「观察」
-selected = ["观察"];
+// 默认
+selected=["观察"];
 container.children[1].classList.add("active");
 
 // ===== Prompt =====
 function buildPrompt(seed,styleText){
-
 return `
-写一个短故事
+写短故事
 
 主题：${seed}
 
-写作规则：
+规则：
 ${styleText}
 
-结构（必须遵守）：
+结构：
 日常 → 异常 → 放大 → 观察 → 收尾
 
-关键：
-- 异常不能直接出现，必须通过细节慢慢显现
-- 人物不能讨论异常
-- 只观察，不解释
-
 要求：
-- 6到12句
+- 6~12句
 - 每句具体
-- 每句像一个镜头
-
-禁止：
-- 不要“突然”
-- 不要“仿佛”
-- 不要“我意识到”
-- 不要总结
-- 不要哲理
+- 不解释
+- 不总结
+- 不哲理
+- 不使用“突然”“仿佛”
 
 输出：每行一句
+`;
+}
+
+// ===== 孔老六评审 =====
+function buildJudgePrompt(A,B,C){
+return `
+你是编辑“孔老六”。
+
+下面三个故事，选一个最像人写的。
+
+标准：
+- 不刻意
+- 不解释
+- 有余味
+- 克制
+
+不要分析。
+
+输出：
+第一行：A 或 B 或 C
+第二行：一句点评（不超过15字）
+
+---
+
+A：
+${A}
+
+B：
+${B}
+
+C：
+${C}
 `;
 }
 
@@ -214,7 +237,7 @@ async function callAI(prompt){
         body:JSON.stringify({
             model:"deepseek-chat",
             messages:[
-                {role:"system",content:"你是一个写短篇小说的作家"},
+                {role:"system",content:"你是小说作者"},
                 {role:"user",content:prompt}
             ],
             temperature:0.85
@@ -225,51 +248,47 @@ async function callAI(prompt){
     return data.choices[0].message.content;
 }
 
-// ===== 生成 =====
+// ===== 主流程 =====
 async function generate(){
 
     const seed=document.getElementById("seed").value;
-
-    if(selected.length===0){
-        alert("选一个写作方式");
-        return;
-    }
-
     document.getElementById("results").innerHTML="Generating...";
 
-    let outputs=[];
-
-    if(selected.length===1){
-
-        for(let i=0;i<3;i++){
-            const text = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
-            outputs.push({title:"A"+i,content:text});
-        }
-    }
+    let A,B,C;
 
     if(selected.length===2){
+        const mix = templates[selected[0]].prompt + templates[selected[1]].prompt;
 
-        const styleMix =
-            templates[selected[0]].prompt +
-            templates[selected[1]].prompt;
+        A = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
+        B = await callAI(buildPrompt(seed,templates[selected[1]].prompt));
+        C = await callAI(buildPrompt(seed,mix));
 
-        const A = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
-        const B = await callAI(buildPrompt(seed,templates[selected[1]].prompt));
-        const MIX = await callAI(buildPrompt(seed,styleMix));
-
-        outputs=[
-            {title:"A",content:A},
-            {title:"B",content:B},
-            {title:"Mix",content:MIX}
-        ];
+    }else{
+        A = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
+        B = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
+        C = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
     }
 
-    document.getElementById("results").innerHTML = outputs.map(o=>`
+    // 👉 孔老六
+    const judge = await callAI(buildJudgePrompt(A,B,C));
+
+    const lines = judge.split("\n");
+    const pick = lines[0].trim();
+    const comment = lines[1] || "";
+
+    const map = {A:A,B:B,C:C};
+
+    document.getElementById("results").innerHTML = ["A","B","C"].map(k=>`
         <div class="card">
-            <div class="title">${o.title}</div>
-            ${o.content.split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
+            <div class="title">${k}</div>
+            ${map[k].split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
+            ${pick===k?`<div class="recommend">⭐ 孔老六选了这个</div>`:""}
         </div>
-    `).join("");
+    `).join("") + `
+        <div style="grid-column:1/4" class="comment">
+        孔老六：${comment}
+        </div>
+    `;
 }
 
 </script>
