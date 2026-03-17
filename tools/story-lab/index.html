@@ -2,25 +2,89 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Story Lab v0.5</title>
+<title>Story Lab</title>
 
 <style>
-body{background:#0a0a0a;color:#e8e8e8;font-family:system-ui;padding:40px;}
-textarea{width:100%;height:100px;background:#111;color:#fff;border:1px solid #333;padding:10px;}
-.tag{display:inline-block;padding:6px 12px;border:1px solid #333;margin:5px;cursor:pointer;}
-.tag.active{border-color:#00ffff;}
-button{margin-top:20px;padding:10px 20px;background:#222;color:#fff;border:1px solid #444;}
-.results{margin-top:30px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
-.card{background:#111;border:1px solid #222;padding:15px;}
-.line{margin-bottom:8px;line-height:1.5;}
+body{
+    background:#0a0a0a;
+    color:#e8e8e8;
+    font-family:system-ui;
+    padding:40px;
+}
+
+h2{margin-bottom:5px;}
+.desc{color:#888;margin-bottom:20px;}
+
+textarea{
+    width:100%;
+    height:100px;
+    background:#111;
+    color:#fff;
+    border:1px solid #333;
+    padding:10px;
+}
+
+.tag{
+    display:inline-block;
+    padding:8px 14px;
+    border:1px solid #333;
+    margin:5px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+.tag small{
+    display:block;
+    color:#666;
+    font-size:11px;
+}
+
+.tag.active{
+    border-color:#00ffff;
+}
+
+button{
+    margin-top:20px;
+    padding:10px 20px;
+    background:#222;
+    color:#fff;
+    border:1px solid #444;
+    cursor:pointer;
+}
+
+.results{
+    margin-top:30px;
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:20px;
+}
+
+.card{
+    background:#111;
+    border:1px solid #222;
+    padding:15px;
+}
+
+.line{
+    margin-bottom:8px;
+    line-height:1.5;
+}
+
+.title{
+    color:#888;
+    margin-bottom:10px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>Story Lab v0.5</h2>
+<h2>Story Lab</h2>
+<div class="desc">
+输入一个想法 → 选择写作方式 → 生成短故事
+</div>
 
-<textarea id="seed" placeholder="输入一个想法..."></textarea>
+<textarea id="seed" placeholder="例如：我在电梯里看到未来的自己"></textarea>
 
 <div id="styles"></div>
 
@@ -30,35 +94,68 @@ button{margin-top:20px;padding:10px 20px;background:#222;color:#fff;border:1px s
 
 <script>
 
-// ===== 你的API KEY =====
+// ===== API KEY =====
 const API_KEY = "sk-fedd40541f68477f83cb3827ceec4abd";
 
-// ===== 风格 =====
-const styles = [
-    {id:"孤独"},
-    {id:"温柔"},
-    {id:"荒诞"},
-    {id:"反转"},
-    {id:"对话"},
-    {id:"极简"}
-];
+// ===== 作者模板 =====
+const templates = {
+    "冷静": {
+        label:"冷静",
+        desc:"像记录，不解释",
+        prompt:`
+语气冷静，像记录。
+每句推进信息。
+不解释情绪。
+不抒情。
+不比喻。
+`
+    },
+    "观察": {
+        label:"观察",
+        desc:"压抑日常",
+        prompt:`
+语气平静但压抑。
+多写身体和环境细节。
+人物反应迟钝。
+情绪通过动作体现。
+少形容词。
+`
+    },
+    "日常": {
+        label:"日常",
+        desc:"轻微偏移",
+        prompt:`
+语气温和。
+从日常开始。
+异常很小。
+不戏剧化。
+轻微偏移收尾。
+`
+    }
+};
 
 let selected = [];
 
+// ===== UI =====
 const container = document.getElementById("styles");
 
-styles.forEach(s=>{
+Object.keys(templates).forEach(name=>{
+    const t = templates[name];
+
     const el=document.createElement("div");
     el.className="tag";
-    el.innerText=s.id;
+    el.innerHTML = `
+        ${t.label}
+        <small>${t.desc}</small>
+    `;
 
     el.onclick=()=>{
-        if(selected.includes(s.id)){
-            selected=selected.filter(i=>i!==s.id);
+        if(selected.includes(name)){
+            selected=selected.filter(i=>i!==name);
             el.classList.remove("active");
         }else{
-            if(selected.length>=2){alert("最多2个");return;}
-            selected.push(s.id);
+            if(selected.length>=2){alert("最多选2个");return;}
+            selected.push(name);
             el.classList.add("active");
         }
     };
@@ -66,7 +163,46 @@ styles.forEach(s=>{
     container.appendChild(el);
 });
 
-// ===== 核心：调用API =====
+// 👉 默认选中「观察」
+selected = ["观察"];
+container.children[1].classList.add("active");
+
+// ===== Prompt =====
+function buildPrompt(seed,styleText){
+
+return `
+写一个短故事
+
+主题：${seed}
+
+写作规则：
+${styleText}
+
+结构（必须遵守）：
+日常 → 异常 → 放大 → 观察 → 收尾
+
+关键：
+- 异常不能直接出现，必须通过细节慢慢显现
+- 人物不能讨论异常
+- 只观察，不解释
+
+要求：
+- 6到12句
+- 每句具体
+- 每句像一个镜头
+
+禁止：
+- 不要“突然”
+- 不要“仿佛”
+- 不要“我意识到”
+- 不要总结
+- 不要哲理
+
+输出：每行一句
+`;
+}
+
+// ===== API =====
 async function callAI(prompt){
 
     const res = await fetch("https://api.deepseek.com/v1/chat/completions",{
@@ -78,39 +214,15 @@ async function callAI(prompt){
         body:JSON.stringify({
             model:"deepseek-chat",
             messages:[
-                {role:"system",content:"你是一个擅长写极短漫画故事的作家，语言自然，有画面感"},
+                {role:"system",content:"你是一个写短篇小说的作家"},
                 {role:"user",content:prompt}
             ],
-            temperature:0.9
+            temperature:0.85
         })
     });
 
     const data = await res.json();
     return data.choices[0].message.content;
-}
-
-// ===== 构建prompt（最关键）=====
-function buildPrompt(seed,style){
-
-    return `
-写一个短故事。
-
-主题：${seed}
-风格：${style}
-
-要求：
-- 5到15句
-- 每句像一个镜头
-- 结构必须：
-日常 → 异常 → 放大 → 观察 → 收尾
-
-- 不要解释
-- 不要总结
-- 要有画面细节
-- 语言自然
-
-直接输出，每行一句。
-`;
 }
 
 // ===== 生成 =====
@@ -119,7 +231,7 @@ async function generate(){
     const seed=document.getElementById("seed").value;
 
     if(selected.length===0){
-        alert("选风格");
+        alert("选一个写作方式");
         return;
     }
 
@@ -130,16 +242,20 @@ async function generate(){
     if(selected.length===1){
 
         for(let i=0;i<3;i++){
-            const text = await callAI(buildPrompt(seed,selected[0]));
+            const text = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
             outputs.push({title:"A"+i,content:text});
         }
     }
 
     if(selected.length===2){
 
-        const A = await callAI(buildPrompt(seed,selected[0]));
-        const B = await callAI(buildPrompt(seed,selected[1]));
-        const MIX = await callAI(buildPrompt(seed,selected.join("+")));
+        const styleMix =
+            templates[selected[0]].prompt +
+            templates[selected[1]].prompt;
+
+        const A = await callAI(buildPrompt(seed,templates[selected[0]].prompt));
+        const B = await callAI(buildPrompt(seed,templates[selected[1]].prompt));
+        const MIX = await callAI(buildPrompt(seed,styleMix));
 
         outputs=[
             {title:"A",content:A},
@@ -150,7 +266,7 @@ async function generate(){
 
     document.getElementById("results").innerHTML = outputs.map(o=>`
         <div class="card">
-            <div>${o.title}</div>
+            <div class="title">${o.title}</div>
             ${o.content.split("\n").map(l=>`<div class="line">${l}</div>`).join("")}
         </div>
     `).join("");
