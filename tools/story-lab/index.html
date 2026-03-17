@@ -1,343 +1,518 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>Story Lab v1.1.2</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STORY LAB v1.6.5 | Retro OS Station</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
 
-<style>
-body{background:#0a0a0a;color:#e8e8e8;font-family:system-ui;padding:40px;}
+        :root {
+            --bg-base: #e6e2d3; 
+            --window-bg: #f5f3eb;
+            --border-color: #222;
+            --accent-blue: #4a90e2;
+            --master-red: #d0021b;
+            --text-main: #222;
+            --radius: 10px; /* ells 要求的倒角 */
+            --shadow: 6px 6px 0px rgba(0,0,0,0.1);
+        }
 
-textarea{width:100%;background:#111;color:#fff;border:1px solid #333;padding:10px;}
-#seed{height:80px;}
-#jsonEditor{height:220px;margin-top:20px;}
-#promptOutput{height:160px;margin-top:20px;}
+        body {
+            background-color: var(--bg-base);
+            background-image: radial-gradient(#d1cdbe 1.5px, transparent 1.5px);
+            background-size: 25px 25px;
+            color: var(--text-main);
+            font-family: 'Courier Prime', monospace;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 100px 1fr 420px;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            height: 94vh;
+            overflow: hidden;
+        }
 
-.history span{
-    display:inline-block;padding:6px 10px;border:1px solid #333;
-    margin-right:6px;cursor:pointer;font-size:12px;color:#aaa;
-}
-.history span:hover{border-color:#00ffff;color:#fff;}
+        /* 桌面图标样式 */
+        .desktop-icons {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .icon-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            width: 80px;
+            transition: transform 0.1s;
+        }
+        .icon-unit:active { transform: scale(0.95); }
+        .icon-unit svg { width: 36px; height: 36px; fill: var(--text-main); opacity: 0.8; }
+        .icon-unit span { font-size: 10px; font-weight: bold; text-align: center; background: rgba(255,255,255,0.5); padding: 1px 4px; border-radius: 4px; }
 
-.tag{
-    display:inline-block;padding:8px 14px;border:1px solid #333;
-    margin:5px;cursor:pointer;
-}
-.tag small{display:block;font-size:11px;color:#666;}
-.tag.active{border-color:#00ffff;}
+        /* 复古窗口 */
+        .window {
+            background: var(--window-bg);
+            border: 2.5px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-button{
-    margin-top:10px;padding:8px 16px;
-    background:#222;color:#fff;border:1px solid #444;cursor:pointer;
-}
+        .window-header {
+            background: var(--border-color);
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 1px;
+        }
 
-.results{
-    margin-top:30px;
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:20px;
-}
+        .window-controls { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; }
 
-.card{background:#111;border:1px solid #222;padding:15px;}
-.line{margin-bottom:6px;}
-.recommend{color:#00ffff;margin-top:10px;}
-.section{margin-top:30px;}
-</style>
+        .window-content { padding: 15px; flex: 1; overflow-y: auto; }
+
+        /* Header */
+        header {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2.5px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 5px;
+        }
+        header h1 { margin: 0; font-size: 1.2rem; letter-spacing: -1px; }
+
+        /* Main Workspace */
+        main { grid-column: 2; display: flex; flex-direction: column; gap: 20px; }
+
+        .group-box {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            position: relative;
+            background: rgba(255,255,255,0.3);
+        }
+        .group-label {
+            position: absolute; top: -10px; left: 15px; background: var(--window-bg);
+            padding: 0 8px; font-size: 10px; font-weight: bold; border: 2px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        textarea {
+            width: 100%; background: #fff; border: 2px solid var(--border-color);
+            padding: 12px; font-family: inherit; border-radius: 8px; box-sizing: border-box; outline: none;
+            transition: box-shadow 0.2s;
+        }
+        textarea:focus { box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); }
+        #seed { height: 100px; font-size: 1.1rem; }
+
+        .selector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .tag-btn {
+            padding: 10px; border: 2px solid var(--border-color); border-radius: 6px;
+            background: #fff; cursor: pointer; font-size: 11px; font-family: inherit; font-weight: bold; transition: 0.1s;
+        }
+        .tag-btn.active { background: var(--border-color); color: #fff; }
+        .master-btn.active { background: var(--master-red); border-color: var(--master-red); }
+
+        .btn-main {
+            background: var(--accent-blue); color: #fff; border: 2.5px solid var(--border-color);
+            padding: 15px; font-weight: bold; font-size: 14px; cursor: pointer; border-radius: var(--radius);
+            box-shadow: 4px 4px 0px #000; text-transform: uppercase; margin-top: 10px;
+        }
+        .btn-main:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #000; }
+
+        /* Race Cards */
+        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .story-card {
+            border: 2px solid var(--border-color); background: #fff; border-radius: 8px;
+            padding: 15px; font-size: 12.5px; position: relative; display: flex; flex-direction: column;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.05);
+        }
+        .badge { background: var(--border-color); color: #fff; font-size: 9px; padding: 2px 8px; border-radius: 20px; width: fit-content; margin-bottom: 10px; font-weight: bold;}
+
+        /* Output Center */
+        section#output { grid-column: 3; display: flex; flex-direction: column; gap: 20px; }
+        
+        .code-view {
+            font-family: 'Courier New', monospace; background: #222; color: #00ff66;
+            font-size: 10.5px; padding: 12px; height: 110px; overflow-y: auto; border-radius: 6px;
+            border: 2px solid var(--border-color);
+        }
+
+        .monitor-frame {
+            background: #000; width: 100%; position: relative; border: 4px solid #333;
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.1);
+        }
+        .monitor-frame.ratio-21-9 { aspect-ratio: 21/9; }
+        .monitor-frame.ratio-16-9 { aspect-ratio: 16/9; }
+        .monitor-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+        .loading {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: var(--accent-blue); display: none; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold; letter-spacing: 2px;
+        }
+
+        #sysLog { grid-column: 1 / 4; font-size: 10px; color: #666; border-top: 2px solid var(--border-color); padding-top: 10px; font-weight: bold;}
+
+        /* 存档样式 */
+        .history-item { 
+            padding: 8px 12px; border: 2px solid var(--border-color); background: #fff; 
+            margin-bottom: 6px; font-size: 11px; cursor: pointer; border-radius: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .history-item:hover { background: var(--accent-blue); color: #fff; }
+
+        /* 密钥面板 */
+        .keys-panel { 
+            margin-top: 10px; border-top: 2px dashed var(--border-color); padding-top: 15px;
+        }
+        .key-input { 
+            width: 100%; background: #fff; border: 2px solid var(--border-color); 
+            padding: 8px; font-size: 10px; border-radius: 4px; margin-bottom: 8px;
+            box-sizing: border-box; font-family: inherit;
+        }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 2px solid var(--window-bg); }
+    </style>
 </head>
-
 <body>
 
-<h2>Story Lab v1.1.2</h2>
-<div style="color:#888;margin-bottom:20px;">Story → Shot → Edit → Prompt → Image</div>
+<header>
+    <h1>STORY LAB <small style="opacity:0.5; font-weight:normal;">v1.6.5_RETRO_OS</small></h1>
+    <div id="clock" style="font-size:14px; font-weight:bold; letter-spacing: 1px;">00:00:00</div>
+</header>
 
-<div id="history" class="history"></div>
-
-<textarea id="seed" placeholder="输入一个想法..."></textarea>
-
-<!-- API KEY -->
-<div id="apiBox">
-  <input 
-    id="apiInput"
-    placeholder="输入 API Key（仅首次）"
-    oninput="saveKey(this.value)"
-    style="width:100%;margin-top:10px;background:#111;color:#fff;border:1px solid #333;padding:8px;"
-  />
+<div class="desktop-icons">
+    <div class="icon-unit" onclick="app.log('System Status: Nominal')">
+        <svg viewBox="0 0 24 24"><path d="M20,18H4V4H20M20,2H4A2,2 0 0,0 2,4V18A2,2 0 0,0 4,20H9L7,22H17L15,22L13,20H20A2,2 0 0,0 22,18V4C22,2.89 21.1,2 20,2Z"/></svg>
+        <span>Workstation</span>
+    </div>
+    <div class="icon-unit" onclick="app.log('Accessing local project files...')">
+        <svg viewBox="0 0 24 24"><path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/></svg>
+        <span>Projects</span>
+    </div>
+    <div class="icon-unit" onclick="app.log('Recycle bin is clean.')">
+        <svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+        <span>Trash bin</span>
+    </div>
 </div>
 
-<div style="text-align:right;margin-top:6px;">
-  <span onclick="editKey()" style="color:#666;cursor:pointer;font-size:12px;">
-    修改API Key
-  </span>
-</div>
+<main>
+    <div class="window">
+        <div class="window-header">
+            <span>Writer's Desk / 导演案头</span>
+            <div class="window-controls"><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div class="window-content">
+            <textarea id="seed" placeholder="在此输入你的故事种子..."></textarea>
+            
+            <div class="group-box">
+                <span class="group-label">Dimension / 叙事维度</span>
+                <div id="stylesList" class="selector-grid"></div>
+            </div>
 
-<div id="styles"></div>
+            <div class="group-box">
+                <span class="group-label">Master Lenses / 大师滤镜</span>
+                <div id="mastersList" class="selector-grid"></div>
+            </div>
 
-<button onclick="generate()">Generate</button>
+            <div style="margin-top:20px;">
+                <span class="label">Director's Notes / 追加笔记</span>
+                <textarea id="directorNote" placeholder="例如：加入周德东式的窥视感，或是安西水丸的极简留白..."></textarea>
+            </div>
 
-<div id="results" class="results"></div>
+            <button class="btn-main" onclick="app.generateStory()" style="width:100%;">Initialize Creative Sequence</button>
+        </div>
+    </div>
 
-<div class="section">
-    <div>🎬 分镜 JSON（可编辑）</div>
-    <textarea id="jsonEditor"></textarea>
-</div>
+    <div class="window" style="flex:0.6; min-height: 200px;">
+        <div class="window-header"><span>Draft Race / 文本赛马</span></div>
+        <div class="window-content race-grid" id="raceResults"></div>
+    </div>
+</main>
 
-<button onclick="generatePrompt()">生成 Prompt</button>
+<section id="output">
+    <!-- 系统窗口：存档与密钥 -->
+    <div class="window" style="flex: 0.7;">
+        <div class="window-header"><span>System / 档案管理</span></div>
+        <div class="window-content">
+            <span class="label">Archive / 最近存档</span>
+            <div id="historyList" style="max-height: 120px; overflow-y: auto; margin-bottom: 12px; border: 1.5px solid #222; padding: 5px; background: rgba(255,255,255,0.5);"></div>
+            
+            <div class="keys-panel">
+                <span class="label">API Credentials</span>
+                <input id="apiKey" class="key-input" type="password" placeholder="DeepSeek API Key" oninput="app.saveKey('deepseek', this.value)">
+                <input id="imgKey" class="key-input" type="password" placeholder="Fal.ai API Key" oninput="app.saveKey('image', this.value)">
+            </div>
+        </div>
+    </div>
 
-<div class="section">
-    <div>🧠 Image Prompt</div>
-    <textarea id="promptOutput"></textarea>
-    <button onclick="copyPrompt()">复制 Prompt</button>
-</div>
+    <!-- 逻辑窗口 -->
+    <div class="window">
+        <div class="window-header"><span>Logic / 剧本逻辑</span></div>
+        <div class="window-content">
+            <span class="label">Shot List (JSON)</span>
+            <div id="jsonOutput" class="code-view">SYSTEM_IDLE...</div>
+            <button class="tag-btn" onclick="app.parseJsonToPrompt()" style="width:100%; margin: 12px 0;">Compile Visual Guide</button>
+            <span class="label" style="color: var(--accent-blue)">Image Prompt</span>
+            <div id="finalPrompt" class="code-view" style="background:#fff; color:var(--accent-blue); border:2px solid #ddd;">Awaiting data...</div>
+        </div>
+    </div>
+
+    <!-- 监视器窗口 -->
+    <div class="window">
+        <div class="window-header"><span>Monitor / 监视器</span></div>
+        <div class="window-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div style="display:flex; gap:8px;">
+                    <div class="ratio-btn" id="r169" onclick="app.setAspect('16-9')">16:9</div>
+                    <div class="ratio-btn active" id="r219" onclick="app.setAspect('21-9')">21:9</div>
+                </div>
+                <span style="font-size:10px; font-weight:bold; color: var(--text-dim);">LIVE_FEED</span>
+            </div>
+            <div class="monitor-frame ratio-21-9" id="monitor">
+                <div style="color:#444; font-size:10px; font-weight: bold;">STANDBY</div>
+                <div class="loading" id="loader">RENDERING...</div>
+            </div>
+            <button class="btn-main" onclick="app.renderKeyVisual()" style="width:100%; margin-top:15px; padding:12px; font-size: 12px;">Develop Key Image</button>
+        </div>
+    </div>
+</section>
+
+<div id="sysLog">Terminal v1.6.5 initialized. Memory clear. Ready for production.</div>
 
 <script>
+window.app = {
+    apiKey: localStorage.getItem("apiKey") || "",
+    imgApiKey: localStorage.getItem("imgApiKey") || "",
+    selectedStyle: "观察",
+    selectedMaster: "None",
+    aspect: "21-9",
+    currentData: null,
 
-let API_KEY = localStorage.getItem("apiKey") || "";
+    styles: {
+        "观察": { desc: "Macro", prompt: "Macro focus, intricate textures, slow observation." },
+        "日常": { desc: "Daily", prompt: "Slice of life, naturalistic, understated." },
+        "冷静": { desc: "Detached", prompt: "Objective, static, cold surveillance style." }
+    },
 
-function saveKey(v){
-    localStorage.setItem("apiKey", v);
-    API_KEY = v;
+    masters: {
+        "None": { label: "Standard", prompt: "" },
+        "里巴神": { label: "UrbanGlitch", prompt: "Urban surrealism, internet noir, odd logic." },
+        "周德东": { label: "Suspense", prompt: "Eerie mundane, voyeuristic, psychological dread." },
+        "三谷幸喜": { label: "Comedy", prompt: "Staged, witty, misunderstanding-based." },
+        "浅野一二〇": { label: "Solitude", prompt: "Melancholic, urban blue, cold neon." },
+        "安西水丸": { label: "Minimal", prompt: "Vast white space, soft focus on objects." }
+    },
 
-    if(v.length > 10){
-        document.getElementById("apiBox").style.display = "none";
-    }
-}
-
-function editKey(){
-    document.getElementById("apiBox").style.display = "block";
-    document.getElementById("apiInput").focus();
-}
-
-// ===== 风格 =====
-const templates = {
-    "观察":{desc:"压抑日常",prompt:`细节多，情绪不说`},
-    "日常":{desc:"轻微偏移",prompt:`日常中出现轻微异常`},
-    "冷静":{desc:"像记录",prompt:`像记录，不解释`}
-};
-
-let selected=["观察"];
-let currentStory=null;
-
-// ===== UI =====
-const container=document.getElementById("styles");
-Object.keys(templates).forEach(name=>{
-    const el=document.createElement("div");
-    el.className="tag";
-    el.innerHTML=`${name}<small>${templates[name].desc}</small>`;
-    if(name==="观察") el.classList.add("active");
-
-    el.onclick=()=>{
-        if(selected.includes(name)){
-            selected=selected.filter(i=>i!==name);
-            el.classList.remove("active");
-        }else{
-            if(selected.length>=2){alert("最多选2个");return;}
-            selected.push(name);
-            el.classList.add("active");
+    log: function(msg, isErr) {
+        const el = document.getElementById("sysLog");
+        if (el) {
+            el.innerText = `>> ${msg}`;
+            el.style.color = isErr ? "#d0021b" : "#666";
         }
-    };
-    container.appendChild(el);
-});
+    },
 
-// ===== Prompt =====
-function buildPrompt(seed,style){
-return `
-写短故事：
-${seed}
+    init: function() {
+        const sCont = document.getElementById("stylesList");
+        if (sCont) {
+            Object.keys(this.styles).forEach(n => {
+                const b = document.createElement("button");
+                b.className = `tag-btn ${n === this.selectedStyle ? 'active' : ''}`;
+                b.innerHTML = `${n}<br><small style="font-size:7px; opacity:0.6">${this.styles[n].desc}</small>`;
+                b.onclick = () => {
+                    document.querySelectorAll('#stylesList .tag-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active'); this.selectedStyle = n;
+                };
+                sCont.appendChild(b);
+            });
+        }
 
-结构：
-日常 → 异常 → 放大 → 观察 → 收尾
+        const mCont = document.getElementById("mastersList");
+        if (mCont) {
+            Object.keys(this.masters).forEach(n => {
+                const b = document.createElement("button");
+                b.className = `tag-btn master-btn ${n === this.selectedMaster ? 'active' : ''}`;
+                b.innerText = this.masters[n].label;
+                b.onclick = () => {
+                    document.querySelectorAll('.master-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active'); this.selectedMaster = n;
+                };
+                mCont.appendChild(b);
+            });
+        }
 
-6-10句，不解释
-风格：${style}
-`;
-}
+        const key1 = document.getElementById("apiKey");
+        const key2 = document.getElementById("imgKey");
+        if(key1 && this.apiKey) key1.value = this.apiKey;
+        if(key2 && this.imgApiKey) key2.value = this.imgApiKey;
 
-function buildShotPrompt(story){
-return `
-生成6-8个分镜JSON数组：
+        this.renderHistory();
+        setInterval(() => {
+            const clock = document.getElementById("clock");
+            if (clock) clock.innerText = new Date().toLocaleTimeString();
+        }, 1000);
+    },
 
-[
- { "shot":1, "intent":"", "type":"", "camera":"", "visual":"", "sound":"" }
-]
+    saveKey: function(t, v) {
+        if(t === 'deepseek') { this.apiKey = v; localStorage.setItem("apiKey", v); }
+        else { this.imgApiKey = v; localStorage.setItem("imgApiKey", v); }
+    },
 
-要求：
-- 必须数组
-- 至少6条
-- 不要markdown
-- intent简短
+    setAspect: function(r) {
+        this.aspect = r;
+        const monitor = document.getElementById("monitor");
+        if (monitor) monitor.className = `monitor-frame ratio-${r}`;
+        const btn169 = document.getElementById("r169");
+        const btn219 = document.getElementById("r219");
+        if (btn169) btn169.classList.toggle("active", r === '16-9');
+        if (btn219) btn219.classList.toggle("active", r === '21-9');
+    },
 
-故事：
-${story}
-`;
-}
+    async callAI(p) {
+        const r = await fetch("https://api.deepseek.com/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
+            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: p }], temperature: 0.8 })
+        });
+        const d = await r.json();
+        return d.choices[0].message.content;
+    },
 
-function buildJudge(A,B,C){
-return `
-选A/B/C中最自然一个，只输出字母+一句话：
+    async generateStory() {
+        if(!this.apiKey) return alert("DeepSeek Key Missing.");
+        const seed = document.getElementById("seed").value;
+        const note = document.getElementById("directorNote").value;
+        if(!seed) return this.log("Missing input source.", true);
+        
+        this.log("Executing story race sequence...");
+        const task = (v) => `基于[${seed}]写短故事。影调：${this.styles[this.selectedStyle].prompt} 滤镜：${this.masters[this.selectedMaster].prompt} 笔记：${note}。方向：${v}。6句。`;
 
-A:${A}
-B:${B}
-C:${C}
-`;
-}
+        try {
+            const [A, B, C] = await Promise.all([this.callAI(task("Visual Focus")), this.callAI(task("Dialog Rhythm")), this.callAI(task("Overall Mood"))]);
+            const judge = await this.callAI(`选最符合的一个字母：\nA:${A}\nB:${B}\nC:${C}`);
+            const pick = judge.match(/[ABC]/)?.[0] || "A";
+            this.currentData = { id: Date.now(), seed, A, B, C, pick, shots: "", master: this.selectedMaster, style: this.selectedStyle };
+            this.renderRace();
+            this.saveToLocal();
+        } catch (e) { this.log(e.message, true); }
+    },
 
-// ===== API =====
-async function callAI(prompt){
-    const res=await fetch("https://api.deepseek.com/v1/chat/completions",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json",
-            "Authorization":"Bearer "+API_KEY
-        },
-        body:JSON.stringify({
-            model:"deepseek-chat",
-            messages:[{role:"user",content:prompt}],
-            temperature:0.8,
-            max_tokens:1200
-        })
-    });
+    renderRace: function() {
+        const box = document.getElementById("raceResults");
+        if (!box) return;
+        const stories = { A: this.currentData.A, B: this.currentData.B, C: this.currentData.C };
+        box.innerHTML = ["A", "B", "C"].map(k => `
+            <div class="story-card">
+                ${this.currentData.pick === k ? `<div class="badge">LENS_PICKED</div>` : ""}
+                <div style="flex:1">${stories[k].replace(/\n/g, '<br>')}</div>
+                <button class="tag-btn" style="margin-top:10px;" onclick="app.generateShots('${k}')">Compile Shots</button>
+            </div>
+        `).join("");
+    },
 
-    const data=await res.json();
-    return data.choices[0].message.content;
-}
+    async generateShots(key) {
+        const story = this.currentData[key];
+        const p = `转JSON数组：[{"shot":1,"duration":"3s","camera":"","visual":"","sound":""}]。不要有额外文字。故事：${story}`;
+        try {
+            let res = await this.callAI(p);
+            res = res.replace(/```json|```/g, "").trim();
+            const jsonBox = document.getElementById("jsonOutput");
+            if (jsonBox) jsonBox.innerText = res;
+            this.currentData.shots = res;
+            this.log("Shot sequence ready for compilation.");
+        } catch (e) { this.log("JSON Parsing Fault.", true); }
+    },
 
-// ===== 生成 =====
-async function generate(){
+    parseJsonToPrompt: function() {
+        try {
+            const raw = document.getElementById("jsonOutput").innerText;
+            const list = JSON.parse(raw.replace(/,\s*([\]}])/g, '$1'));
+            const vibe = this.masters[this.selectedMaster].prompt;
+            const p = list.map(s => `Shot ${s.shot}: ${s.camera}, ${s.visual}. cinematic, 35mm film, ${vibe}`).join("\n\n");
+            const promptBox = document.getElementById("finalPrompt");
+            if (promptBox) promptBox.innerText = p;
+            this.log("Visual Prompt developed.");
+        } catch (e) { alert("Data Compile Fault."); }
+    },
 
-    if(!API_KEY){
-        alert("请先输入 API Key");
-        return;
-    }
+    async renderKeyVisual() {
+        if(!this.imgApiKey) return alert("Fal.ai API Key Missing.");
+        const promptBox = document.getElementById("finalPrompt");
+        if (!promptBox) return;
+        const prompt = promptBox.innerText;
+        if(prompt.includes("Awaiting")) return alert("Please Compile Prompt first.");
 
-    const seed=document.getElementById("seed").value;
+        const loader = document.getElementById("loader");
+        if (loader) loader.style.display = "flex";
+        this.log("Contacting Fal.ai remote server...");
 
-    const s1=templates[selected[0]].prompt;
-    const s2=templates[selected[1]]?.prompt||s1;
+        try {
+            const res = await fetch("https://fal.run/fal-ai/flux/schnell", {
+                method: "POST",
+                headers: { "Authorization": `Key ${this.imgApiKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    prompt: prompt.split('\n\n')[0],
+                    image_size: this.aspect === '21-9' ? { width: 1024, height: 448 } : "landscape_16_9"
+                })
+            });
+            const result = await res.json();
+            const monitor = document.getElementById("monitor");
+            if (monitor) monitor.innerHTML = `<img src="${result.images[0].url}" alt="Key Visual">`;
+            this.log("Visual developed successfully.");
+        } catch (e) { this.log("Render sequence failed.", true); }
+        finally { if (loader) loader.style.display = "none"; }
+    },
 
-    const [A,B,C]=await Promise.all([
-        callAI(buildPrompt(seed,s1)),
-        callAI(buildPrompt(seed,s2)),
-        callAI(buildPrompt(seed,s1+"\n"+s2))
-    ]);
+    saveToLocal: function() {
+        let arr = JSON.parse(localStorage.getItem("lab_v165") || "[]");
+        arr.unshift(this.currentData);
+        localStorage.setItem("lab_v165", JSON.stringify(arr.slice(0, 8)));
+        this.renderHistory();
+    },
 
-    const judge=await callAI(buildJudge(A,B,C));
-    const pick = judge.match(/[ABC]/)?.[0] || "A";
+    renderHistory: function() {
+        const histCont = document.getElementById("historyList");
+        if (!histCont) return; // Error guard
+        
+        const arr = JSON.parse(localStorage.getItem("lab_v165") || "[]");
+        histCont.innerHTML = arr.map((s, i) => `
+            <div class="history-item" onclick="app.loadHistory(${i})">
+                ${s.seed.slice(0, 15)}...
+            </div>
+        `).join("");
+    },
 
-    currentStory={id:Date.now(),seed,A,B,C,pick,shots:""};
-
-    renderStories(currentStory);
-    saveStory(currentStory);
-    renderHistory();
-}
-
-// ===== 渲染 =====
-function renderStories(data){
-    const map={A:data.A,B:data.B,C:data.C};
-
-    document.getElementById("results").innerHTML=
-    ["A","B","C"].map(k=>`
-        <div class="card">
-            ${map[k].split("\\n").map(l=>`<div class="line">${l}</div>`).join("")}
-            ${data.pick===k?`<div class="recommend">⭐孔老六</div>`:""}
-            <button onclick="makeShots('${k}')">分镜</button>
-        </div>
-    `).join("");
-}
-
-// ===== 分镜 =====
-async function makeShots(key){
-
-    if(!API_KEY){
-        alert("请先输入 API Key");
-        return;
-    }
-
-    const story=currentStory[key];
-    let json=await callAI(buildShotPrompt(story));
-
-    json = json.replace(/```json|```/g,"").trim();
-
-    document.getElementById("jsonEditor").value=json;
-
-    currentStory.shots=json;
-    updateCurrent();
-    renderHistory();
-}
-
-// ===== Prompt 转译 =====
-function generatePrompt(){
-
-    let jsonText=document.getElementById("jsonEditor").value;
-
-    jsonText = jsonText.replace(/```json|```/g,"").trim();
-
-    let arr;
-    try{
-        arr=JSON.parse(jsonText);
-    }catch(e){
-        alert("JSON格式错误");
-        return;
-    }
-
-    let prompt=arr.map(s=>`
-shot ${s.shot},
-${s.type}, ${s.camera},
-${s.visual},
-cinematic lighting, shallow depth of field, 35mm film, soft grain, moody atmosphere
-`).join("\\n");
-
-    document.getElementById("promptOutput").value=prompt;
-}
-
-// ===== copy =====
-function copyPrompt(){
-    navigator.clipboard.writeText(document.getElementById("promptOutput").value);
-    alert("已复制");
-}
-
-// ===== storage =====
-function saveStory(s){
-    let arr=JSON.parse(localStorage.getItem("stories")||"[]");
-    arr.push(s);
-    arr=arr.slice(-3);
-    localStorage.setItem("stories",JSON.stringify(arr));
-}
-
-function updateCurrent(){
-    let arr=JSON.parse(localStorage.getItem("stories")||"[]");
-    arr=arr.map(i=>i.id===currentStory.id?currentStory:i);
-    localStorage.setItem("stories",JSON.stringify(arr));
-}
-
-// ===== history =====
-function renderHistory(){
-    const arr=JSON.parse(localStorage.getItem("stories")||"[]");
-    document.getElementById("history").innerHTML=
-    arr.map((s,i)=>`<span onclick="loadStory(${i})">${s.seed.slice(0,8)}</span>`).join("");
-}
-
-function loadStory(i){
-    const arr=JSON.parse(localStorage.getItem("stories")||"[]");
-    currentStory=arr[i];
-    document.getElementById("seed").value=currentStory.seed;
-    renderStories(currentStory);
-    document.getElementById("jsonEditor").value=currentStory.shots||"";
-}
-
-// ===== init =====
-window.onload = () => {
-
-    renderHistory();
-
-    const key = localStorage.getItem("apiKey");
-
-    if(key){
-        API_KEY = key;
-        document.getElementById("apiInput").value = key;
-        document.getElementById("apiBox").style.display = "none";
+    loadHistory: function(i) {
+        const arr = JSON.parse(localStorage.getItem("lab_v165") || "[]");
+        const data = arr[i];
+        if (!data) return;
+        this.currentData = data;
+        document.getElementById("seed").value = data.seed;
+        this.renderRace();
+        const jsonBox = document.getElementById("jsonOutput");
+        if (jsonBox) jsonBox.innerText = data.shots || "SYSTEM_IDLE...";
+        this.log("Project archive loaded.");
     }
 };
 
+window.onload = () => app.init();
 </script>
-
 </body>
 </html>
