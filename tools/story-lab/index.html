@@ -58,7 +58,7 @@
             filter: contrast(1.1) brightness(0.9);
         }
 
-        /* 功能条 Utility Bar */
+        /* 系统条 */
         .utility-bar {
             grid-column: 1 / -1;
             display: flex;
@@ -87,7 +87,6 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            position: relative;
             margin-bottom: 15px;
         }
         .window-header {
@@ -102,9 +101,8 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-        .window-content { padding: 22px; flex: 1; overflow-y: auto; }
+        .window-content { padding: 22px; flex: 1; display: flex; flex-direction: column; }
 
-        /* 组容器与排版 */
         .group-box {
             border: 2px solid var(--border-color);
             border-radius: 8px;
@@ -123,14 +121,13 @@
         textarea {
             width: 100%; background: #fff; border: 2px solid var(--border-color);
             padding: 15px; font-family: inherit; border-radius: 8px; box-sizing: border-box; outline: none;
-            line-height: 1.6; font-size: 14px;
+            line-height: 1.6; font-size: 14px; resize: none;
         }
         #seed { height: 90px; font-size: 1.2rem; }
         #directorNote { height: 60px; font-size: 0.9rem; border-color: #999; }
 
         .selector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         
-        /* 叙事动作：18px */
         .tag-btn {
             padding: 16px 8px; border: 2px solid var(--border-color); border-radius: 8px;
             background: #fff; cursor: pointer; font-size: 18px; 
@@ -155,23 +152,18 @@
             background: var(--accent-blue); color: #fff; border: 3px solid var(--border-color);
             padding: 22px; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: var(--radius);
             box-shadow: 5px 5px 0px #000; text-transform: uppercase; margin-top: 15px;
-            transition: 0.1s; letter-spacing: 2px; width: 100%;
+            transition: 0.1s; letter-spacing: 2px; width: 100%; flex-shrink: 0;
         }
         .btn-main:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0px #000; }
 
-        /* 赛马区：叠纸架构 */
-        .race-container {
-            display: flex;
-            flex-direction: column;
-            gap: 35px;
-            position: relative;
-        }
+        /* 赛马区 */
+        .race-container { display: flex; flex-direction: column; gap: 35px; position: relative; }
         .story-sheet {
             background: #fff;
             border: 2px solid var(--border-color);
-            border-radius: 4px 12px 12px 12px;
+            border-radius: 0px 12px 12px 12px;
             position: relative;
-            padding: 28px 28px 60px 28px; /* 增加底部 padding 以容纳按钮 */
+            padding: 28px 28px 65px 28px; 
             box-shadow: 4px 4px 0px rgba(0,0,0,0.05);
             margin-top: 10px;
             transition: 0.3s;
@@ -179,11 +171,12 @@
         .story-sheet:hover { transform: translateY(-2px); box-shadow: 8px 8px 0px rgba(0,0,0,0.05); }
 
         .sheet-tab {
-            position: absolute; top: -26px; left: -2px; height: 25px; padding: 0 15px;
+            position: absolute; top: -26px; height: 25px; padding: 0 15px;
             background: #ddd; border: 2px solid var(--border-color); border-bottom: none;
             border-radius: 8px 8px 0 0; display: flex; align-items: center;
             font-size: 10px; font-weight: 900; color: #333; letter-spacing: 1px;
         }
+        .story-sheet:nth-child(2) .sheet-tab { left: -2px; background: #ddd; }
         .story-sheet:nth-child(3) .sheet-tab { left: 100px; background: #eee; }
         .story-sheet:nth-child(4) .sheet-tab { left: 210px; background: #f5f5f5; }
 
@@ -195,32 +188,19 @@
             font-size: 11px; padding: 4px 10px; font-weight: 900; letter-spacing: 2px; pointer-events: none;
         }
 
-        /* ells: MIX SHOTS 按钮挪到右下角，带轻微阴影 */
         .sheet-action-mini {
-            position: absolute; 
-            bottom: 15px; 
-            right: 15px; 
-            border: 1.5px solid var(--border-color);
-            background: #fff; 
-            padding: 6px 12px; 
-            font-size: 10px; 
-            font-weight: bold; 
-            cursor: pointer;
-            border-radius: 6px; 
-            transition: 0.2s;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            position: absolute; bottom: 15px; right: 15px; 
+            border: 1.5px solid var(--border-color); background: #fff; 
+            padding: 8px 14px; font-size: 10px; font-weight: bold; cursor: pointer;
+            border-radius: 6px; transition: 0.2s;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1); /* ells: 增加按钮阴影 */
             text-transform: uppercase;
         }
         .sheet-action-mini:hover { 
-            background: var(--accent-blue); 
-            color: #fff; 
-            box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            transform: translateY(-1px);
+            background: var(--accent-blue); color: #fff; 
+            transform: translateY(-2px); box-shadow: 6px 6px 0px rgba(0,0,0,0.15);
         }
-        .sheet-action-mini:active {
-            transform: translateY(1px);
-            box-shadow: none;
-        }
+        .sheet-action-mini:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #000; }
 
         .processing-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -233,27 +213,27 @@
             animation: scanline 2.5s linear infinite;
         }
 
-        /* 侧边栏产出 */
+        /* 侧边栏与 Logic Pipeline 修复 */
         section#output { display: flex; flex-direction: column; gap: 20px; }
+        .logic-container { display: flex; flex-direction: column; gap: 10px; flex: 1; }
         .code-view {
             font-family: 'Courier New', monospace; background: #0c0c0c; color: #00ff66;
-            font-size: 11px; padding: 15px; height: 140px; border-radius: 8px; border: 2px solid var(--border-color); line-height: 1.6;
+            font-size: 11px; padding: 15px; height: 130px; border-radius: 8px; 
+            border: 2px solid var(--border-color); line-height: 1.6; overflow-y: auto;
         }
+        .compile-btn {
+            width: 100%; margin: 5px 0; border: 2px dashed #999; background: transparent;
+            padding: 10px; font-size: 12px; font-weight: bold; cursor: pointer; border-radius: 8px;
+            flex-shrink: 0; transition: 0.2s;
+        }
+        .compile-btn:hover { background: #fff; border-style: solid; border-color: var(--border-color); }
+
         .monitor-frame {
             background: #000; width: 100%; aspect-ratio: 21/9; position: relative; border: 6px solid #333; border-radius: 8px; overflow: hidden;
         }
         .monitor-frame img { width: 100%; height: 100%; object-fit: cover; }
         
         #sysLog { grid-column: 1 / -1; font-size: 11px; color: #777; border-top: 1px solid var(--border-color); padding-top: 15px; font-weight: bold; margin-top: 10px;}
-
-        /* 模态框与存档 */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-        .modal-window { width: 450px; pointer-events: auto; }
 
         .history-item { 
             padding: 15px; border: 2px solid var(--border-color); background: #fff; 
@@ -272,7 +252,7 @@
 </header>
 
 <div class="utility-bar">
-    <div>CHANNEL: NARRATIVE_ENGINE_V1.9.1_UI_FINESSE</div>
+    <div>CHANNEL: NARRATIVE_ENGINE_V1.9.2_REFINED</div>
     <div class="system-tray">
         <div class="tray-icon" title="API Credentials" onclick="app.openModal('keysModal')">
             <svg viewBox="0 0 24 24"><path d="M12.65,10C11.83,7.67 9.61,6 7,6A7,7 0 0,0 0,13A7,7 0 0,0 7,20C9.61,20 11.83,18.33 12.65,16H17V20H21V16H24V12H12.65M7,15A2,2 0 0,1 5,13A2,2 0 0,1 7,11A2,2 0 0,1 9,13A2,2 0 0,1 7,15Z"/></svg>
@@ -289,11 +269,11 @@
 
 <div id="keysModal" class="modal-overlay" onclick="app.closeModal('keysModal')">
     <div class="window modal-window" onclick="event.stopPropagation()">
-        <div class="window-header"><span>Credentials / 密钥管理</span><div onclick="app.closeModal('keysModal')" style="cursor:pointer;">[CLOSE]</div></div>
+        <div class="window-header"><span>Credentials / 密钥配置</span><div onclick="app.closeModal('keysModal')" style="cursor:pointer;">[X]</div></div>
         <div class="window-content">
-            <span class="label">DeepSeek V3 Key</span>
+            <span class="label">DeepSeek Key</span>
             <input id="apiKey" class="key-input" type="password" placeholder="sk-..." oninput="app.saveKey('deepseek', this.value)" style="width:100%; padding:12px; border:2px solid #222; border-radius:8px; margin-bottom:15px; box-sizing:border-box; font-family:inherit;">
-            <span class="label">Fal.ai (Flux) Key</span>
+            <span class="label">Fal.ai Key</span>
             <input id="imgKey" class="key-input" type="password" placeholder="Enter key..." oninput="app.saveKey('image', this.value)" style="width:100%; padding:12px; border:2px solid #222; border-radius:8px; box-sizing:border-box; font-family:inherit;">
         </div>
     </div>
@@ -301,7 +281,7 @@
 
 <div id="archiveModal" class="modal-overlay" onclick="app.closeModal('archiveModal')">
     <div class="window modal-window" onclick="event.stopPropagation()">
-        <div class="window-header"><span>Archives / 历史存档</span><div onclick="app.closeModal('archiveModal')" style="cursor:pointer;">[CLOSE]</div></div>
+        <div class="window-header"><span>Archives / 历史存档</span><div onclick="app.closeModal('archiveModal')" style="cursor:pointer;">[X]</div></div>
         <div class="window-content" id="historyList"></div>
     </div>
 </div>
@@ -310,7 +290,7 @@
     <div class="window">
         <div class="window-header"><span>COMMAND CONSOLE / 导演案头</span></div>
         <div class="window-content">
-            <textarea id="seed" placeholder="在此输入故事种子，描述一个瞬间、一段对峙、或者一个出神的下午..."></textarea>
+            <textarea id="seed" placeholder="在此输入你的故事种子..."></textarea>
             
             <div class="group-box">
                 <span class="group-label">Narrative Logic / 叙事动作</span>
@@ -318,13 +298,13 @@
             </div>
 
             <div class="group-box">
-                <span class="group-label">Master DNA / 大师滤镜 (可多选 2 项)</span>
+                <span class="group-label">Master DNA / 大师滤镜</span>
                 <div id="mastersList" class="selector-grid"></div>
             </div>
 
             <div style="margin-top:20px;">
                 <span class="label">Director's Notes / 追加笔记</span>
-                <textarea id="directorNote" placeholder="例如：镜头极低，大面积阴影，强调环境音..."></textarea>
+                <textarea id="directorNote" placeholder="例如：镜头极低，环境音孤立..."></textarea>
             </div>
 
             <button id="genBtn" class="btn-main" onclick="app.generateStory()">Process DNA Sequence</button>
@@ -334,9 +314,7 @@
     <div class="window">
         <div class="window-header"><span>STORY TRACKS / 文本赛马</span></div>
         <div class="window-content race-container" id="raceResults">
-            <div style="text-align: center; padding-top: 100px; color: #bbb; letter-spacing: 5px; font-size: 14px;">
-                AWAITING MULTI-TRACK FEED...
-            </div>
+            <div style="text-align: center; padding-top: 100px; color: #bbb; letter-spacing: 5px; font-size: 14px;">AWAITING INPUT...</div>
             <div id="raceOverlay" class="processing-overlay">
                 <div class="scanline"></div>
                 <div style="border: 5px solid #222; border-top-color: var(--accent-blue); width: 45px; height: 45px; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 25px;"></div>
@@ -349,10 +327,10 @@
 <section id="output">
     <div class="window">
         <div class="window-header"><span>LOGIC PIPELINE / 剧本分镜</span></div>
-        <div class="window-content">
+        <div class="window-content logic-container">
             <span class="label">SHOT_LIST_STREAM</span>
             <div id="jsonOutput" class="code-view">SYSTEM_IDLE...</div>
-            <button class="tag-btn" onclick="app.parseJsonToPrompt()" style="width:100%; margin: 15px 0; border-style: dashed; font-size: 12px; padding: 12px;">Compile Visual DNA</button>
+            <button class="compile-btn" onclick="app.parseJsonToPrompt()">Compile Visual DNA</button>
             <span class="label" style="color: var(--accent-blue)">FLUX_PROMPT_GUIDE</span>
             <div id="finalPrompt" class="code-view" style="background:#fff; color:var(--accent-blue); border:2px solid #ddd; height: 100px;">Waiting...</div>
         </div>
@@ -369,7 +347,7 @@
     </div>
 </section>
 
-<div id="sysLog">System calibrated. Folder sheets optimized.</div>
+<div id="sysLog">System stable. Pipeline overflow fixed.</div>
 
 <script>
 window.app = {
@@ -380,18 +358,18 @@ window.app = {
     currentData: null,
 
     styles: {
-        "凝视": { desc: "Gaze", prompt: "Hyper-detailed macro observation, focus on uncanny textures and micro-movements." },
-        "白描": { desc: "Sketch", prompt: "Plain narrative style, stripping away emotional adjectives, focus on raw facts." },
+        "凝视": { desc: "Gaze", prompt: "Hyper-detailed macro observation, focus on textures and micro-movements." },
+        "白描": { desc: "Sketch", prompt: "Plain narrative style, focus on raw facts and physical actions." },
         "抽离": { desc: "Detached", prompt: "Out-of-body perspective, distant high-angle observation, cold and objective." }
     },
 
     masters: {
         "标准模式": { label: "标准模式", prompt: "" },
-        "都市怪谈": { label: "都市怪谈", prompt: "Urban surrealism, internet noir, deadpan humor, supernatural elements as normal." },
-        "中式惊悚": { label: "中式惊悚", prompt: "Domestic suspense, voyeuristic angles, psychological dread, hidden malice in mundane objects." },
-        "戏剧对白": { label: "戏剧对白", prompt: "Fast-paced witty dialogue, chain reactions of misunderstandings, high theatrical tension." },
-        "冷感孤独": { label: "冷感孤独", prompt: "Cold urban decay, melancholic neon reflections, blue-gray palette, vast empty cityscapes." },
-        "极简留白": { label: "极简留白", prompt: "Vast negative space, soft focus on single static object, minimalist monologue." }
+        "都市怪谈": { label: "都市怪谈", prompt: "Urban surrealism, internet noir, deadpan humor." },
+        "中式惊悚": { label: "中式惊悚", prompt: "Psychological dread, hidden malice in mundane objects." },
+        "戏剧对白": { label: "戏剧对白", prompt: "Fast-paced witty dialogue, theatrical tension." },
+        "冷感孤独": { label: "冷感孤独", prompt: "Cold urban decay, melancholic neon, isolated spaces." },
+        "极简留白": { label: "极简留白", prompt: "Vast negative space, soft focus on single static object." }
     },
 
     log: function(msg, isErr) {
@@ -493,7 +471,6 @@ window.app = {
         const box = document.getElementById("raceResults");
         const stories = { A: this.currentData.A, B: this.currentData.B, C: this.currentData.C };
         const labels = { A: `${this.currentData.masters[0]}`, B: `${this.currentData.masters[1] || this.currentData.masters[0]}`, C: "HYBRID MIX" };
-        
         box.innerHTML = `
             <div id="raceOverlay" class="processing-overlay"><div class="scanline"></div><span>PRINTING...</span></div>
             ${["A", "B", "C"].map(k => `
@@ -548,19 +525,19 @@ window.app = {
         } catch (e) { this.log("Failed.", true); }
     },
 
-    clearSystem: function() { if(confirm("Confirm: Wipe all data and keys?")) { localStorage.clear(); location.reload(); } },
+    clearSystem: function() { if(confirm("Confirm: Wipe all data?")) { localStorage.clear(); location.reload(); } },
     saveToLocal: function() {
-        let arr = JSON.parse(localStorage.getItem("lab_v191") || "[]");
-        arr.unshift(this.currentData); localStorage.setItem("lab_v191", JSON.stringify(arr.slice(0, 15)));
+        let arr = JSON.parse(localStorage.getItem("lab_v192") || "[]");
+        arr.unshift(this.currentData); localStorage.setItem("lab_v192", JSON.stringify(arr.slice(0, 15)));
         this.renderHistory();
     },
     renderHistory: function() {
         const histCont = document.getElementById("historyList");
-        const arr = JSON.parse(localStorage.getItem("lab_v191") || "[]");
+        const arr = JSON.parse(localStorage.getItem("lab_v192") || "[]");
         histCont.innerHTML = arr.length ? arr.map((s, i) => `<div class="history-item" onclick="app.loadHistory(${i}); app.closeModal('archiveModal')">[${s.style.slice(0,1)}] ${s.seed.slice(0, 25)}...</div>`).join("") : "<p style='color:#aaa; font-size:11px; text-align:center;'>Archive empty.</p>";
     },
     loadHistory: function(i) {
-        const arr = JSON.parse(localStorage.getItem("lab_v191") || "[]");
+        const arr = JSON.parse(localStorage.getItem("lab_v192") || "[]");
         const data = arr[i]; if (!data) return;
         this.currentData = data; document.getElementById("seed").value = data.seed;
         this.selectedMasters = data.masters || ["标准模式"]; this.selectedStyle = data.style;
