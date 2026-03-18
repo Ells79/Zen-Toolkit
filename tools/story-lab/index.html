@@ -18,8 +18,7 @@
             --shadow: 8px 8px 0px rgba(0,0,0,0.08);
         }
 
-        /* 动画区域 */
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* 动画 */
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
         @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
 
@@ -30,7 +29,7 @@
             color: var(--text-main);
             font-family: 'Courier Prime', monospace;
             margin: 0;
-            padding: 15px 30px 30px;
+            padding: 0 30px 30px;
             display: grid;
             grid-template-columns: 1fr 420px; 
             grid-template-rows: auto auto 1fr;
@@ -39,42 +38,47 @@
             box-sizing: border-box;
         }
 
-        /* 报头设计 Masthead */
+        @media (max-width: 1000px) {
+            body { grid-template-columns: 1fr; padding: 0 15px 20px; }
+            .masthead img { max-width: 95%; }
+        }
+
+        /* 报头区 */
         .masthead {
-            grid-column: 1 / 3;
+            grid-column: 1 / -1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px 0 10px;
-            border-bottom: 4px double var(--border-color); /* 报纸风格双线 */
+            padding: 40px 0 25px;
+            border-bottom: 5px double var(--border-color);
         }
         .masthead img {
-            max-width: 500px;
+            max-width: 580px;
             height: auto;
-            filter: contrast(1.1);
+            filter: contrast(1.1) brightness(0.9);
         }
 
-        /* 系统信息条 */
+        /* 功能条 Utility Bar */
         .utility-bar {
-            grid-column: 1 / 3;
+            grid-column: 1 / -1;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 10px;
+            padding: 12px 0;
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 10px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            text-transform: uppercase;
+            color: #666;
         }
 
-        .system-tray { display: flex; align-items: center; gap: 18px; }
-        .tray-icon { display: flex; align-items: center; cursor: pointer; opacity: 0.6; transition: 0.2s; }
-        .tray-icon:hover { opacity: 1; }
+        .system-tray { display: flex; align-items: center; gap: 15px; }
+        .tray-icon { display: flex; align-items: center; cursor: pointer; opacity: 0.5; transition: 0.2s; }
+        .tray-icon:hover { opacity: 1; transform: scale(1.1); }
         .tray-icon svg { width: 18px; height: 18px; fill: var(--text-main); }
         #clock { min-width: 90px; text-align: right; }
 
-        /* Window & Layout */
+        /* 窗口组件 */
         .window {
             background: var(--window-bg);
             border: 3px solid var(--border-color);
@@ -84,122 +88,181 @@
             flex-direction: column;
             overflow: hidden;
             position: relative;
+            margin-bottom: 15px;
         }
         .window-header {
             background: var(--border-color);
             color: #fff;
-            padding: 8px 15px;
-            font-size: 11px;
+            padding: 10px 15px;
+            font-size: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             font-weight: bold;
+            text-transform: uppercase;
         }
-        .window-content { padding: 20px; flex: 1; overflow-y: auto; }
+        .window-content { padding: 22px; flex: 1; overflow-y: auto; }
 
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1000;
-            display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-        .modal-window { width: 420px; max-height: 80vh; pointer-events: auto; }
-
-        /* Group Boxes */
+        /* 组容器与排版 */
         .group-box {
             border: 2px solid var(--border-color);
             border-radius: 8px;
-            padding: 18px;
-            margin-top: 18px;
+            padding: 20px;
+            margin-top: 22px;
             position: relative;
-            background: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.3);
         }
         .group-label {
             position: absolute; top: -11px; left: 15px; background: var(--window-bg);
             padding: 0 10px; font-size: 10px; font-weight: bold; border: 2px solid var(--border-color);
             border-radius: 4px;
         }
+        .label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
 
         textarea {
             width: 100%; background: #fff; border: 2px solid var(--border-color);
             padding: 15px; font-family: inherit; border-radius: 8px; box-sizing: border-box; outline: none;
-            line-height: 1.6;
+            line-height: 1.6; font-size: 14px;
         }
         #seed { height: 90px; font-size: 1.2rem; }
+        #directorNote { height: 60px; font-size: 0.9rem; border-color: #999; }
 
         .selector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        
+        /* 叙事动作：18px */
         .tag-btn {
-            padding: 12px; border: 2px solid var(--border-color); border-radius: 8px;
-            background: #fff; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: bold; transition: 0.15s;
-            position: relative;
+            padding: 16px 8px; border: 2px solid var(--border-color); border-radius: 8px;
+            background: #fff; cursor: pointer; font-size: 18px; 
+            font-family: inherit; font-weight: bold; transition: 0.1s;
+            position: relative; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
+        .tag-btn small { display: block; font-size: 9px; opacity: 0.4; font-weight: normal; margin-top: 5px; }
         .tag-btn.active { background: var(--border-color); color: #fff; }
+        
+        .master-btn { font-size: 12px; padding: 12px 8px; }
         .master-btn.active { background: var(--master-red); border-color: var(--master-red); }
+        
         .mix-num { 
             position: absolute; top: -8px; right: -8px; background: #fff; color: var(--master-red); 
             border: 2px solid var(--master-red); border-radius: 50%; width: 18px; height: 18px; 
             font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; 
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
         }
 
         .btn-main {
             background: var(--accent-blue); color: #fff; border: 3px solid var(--border-color);
-            padding: 18px; font-weight: bold; font-size: 15px; cursor: pointer; border-radius: var(--radius);
+            padding: 22px; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: var(--radius);
             box-shadow: 5px 5px 0px #000; text-transform: uppercase; margin-top: 15px;
-            transition: 0.1s;
+            transition: 0.1s; letter-spacing: 2px; width: 100%;
         }
         .btn-main:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0px #000; }
-        .btn-main:disabled { background: #999; cursor: wait; opacity: 0.8; border-color: #666;}
 
-        .race-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; position: relative; min-height: 380px;}
-        .story-card {
-            border: 2px solid var(--border-color); background: #fff; border-radius: 10px;
-            padding: 20px; font-size: 13.5px; position: relative; display: flex; flex-direction: column;
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.05);
+        /* 赛马区：叠纸架构 */
+        .race-container {
+            display: flex;
+            flex-direction: column;
+            gap: 35px;
+            position: relative;
         }
-        .badge { background: var(--border-color); color: #fff; font-size: 9px; padding: 3px 10px; border-radius: 20px; width: fit-content; margin-bottom: 12px; font-weight: bold; text-transform: uppercase;}
+        .story-sheet {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 4px 12px 12px 12px;
+            position: relative;
+            padding: 28px 28px 60px 28px; /* 增加底部 padding 以容纳按钮 */
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.05);
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        .story-sheet:hover { transform: translateY(-2px); box-shadow: 8px 8px 0px rgba(0,0,0,0.05); }
+
+        .sheet-tab {
+            position: absolute; top: -26px; left: -2px; height: 25px; padding: 0 15px;
+            background: #ddd; border: 2px solid var(--border-color); border-bottom: none;
+            border-radius: 8px 8px 0 0; display: flex; align-items: center;
+            font-size: 10px; font-weight: 900; color: #333; letter-spacing: 1px;
+        }
+        .story-sheet:nth-child(3) .sheet-tab { left: 100px; background: #eee; }
+        .story-sheet:nth-child(4) .sheet-tab { left: 210px; background: #f5f5f5; }
+
+        .sheet-content { font-size: 15px; line-height: 1.8; color: #222; }
+
+        .laoliu-seal {
+            position: absolute; bottom: 20px; left: 30px; transform: rotate(-12deg);
+            background: rgba(208, 2, 27, 0.05); color: var(--master-red); border: 2px solid var(--master-red);
+            font-size: 11px; padding: 4px 10px; font-weight: 900; letter-spacing: 2px; pointer-events: none;
+        }
+
+        /* ells: MIX SHOTS 按钮挪到右下角，带轻微阴影 */
+        .sheet-action-mini {
+            position: absolute; 
+            bottom: 15px; 
+            right: 15px; 
+            border: 1.5px solid var(--border-color);
+            background: #fff; 
+            padding: 6px 12px; 
+            font-size: 10px; 
+            font-weight: bold; 
+            cursor: pointer;
+            border-radius: 6px; 
+            transition: 0.2s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            text-transform: uppercase;
+        }
+        .sheet-action-mini:hover { 
+            background: var(--accent-blue); 
+            color: #fff; 
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+        }
+        .sheet-action-mini:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
 
         .processing-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(245, 243, 235, 0.95); z-index: 10;
+            background: rgba(245, 243, 235, 0.97); z-index: 100;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold;
         }
         .scanline {
-            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-            background: rgba(74, 144, 226, 0.3); box-shadow: 0 0 15px var(--accent-blue);
-            animation: scanline 2s linear infinite;
+            position: absolute; top: 0; left: 0; width: 100%; height: 8px;
+            background: rgba(74, 144, 226, 0.2); box-shadow: 0 0 20px var(--accent-blue);
+            animation: scanline 2.5s linear infinite;
         }
 
-        /* Outputs */
+        /* 侧边栏产出 */
+        section#output { display: flex; flex-direction: column; gap: 20px; }
         .code-view {
-            font-family: 'Courier New', monospace; background: #111; color: #00ff66;
-            font-size: 11px; padding: 15px; height: 130px; overflow-y: auto; border-radius: 8px;
-            border: 2px solid var(--border-color); line-height: 1.5;
+            font-family: 'Courier New', monospace; background: #0c0c0c; color: #00ff66;
+            font-size: 11px; padding: 15px; height: 140px; border-radius: 8px; border: 2px solid var(--border-color); line-height: 1.6;
         }
         .monitor-frame {
-            background: #000; width: 100%; position: relative; border: 6px solid #333;
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            overflow: hidden; box-shadow: inset 0 0 50px rgba(0,255,255,0.05);
+            background: #000; width: 100%; aspect-ratio: 21/9; position: relative; border: 6px solid #333; border-radius: 8px; overflow: hidden;
         }
-        .monitor-frame.ratio-21-9 { aspect-ratio: 21/9; }
-        .monitor-frame.ratio-16-9 { aspect-ratio: 16/9; }
         .monitor-frame img { width: 100%; height: 100%; object-fit: cover; }
         
-        #sysLog { grid-column: 1 / 3; font-size: 11px; color: #666; border-top: 1px solid var(--border-color); padding-top: 15px; font-weight: bold; margin-top: 10px;}
+        #sysLog { grid-column: 1 / -1; font-size: 11px; color: #777; border-top: 1px solid var(--border-color); padding-top: 15px; font-weight: bold; margin-top: 10px;}
+
+        /* 模态框与存档 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-window { width: 450px; pointer-events: auto; }
 
         .history-item { 
-            padding: 12px 15px; border: 2px solid var(--border-color); background: #fff; 
-            margin-bottom: 10px; font-size: 12px; cursor: pointer; border-radius: 8px;
+            padding: 15px; border: 2px solid var(--border-color); background: #fff; 
+            margin-bottom: 12px; font-size: 13px; cursor: pointer; border-radius: 10px;
         }
         .history-item:hover { background: var(--accent-blue); color: #fff; }
-        .key-input { 
-            width: 100%; background: #fff; border: 2px solid var(--border-color); 
-            padding: 12px; font-size: 12px; border-radius: 6px; margin-bottom: 12px; box-sizing: border-box;
-        }
 
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 3px solid var(--window-bg); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -209,37 +272,36 @@
 </header>
 
 <div class="utility-bar">
-    <div style="letter-spacing: 2px;">EDITION: DAILY_CREATIVE</div>
+    <div>CHANNEL: NARRATIVE_ENGINE_V1.9.1_UI_FINESSE</div>
     <div class="system-tray">
-        <div class="tray-icon" title="API Configuration" onclick="app.openModal('keysModal')">
+        <div class="tray-icon" title="API Credentials" onclick="app.openModal('keysModal')">
             <svg viewBox="0 0 24 24"><path d="M12.65,10C11.83,7.67 9.61,6 7,6A7,7 0 0,0 0,13A7,7 0 0,0 7,20C9.61,20 11.83,18.33 12.65,16H17V20H21V16H24V12H12.65M7,15A2,2 0 0,1 5,13A2,2 0 0,1 7,11A2,2 0 0,1 9,13A2,2 0 0,1 7,15Z"/></svg>
         </div>
-        <div class="tray-icon" title="Archives" onclick="app.openModal('archiveModal')">
+        <div class="tray-icon" title="History Archive" onclick="app.openModal('archiveModal')">
             <svg viewBox="0 0 24 24"><path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/></svg>
         </div>
-        <div class="tray-icon" title="Clear System" onclick="app.clearSystem()">
+        <div class="tray-icon" title="Purge System" onclick="app.clearSystem()">
             <svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
         </div>
         <div id="clock">00:00:00</div>
     </div>
 </div>
 
-<!-- Modals -->
 <div id="keysModal" class="modal-overlay" onclick="app.closeModal('keysModal')">
     <div class="window modal-window" onclick="event.stopPropagation()">
-        <div class="window-header"><span>CREDENTIALS</span><div onclick="app.closeModal('keysModal')" style="cursor:pointer;">[CLOSE]</div></div>
+        <div class="window-header"><span>Credentials / 密钥管理</span><div onclick="app.closeModal('keysModal')" style="cursor:pointer;">[CLOSE]</div></div>
         <div class="window-content">
-            <span style="font-size: 10px; font-weight: bold; margin-bottom: 8px; display: block;">DeepSeek API Key</span>
-            <input id="apiKey" class="key-input" type="password" placeholder="sk-..." oninput="app.saveKey('deepseek', this.value)">
-            <span style="font-size: 10px; font-weight: bold; margin-bottom: 8px; display: block;">Fal.ai (Flux) Key</span>
-            <input id="imgKey" class="key-input" type="password" placeholder="Enter key..." oninput="app.saveKey('image', this.value)">
+            <span class="label">DeepSeek V3 Key</span>
+            <input id="apiKey" class="key-input" type="password" placeholder="sk-..." oninput="app.saveKey('deepseek', this.value)" style="width:100%; padding:12px; border:2px solid #222; border-radius:8px; margin-bottom:15px; box-sizing:border-box; font-family:inherit;">
+            <span class="label">Fal.ai (Flux) Key</span>
+            <input id="imgKey" class="key-input" type="password" placeholder="Enter key..." oninput="app.saveKey('image', this.value)" style="width:100%; padding:12px; border:2px solid #222; border-radius:8px; box-sizing:border-box; font-family:inherit;">
         </div>
     </div>
 </div>
 
 <div id="archiveModal" class="modal-overlay" onclick="app.closeModal('archiveModal')">
     <div class="window modal-window" onclick="event.stopPropagation()">
-        <div class="window-header"><span>ARCHIVES</span><div onclick="app.closeModal('archiveModal')" style="cursor:pointer;">[CLOSE]</div></div>
+        <div class="window-header"><span>Archives / 历史存档</span><div onclick="app.closeModal('archiveModal')" style="cursor:pointer;">[CLOSE]</div></div>
         <div class="window-content" id="historyList"></div>
     </div>
 </div>
@@ -248,37 +310,37 @@
     <div class="window">
         <div class="window-header"><span>COMMAND CONSOLE / 导演案头</span></div>
         <div class="window-content">
-            <textarea id="seed" placeholder="描述一个瞬间，一段对话，或者一个失眠的夜晚..."></textarea>
+            <textarea id="seed" placeholder="在此输入故事种子，描述一个瞬间、一段对峙、或者一个出神的下午..."></textarea>
             
             <div class="group-box">
-                <span class="group-label">Tone / 叙事维度</span>
+                <span class="group-label">Narrative Logic / 叙事动作</span>
                 <div id="stylesList" class="selector-grid"></div>
             </div>
 
             <div class="group-box">
-                <span class="group-label">Lenses / 大师滤镜 (可多选 2 项)</span>
+                <span class="group-label">Master DNA / 大师滤镜 (可多选 2 项)</span>
                 <div id="mastersList" class="selector-grid"></div>
             </div>
 
             <div style="margin-top:20px;">
-                <span class="label">Notes / 追加笔记</span>
-                <textarea id="directorNote" placeholder="例如：镜头低角度，强调环境音..."></textarea>
+                <span class="label">Director's Notes / 追加笔记</span>
+                <textarea id="directorNote" placeholder="例如：镜头极低，大面积阴影，强调环境音..."></textarea>
             </div>
 
-            <button id="genBtn" class="btn-main" onclick="app.generateStory()">Initialize Sequence</button>
+            <button id="genBtn" class="btn-main" onclick="app.generateStory()">Process DNA Sequence</button>
         </div>
     </div>
 
     <div class="window">
-        <div class="window-header"><span>DRAFT RACE / 文本赛马</span></div>
-        <div class="window-content race-grid" id="raceResults">
-            <div style="grid-column: 1/4; text-align: center; padding-top: 100px; color: #bbb; letter-spacing: 5px;">
-                READY FOR INPUT...
+        <div class="window-header"><span>STORY TRACKS / 文本赛马</span></div>
+        <div class="window-content race-container" id="raceResults">
+            <div style="text-align: center; padding-top: 100px; color: #bbb; letter-spacing: 5px; font-size: 14px;">
+                AWAITING MULTI-TRACK FEED...
             </div>
             <div id="raceOverlay" class="processing-overlay">
                 <div class="scanline"></div>
-                <div style="border: 5px solid #222; border-top-color: var(--accent-blue); width: 40px; height: 40px; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px;"></div>
-                <span style="letter-spacing: 10px; font-size: 14px;">PRINTING...</span>
+                <div style="border: 5px solid #222; border-top-color: var(--accent-blue); width: 45px; height: 45px; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 25px;"></div>
+                <span style="letter-spacing: 12px; font-size: 16px; font-weight: bold;">PRINTING...</span>
             </div>
         </div>
     </div>
@@ -288,58 +350,48 @@
     <div class="window">
         <div class="window-header"><span>LOGIC PIPELINE / 剧本分镜</span></div>
         <div class="window-content">
-            <span class="label">JSON Stream</span>
+            <span class="label">SHOT_LIST_STREAM</span>
             <div id="jsonOutput" class="code-view">SYSTEM_IDLE...</div>
-            <button class="tag-btn" onclick="app.parseJsonToPrompt()" style="width:100%; margin: 15px 0;">Compile Visuals</button>
-            <span class="label" style="color: var(--accent-blue)">Image Prompt</span>
-            <div id="finalPrompt" class="code-view" style="background:#fff; color:var(--accent-blue); border:2px solid #ddd; height: 110px;">Waiting...</div>
+            <button class="tag-btn" onclick="app.parseJsonToPrompt()" style="width:100%; margin: 15px 0; border-style: dashed; font-size: 12px; padding: 12px;">Compile Visual DNA</button>
+            <span class="label" style="color: var(--accent-blue)">FLUX_PROMPT_GUIDE</span>
+            <div id="finalPrompt" class="code-view" style="background:#fff; color:var(--accent-blue); border:2px solid #ddd; height: 100px;">Waiting...</div>
         </div>
     </div>
 
     <div class="window">
-        <div class="window-header"><span>MONITOR / 监视器</span></div>
+        <div class="window-header"><span>CORE MONITOR / 监视器</span></div>
         <div class="window-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <div style="display:flex; gap:10px;">
-                    <div class="ratio-btn" id="r169" onclick="app.setAspect('16-9')" style="cursor:pointer; font-size:10px; border:2px solid #222; padding:4px 10px; border-radius: 4px;">16:9</div>
-                    <div class="ratio-btn active" id="r219" onclick="app.setAspect('21-9')" style="cursor:pointer; font-size:10px; border:2px solid #222; padding:4px 10px; font-weight:bold; border-radius: 4px;">21:9</div>
-                </div>
+            <div class="monitor-frame" id="monitor">
+                <div style="color: #333; font-size: 11px; font-weight: bold; letter-spacing: 4px;">OFFLINE</div>
             </div>
-            <div class="monitor-frame ratio-21-9" id="monitor">
-                <div style="color: #444; font-size: 10px; font-weight: bold; letter-spacing: 3px;">NO FEED</div>
-                <div id="monitorLoader" class="loading-screen">
-                    <span style="animation: pulse 1s infinite;">DEVELOPING...</span>
-                </div>
-            </div>
-            <button id="devBtn" class="btn-main" onclick="app.renderKeyVisual()" style="width:100%; margin-top:15px; padding:15px; font-size: 13px;">Execute Development</button>
+            <button id="devBtn" class="btn-main" onclick="app.renderKeyVisual()" style="font-size: 13px; padding: 15px;">Execute Development</button>
         </div>
     </div>
 </section>
 
-<div id="sysLog">Masthead calibrated. Edition 01 ready.</div>
+<div id="sysLog">System calibrated. Folder sheets optimized.</div>
 
 <script>
 window.app = {
     apiKey: localStorage.getItem("apiKey") || "",
     imgApiKey: localStorage.getItem("imgApiKey") || "",
-    selectedStyle: "观察",
-    selectedMasters: ["标准"],
-    aspect: "21-9",
+    selectedStyle: "凝视",
+    selectedMasters: ["标准模式"],
     currentData: null,
 
     styles: {
-        "观察": { desc: "Macro", prompt: "Hyper-detailed macro, focus on textures and the breath of objects." },
-        "日常": { desc: "Daily", prompt: "Plain narrative, focusing on mundane moments with subtle deviation." },
-        "冷静": { desc: "Detached", prompt: "Cold, objective surveillance style, distant perspective." }
+        "凝视": { desc: "Gaze", prompt: "Hyper-detailed macro observation, focus on uncanny textures and micro-movements." },
+        "白描": { desc: "Sketch", prompt: "Plain narrative style, stripping away emotional adjectives, focus on raw facts." },
+        "抽离": { desc: "Detached", prompt: "Out-of-body perspective, distant high-angle observation, cold and objective." }
     },
 
     masters: {
-        "标准": { label: "标准模式", prompt: "" },
-        "怪谈": { label: "都市怪谈", prompt: "Urban surrealism, internet-native slang, deadpan humor." },
-        "惊悚": { label: "中式惊悚", prompt: "Domestic suspense, voyeuristic angles, mundane malice." },
-        "对白": { label: "戏剧对白", prompt: "Fast-paced witty dialogue, theatrical tension." },
-        "孤独": { label: "冷感孤独", prompt: "Cold urban decay, melancholic neon blue, empty spaces." },
-        "极简": { label: "极简留白", prompt: "Vast negative space, soft focus on single object." }
+        "标准模式": { label: "标准模式", prompt: "" },
+        "都市怪谈": { label: "都市怪谈", prompt: "Urban surrealism, internet noir, deadpan humor, supernatural elements as normal." },
+        "中式惊悚": { label: "中式惊悚", prompt: "Domestic suspense, voyeuristic angles, psychological dread, hidden malice in mundane objects." },
+        "戏剧对白": { label: "戏剧对白", prompt: "Fast-paced witty dialogue, chain reactions of misunderstandings, high theatrical tension." },
+        "冷感孤独": { label: "冷感孤独", prompt: "Cold urban decay, melancholic neon reflections, blue-gray palette, vast empty cityscapes." },
+        "极简留白": { label: "极简留白", prompt: "Vast negative space, soft focus on single static object, minimalist monologue." }
     },
 
     log: function(msg, isErr) {
@@ -355,7 +407,7 @@ window.app = {
         Object.keys(this.styles).forEach(n => {
             const b = document.createElement("button");
             b.className = `tag-btn ${n === this.selectedStyle ? 'active' : ''}`;
-            b.innerHTML = `${n}<br><small style="font-size:7px; opacity:0.6">${this.styles[n].desc}</small>`;
+            b.innerHTML = `${n}<br><small>${this.styles[n].desc}</small>`;
             b.onclick = () => {
                 document.querySelectorAll('#stylesList .tag-btn').forEach(x => x.classList.remove('active'));
                 b.classList.add('active'); this.selectedStyle = n;
@@ -366,16 +418,12 @@ window.app = {
         if(this.apiKey) document.getElementById("apiKey").value = this.apiKey;
         if(this.imgApiKey) document.getElementById("imgKey").value = this.imgApiKey;
         this.renderHistory();
-        setInterval(() => {
-            const clock = document.getElementById("clock");
-            if (clock) clock.innerText = new Date().toLocaleTimeString();
-        }, 1000);
+        setInterval(() => { document.getElementById("clock").innerText = new Date().toLocaleTimeString(); }, 1000);
     },
 
     renderMasters: function() {
         const mCont = document.getElementById("mastersList");
-        if (!mCont) return;
-        mCont.innerHTML = "";
+        if (!mCont) return; mCont.innerHTML = "";
         Object.keys(this.masters).forEach(n => {
             const index = this.selectedMasters.indexOf(n);
             const b = document.createElement("button");
@@ -387,15 +435,14 @@ window.app = {
                 b.appendChild(num);
             }
             b.onclick = () => {
-                if (n === "标准") {
-                    this.selectedMasters = ["标准"];
-                } else {
-                    const stdIdx = this.selectedMasters.indexOf("标准");
+                if (n === "标准模式") { this.selectedMasters = ["标准模式"]; } 
+                else {
+                    const stdIdx = this.selectedMasters.indexOf("标准模式");
                     if (stdIdx > -1) this.selectedMasters.splice(stdIdx, 1);
                     const i = this.selectedMasters.indexOf(n);
                     if (i > -1) { this.selectedMasters.splice(i, 1); } 
                     else if (this.selectedMasters.length < 2) { this.selectedMasters.push(n); }
-                    if (this.selectedMasters.length === 0) this.selectedMasters = ["标准"];
+                    if (this.selectedMasters.length === 0) this.selectedMasters = ["标准模式"];
                 }
                 this.renderMasters();
             };
@@ -408,64 +455,53 @@ window.app = {
         else { this.imgApiKey = v; localStorage.setItem("imgApiKey", v); }
     },
 
-    setAspect: function(r) {
-        this.aspect = r;
-        document.getElementById("monitor").className = `monitor-frame ratio-${r}`;
-        document.getElementById("r169").classList.toggle("active", r === '16-9');
-        document.getElementById("r219").classList.toggle("active", r === '21-9');
-    },
-
     async callAI(p) {
         const r = await fetch("https://api.deepseek.com/v1/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
             body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: p }], temperature: 0.85 })
         });
-        const d = await r.json();
-        return d.choices[0].message.content;
+        const d = await r.json(); return d.choices[0].message.content;
     },
 
     async generateStory() {
-        if(!this.apiKey) return alert("Error: API Key missing.");
+        if(!this.apiKey) return alert("System Error: API Key missing.");
         const seed = document.getElementById("seed").value;
+        const note = document.getElementById("directorNote").value;
         const btn = document.getElementById("genBtn");
         const overlay = document.getElementById("raceOverlay");
-        if(!seed) return this.log("Input empty.", true);
+        if(!seed) return this.log("Input required.", true);
         
-        btn.disabled = true; btn.innerText = "INITIALIZING..."; overlay.style.display = "flex";
-        this.log("Mixing components for triple race...");
+        btn.disabled = true; btn.innerText = "DNA PROCESSING..."; overlay.style.display = "flex";
+        this.log(`Initiating [${this.selectedStyle}] sequence...`);
 
-        const stylePrompt = this.styles[this.selectedStyle].prompt;
-        const m1 = this.selectedMasters[0];
-        const m2 = this.selectedMasters[1] || m1;
-        const note = document.getElementById("directorNote").value;
-
-        const buildTask = (m, v) => `Based on [${seed}], write 6-sentence story in Chinese. Tone: ${stylePrompt}. Master: ${this.masters[m].prompt}. Direction: ${v}. Note: ${note}`;
-        const taskC = `Based on [${seed}]. Tone: ${stylePrompt}. HYBRID MIX of [${this.masters[m1].prompt}] and [${this.masters[m2].prompt}]. Chinese, 6 sentences. Note: ${note}`;
+        const buildTask = (m, v) => `Based on [${seed}], write a 6-sentence story in Chinese. Directive: ${this.styles[this.selectedStyle].prompt}. Master Lens: ${this.masters[m].prompt}. Direction: ${v}. Note: ${note}`;
+        const taskC = `Based on [${seed}]. Style: ${this.styles[this.selectedStyle].prompt}. HYBRID MIX of [${this.masters[this.selectedMasters[0]].prompt}] and [${this.masters[this.selectedMasters[1] || this.selectedMasters[0]].prompt}]. Chinese, 6 sentences. Note: ${note}`;
 
         try {
-            const [A, B, C] = await Promise.all([this.callAI(buildTask(m1, "A")), this.callAI(buildTask(m2, "B")), this.callAI(taskC)]);
-            const judge = await this.callAI(`Select (A/B/C) based on flavor quality:\nA:${A}\nB:${B}\nC:${C}`);
+            const [A, B, C] = await Promise.all([this.callAI(buildTask(this.selectedMasters[0], "Focus A")), this.callAI(buildTask(this.selectedMasters[1] || this.selectedMasters[0], "Focus B")), this.callAI(taskC)]);
+            const judge = await this.callAI(`Select (A/B/C) with best cinematic quality:\nA:${A}\nB:${B}\nC:${C}`);
             const pick = judge.match(/[ABC]/)?.[0] || "A";
             this.currentData = { id: Date.now(), seed, A, B, C, pick, shots: "", masters: [...this.selectedMasters], style: this.selectedStyle };
             this.renderRace(); this.saveToLocal();
-            this.log("Sequence ready.");
-        } catch (e) { this.log("System Failure: " + e.message, true); }
-        finally { btn.disabled = false; btn.innerText = "Initialize Sequence"; overlay.style.display = "none"; }
+            this.log("Sheets ready.");
+        } catch (e) { this.log("API Failure.", true); }
+        finally { btn.disabled = false; btn.innerText = "Process DNA Sequence"; overlay.style.display = "none"; }
     },
 
     renderRace: function() {
         const box = document.getElementById("raceResults");
         const stories = { A: this.currentData.A, B: this.currentData.B, C: this.currentData.C };
-        const labelMap = { A: `${this.currentData.masters[0]}`, B: `${this.currentData.masters[1] || this.currentData.masters[0]}`, C: "HYBRID MIX" };
+        const labels = { A: `${this.currentData.masters[0]}`, B: `${this.currentData.masters[1] || this.currentData.masters[0]}`, C: "HYBRID MIX" };
+        
         box.innerHTML = `
             <div id="raceOverlay" class="processing-overlay"><div class="scanline"></div><span>PRINTING...</span></div>
             ${["A", "B", "C"].map(k => `
-                <div class="story-card">
-                    <div class="badge">${labelMap[k]}</div>
-                    ${this.currentData.pick === k ? `<div style="position:absolute; top:20px; right:20px; font-size:10px; color:var(--master-red); font-weight:bold;">PICKED</div>` : ""}
-                    <div style="flex:1; line-height:1.7;">${stories[k].replace(/\n/g, '<br>')}</div>
-                    <button class="tag-btn" style="margin-top:20px; border-style:dashed;" onclick="app.generateShots('${k}')">Compile Shots</button>
+                <div class="story-sheet">
+                    <div class="sheet-tab">TRACK ${k} - ${labels[k]}</div>
+                    ${this.currentData.pick === k ? `<div class="laoliu-seal">老六精选</div>` : ""}
+                    <div class="sheet-content">${stories[k].replace(/\n/g, '<br>')}</div>
+                    <button class="sheet-action-mini" onclick="app.generateShots('${k}')">MIX SHOTS</button>
                 </div>
             `).join("")}
         `;
@@ -473,8 +509,8 @@ window.app = {
 
     async generateShots(key) {
         const story = this.currentData[key];
-        const p = `Convert to JSON array: [{"shot":1,"duration":"3s","camera":"","visual":"","sound":""}]. Story: ${story}`;
-        this.log("Compiling shots from choice " + key);
+        const p = `Convert story to JSON array only: [{"shot":1,"duration":"3s","camera":"","visual":"","sound":""}]. Story: ${story}`;
+        this.log("Compiling sheet " + key + " data.");
         try {
             let res = await this.callAI(p);
             res = res.replace(/```json|```/g, "").trim();
@@ -488,9 +524,10 @@ window.app = {
             const raw = document.getElementById("jsonOutput").innerText;
             const list = JSON.parse(raw.replace(/,\s*([\]}])/g, '$1'));
             const vibe = this.selectedMasters.map(m => this.masters[m].prompt).join(", ");
-            const p = list.map(s => `Shot ${s.shot}: ${s.camera}, ${s.visual}. Cinematic grain, ${vibe}.`).join("\n\n");
+            const styleVibe = this.styles[this.selectedStyle].prompt;
+            const p = list.map(s => `Shot ${s.shot}: ${s.camera}, ${s.visual}. Cinematic grain, ${vibe}, ${styleVibe}.`).join("\n\n");
             document.getElementById("finalPrompt").innerText = p;
-            this.log("Prompts ready.");
+            this.log("Visual DNA compiled.");
         } catch (e) { alert("Parsing Fault."); }
     },
 
@@ -498,46 +535,35 @@ window.app = {
         if(!this.imgApiKey) return alert("API Key Missing.");
         const prompt = document.getElementById("finalPrompt").innerText;
         if(prompt.includes("Waiting")) return alert("Compile Prompt first.");
-        const loader = document.getElementById("monitorLoader");
-        const btn = document.getElementById("devBtn");
-        loader.style.display = "flex"; btn.disabled = true;
-        this.log("Accessing remote image developer...");
+        this.log("Developing...");
         try {
             const res = await fetch("https://fal.run/fal-ai/flux/schnell", {
                 method: "POST",
                 headers: { "Authorization": `Key ${this.imgApiKey}`, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    prompt: prompt.split('\n\n')[0],
-                    image_size: this.aspect === '21-9' ? { width: 1024, height: 448 } : "landscape_16_9"
-                })
+                body: JSON.stringify({ prompt: prompt.split('\n\n')[0], image_size: { width: 1024, height: 448 } })
             });
             const result = await res.json();
-            document.getElementById("monitor").innerHTML = `<img src="${result.images[0].url}" alt="Key Frame">`;
-            this.log("Frame developed successfully.");
-        } catch (e) { this.log("Render failed.", true); }
-        finally { loader.style.display = "none"; btn.disabled = false; }
+            document.getElementById("monitor").innerHTML = `<img src="${result.images[0].url}" alt="Key">`;
+            this.log("Success.");
+        } catch (e) { this.log("Failed.", true); }
     },
 
-    clearSystem: function() { if(confirm("Wipe system and archives?")) { localStorage.clear(); location.reload(); } },
+    clearSystem: function() { if(confirm("Confirm: Wipe all data and keys?")) { localStorage.clear(); location.reload(); } },
     saveToLocal: function() {
-        let arr = JSON.parse(localStorage.getItem("lab_v175") || "[]");
-        arr.unshift(this.currentData); localStorage.setItem("lab_v175", JSON.stringify(arr.slice(0, 15)));
+        let arr = JSON.parse(localStorage.getItem("lab_v191") || "[]");
+        arr.unshift(this.currentData); localStorage.setItem("lab_v191", JSON.stringify(arr.slice(0, 15)));
         this.renderHistory();
     },
     renderHistory: function() {
         const histCont = document.getElementById("historyList");
-        const arr = JSON.parse(localStorage.getItem("lab_v175") || "[]");
-        histCont.innerHTML = arr.length ? arr.map((s, i) => `
-            <div class="history-item" onclick="app.loadHistory(${i}); app.closeModal('archiveModal')">
-                <div><span style="font-weight:bold; color:var(--accent-blue)">[${s.style.slice(0,1)}]</span> ${s.seed.slice(0, 25)}...</div>
-            </div>
-        `).join("") : "<p style='color:#aaa; font-size:11px; text-align:center;'>Archive empty.</p>";
+        const arr = JSON.parse(localStorage.getItem("lab_v191") || "[]");
+        histCont.innerHTML = arr.length ? arr.map((s, i) => `<div class="history-item" onclick="app.loadHistory(${i}); app.closeModal('archiveModal')">[${s.style.slice(0,1)}] ${s.seed.slice(0, 25)}...</div>`).join("") : "<p style='color:#aaa; font-size:11px; text-align:center;'>Archive empty.</p>";
     },
     loadHistory: function(i) {
-        const arr = JSON.parse(localStorage.getItem("lab_v175") || "[]");
+        const arr = JSON.parse(localStorage.getItem("lab_v191") || "[]");
         const data = arr[i]; if (!data) return;
         this.currentData = data; document.getElementById("seed").value = data.seed;
-        this.selectedMasters = data.masters || ["标准"]; this.selectedStyle = data.style;
+        this.selectedMasters = data.masters || ["标准模式"]; this.selectedStyle = data.style;
         this.renderMasters(); this.renderRace();
         document.getElementById("jsonOutput").innerText = data.shots || "SYSTEM_IDLE...";
     }
