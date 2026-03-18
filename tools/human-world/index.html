@@ -115,7 +115,6 @@
             height: 100%;
             background-color: var(--paper-aged);
             background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%);
-            /* 修正对齐：考虑打孔位的非对称间距 (85px left vs 50px right) */
             padding: 20px 50px 50px 85px;
             box-sizing: border-box;
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
@@ -155,28 +154,28 @@
                         inset 2px 3px 5px rgba(0,0,0,1);
         }
 
-        /* 挂靠容器：对齐修正与硬光投影 */
+        /* 挂靠容器：对齐修正与硬光垂直投影 */
         .cliptop-photo-container {
             width: 100%;
             display: flex;
             justify-content: center;
-            /* 修正：向左偏移17.5px以抵消内边距差异，实现相对于纸张宽度的视觉居中 */
+            /* 修正：向左偏移17.5px平衡打孔边距，垂直方向向上偏移确保回形针咬合 */
             transform: translateX(-17.5px);
-            margin-top: -55px; 
+            margin-top: -72px; 
             margin-bottom: 30px;
             position: relative;
             z-index: 20; 
         }
 
         .cliptop-photo {
-            width: 200px;
-            height: 250px;
+            width: 205px;
+            height: 260px;
             background-image: var(--default-polaroid);
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center top;
-            /* 强化硬光影子：向下位移，中度模糊，更高对比度 */
-            filter: drop-shadow(0 12px 12px rgba(0,0,0,0.5));
+            /* lls 要求的硬光影子：向下位移，影子边缘较实，更有物理厚度感 */
+            filter: drop-shadow(0 15px 8px rgba(0,0,0,0.45));
             transform: rotate(-0.5deg);
         }
 
