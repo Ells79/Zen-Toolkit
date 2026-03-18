@@ -14,9 +14,6 @@
 
             /* 纹理引用 - 仅用于文件夹外壳 */
             --texture: url('https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/human-world/assets/npz100.png');
-            
-            /* 【ells 提示】核心照片 WebP 路径 */
-            --default-polaroid: url('https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/human-world/assets/oldpic.webp');
         }
 
         body, html {
@@ -115,7 +112,7 @@
             height: 100%;
             background-color: var(--paper-aged);
             background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%);
-            padding: 20px 50px 50px 85px;
+            padding: 40px 50px 50px 90px;
             box-sizing: border-box;
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
             transition: all 0.9s cubic-bezier(0.25, 1, 0.3, 1);
@@ -154,29 +151,78 @@
                         inset 2px 3px 5px rgba(0,0,0,1);
         }
 
-        /* 挂靠容器：对齐修正与硬光垂直投影 */
-        .cliptop-photo-container {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            /* 修正：向左偏移17.5px平衡打孔边距，垂直方向向上偏移确保回形针咬合 */
-            transform: translateX(-17.5px);
-            margin-top: -72px; 
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 20; 
+        /* 照片容器布局 */
+        .photo-wrap {
+            position: absolute;
+            top: -72px; 
+            right: 28px; /* ells: 再向右过来几个像素 */
+            width: 200px;
+            transform: rotate(1.5deg);
+            z-index: 100;
+            /* ells: 影子转个5度且带硬感 */
+            filter: drop-shadow(8px 15px 12px rgba(0,0,0,0.5));
         }
 
-        .cliptop-photo {
-            width: 205px;
-            height: 260px;
-            background-image: var(--default-polaroid);
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center top;
-            /* lls 要求的硬光影子：向下位移，影子边缘较实，更有物理厚度感 */
-            filter: drop-shadow(0 15px 8px rgba(0,0,0,0.45));
-            transform: rotate(-0.5deg);
+        /* 复刻拍立得白框 */
+        .polaroid-frame {
+            background: #fffef5;
+            padding: 12px 12px 35px 12px;
+            box-sizing: border-box;
+            border: 1px solid #e0d9c0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .polaroid-frame .inner-img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background-size: cover;
+            background-position: center;
+            background-color: #eee;
+            /* 泛黄照片滤镜 */
+            filter: grayscale(0.5) contrast(1.1) sepia(0.3);
+        }
+
+        .polaroid-frame .caption {
+            margin-top: 10px;
+            font-family: var(--typewriter);
+            font-size: 9px;
+            color: #888;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        /* 别针 SVG 定位 */
+        .clip-svg {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-150%); /* ells: 模拟别针咬合纸边缘的位置 */
+            width: 28px;
+            height: 65px;
+            z-index: 110;
+        }
+
+        /* 左侧姓名显示区 */
+        .person-name {
+            font-family: "STSong", "Songti SC", serif;
+            font-size: 38px;
+            font-weight: 500;
+            margin: 40px 0 30px 0;
+            color: var(--ink);
+            letter-spacing: 4px;
+        }
+
+        .id-label {
+            font-family: var(--typewriter);
+            font-size: 11px;
+            color: #888;
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 3px 10px;
+            display: inline-block;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .submission-details {
@@ -185,13 +231,16 @@
             color: var(--ink);
             line-height: 1.4;
             border-top: 1px solid rgba(0,0,0,0.06);
-            padding-top: 35px;
-            margin-top: 10px;
+            padding-top: 30px;
+            margin-top: 30px;
+            max-width: 80%;
         }
 
         .detail-item {
             display: flex;
             margin-bottom: 8px;
+            white-space: nowrap; /* ells: 不换行 */
+            align-items: baseline;
         }
 
         .detail-label {
@@ -200,6 +249,7 @@
             font-size: 10.5px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            flex-shrink: 0;
         }
 
         .detail-value {
@@ -215,6 +265,7 @@
             color: #2c2c2c;
             border-top: 1px dashed rgba(0,0,0,0.1);
             padding-top: 20px;
+            white-space: normal;
         }
 
         .hint {
@@ -248,24 +299,48 @@
 <script>
     const archiveData = [
         {
+            id: "CASE-SZ-92",
+            name: "小芳",
+            item: "ID-CARD / 暂住证",
+            status: "Closed",
+            img: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop", 
+            story: "1992年春，她拎着红蓝编织袋走出车站，脚下是深圳火车站温热的柏油路。她是凯达厂第一批缝纫女工。那张泛黄的暂住证，记录了她从农田走向世界工厂的第一步。这世界那么多人，她曾是那座城市最忙碌的背影之一。",
+            ref: "SUBMISSION NO: SZ-04"
+        },
+        {
             id: "CASE-SH-88",
-            name: "Lao Shen / 老沈",
+            name: "老沈",
             item: "HERO-PEN / 钢笔",
             status: "Verified",
-            img: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/human-world/assets/oldpic.webp", 
+            img: "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?q=80&w=400&auto=format&fit=crop", 
             story: "1988年的上海，他是弄堂里唯一的代笔人。在那张只有两平米的木桌上，他替远赴重洋的留学生写家信，也替下岗的工人写求职书。他总说，纸上的墨迹是有温度的。这世界那么多人，他曾在字里行间，缝补过成千上万个破碎的思念。",
             ref: "SUBMISSION NO: E21"
         },
         {
-            id: "CASE-SZ-92",
-            name: "Xiao Fang / 小芳",
-            item: "ID-CARD / 暂住证",
-            status: "Closed",
-            img: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/human-world/assets/oldpic.webp", 
-            story: "1992年春，她拎着红蓝编织袋走出车站，脚下是深圳火车站温热的柏油路。她是凯达厂第一批缝纫女工。那张泛黄的暂住证，记录了她从农田走向世界工厂的第一步。这世界那么多人，她曾是那座城市最忙碌的背影之一。",
-            ref: "SUBMISSION NO: SZ-04"
+            id: "CASE-BJ-01",
+            name: "张工",
+            item: "3.5' DISK / 软盘",
+            status: "Approved",
+            img: "https://images.unsplash.com/photo-1591405351990-4726e331f141?q=80&w=400&auto=format&fit=crop", 
+            story: "2001年的中关村。他在地下一层的柜台里组装电脑。那是拨号上网的最后一年。他每天把几兆的代码存进这张软盘，觉得自己正在亲手敲开数字时代的大门。这世界那么多人，他在寂静的深夜里，听过未来转动的声音。",
+            ref: "SUBMISSION NO: BJ-88"
         }
     ];
+
+    // 别针 SVG 模板
+    const clipSvg = `
+        <svg class="clip-svg" viewBox="0 0 24 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="clipMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fff" />
+                    <stop offset="50%" stop-color="#aaa" />
+                    <stop offset="100%" stop-color="#777" />
+                </linearGradient>
+            </defs>
+            <path d="M12 58C6 58 2 54 2 48V12C2 6 6 2 12 2C18 2 22 6 22 12V45C22 49 19 52 15 52C11 52 8 49 8 45V15C8 13 9 12 11 12C13 12 14 13 14 15V45C14 46 15 47 16 47C17 47 18 46 18 45V12C18 9 15 7 12 7C9 7 6 9 6 12V48C6 51 9 53 12 53C15 53 18 51 18 48V45" 
+                  stroke="url(#clipMetal)" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+    `;
 
     let currentIdx = 0;
     const stack = document.getElementById('stack');
@@ -282,17 +357,27 @@
                 <div class="hole"></div>
             </div>
             
-            <div class="cliptop-photo-container">
-                <div class="cliptop-photo" style="background-image: url('${item.img}')"></div>
+            <!-- ells: 组合式照片组件，确保外框和别针不被覆盖 -->
+            <div class="photo-wrap">
+                ${clipSvg}
+                <div class="polaroid-frame">
+                    <div class="inner-img" style="background-image: url('${item.img}')"></div>
+                    <div class="caption">${item.ref}</div>
+                </div>
             </div>
 
-            <div class="submission-details">
-                <div class="detail-item"><span class="detail-label">Archive Number:</span> <span class="detail-value">${item.id}</span></div>
-                <div class="detail-item"><span class="detail-label">Approval Status:</span> <span class="detail-value">${item.status}</span></div>
-                <div class="detail-item"><span class="detail-label">Evidence Item:</span> <span class="detail-value">${item.item}</span></div>
-                
-                <div class="story-section">
-                    ${item.story}
+            <div class="card-content">
+                <div class="id-label">Archive Number: NC-1978-B01</div>
+                <h1 class="person-name">${item.name}</h1>
+
+                <div class="submission-details">
+                    <div class="detail-item"><span class="detail-label">Archive Number:</span> <span class="detail-value">${item.id}</span></div>
+                    <div class="detail-item"><span class="detail-label">Approval Status:</span> <span class="detail-value">${item.status}</span></div>
+                    <div class="detail-item"><span class="detail-label">Evidence Item:</span> <span class="detail-value">${item.item}</span></div>
+                    
+                    <div class="story-section">
+                        ${item.story}
+                    </div>
                 </div>
             </div>
         `;
