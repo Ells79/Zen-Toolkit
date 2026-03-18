@@ -15,7 +15,7 @@
             /* 纹理引用 - 仅用于文件夹外壳 */
             --texture: url('https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/human-world/assets/npz100.png');
             
-            /* 【ells 提示】请将 oldpic.webp 上传到你的 github assets 文件夹，然后替换下方的 URL */
+            /* 【ells 提示】核心照片 WebP 路径 */
             --default-polaroid: url('https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/human-world/assets/oldpic.webp');
         }
 
@@ -115,6 +115,7 @@
             height: 100%;
             background-color: var(--paper-aged);
             background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%);
+            /* 修正对齐：考虑打孔位的非对称间距 (85px left vs 50px right) */
             padding: 20px 50px 50px 85px;
             box-sizing: border-box;
             box-shadow: 0 15px 50px rgba(0,0,0,0.5);
@@ -154,13 +155,14 @@
                         inset 2px 3px 5px rgba(0,0,0,1);
         }
 
-        /* 挂靠容器：针对 oldpic.webp 优化 */
+        /* 挂靠容器：对齐修正与硬光投影 */
         .cliptop-photo-container {
             width: 100%;
             display: flex;
             justify-content: center;
-            /* 调整负边距，让回形针咬合处正好对齐纸张上边缘 */
-            margin-top: -50px; 
+            /* 修正：向左偏移17.5px以抵消内边距差异，实现相对于纸张宽度的视觉居中 */
+            transform: translateX(-17.5px);
+            margin-top: -55px; 
             margin-bottom: 30px;
             position: relative;
             z-index: 20; 
@@ -173,9 +175,9 @@
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center top;
-            /* 真实光影：纸上的影子 */
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
-            transform: rotate(-1deg);
+            /* 强化硬光影子：向下位移，中度模糊，更高对比度 */
+            filter: drop-shadow(0 12px 12px rgba(0,0,0,0.5));
+            transform: rotate(-0.5deg);
         }
 
         .submission-details {
