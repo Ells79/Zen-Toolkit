@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ells | 极简磁带音乐盒 Pro</title>
+    <title>Ells | 来自2007的音乐盒</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -69,25 +69,27 @@
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带：影子重量减少 30%，并向内收回，避免影响按钮 */
+        /* 磁带：增加了硬件加速层，防止影子在部分浏览器消失 */
         .specimen-case {
             position: relative;
             z-index: 10;
-            transform: rotateX(8deg);
+            /* ells: 加入 translateZ(0) 激活 GPU 渲染，确保影子显示稳定 */
+            transform: rotateX(8deg) translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-filter: 
+                drop-shadow(25px 40px 15px rgba(0,0,0,0.32))
+                drop-shadow(45px 70px 45px rgba(0,0,0,0.18));
             filter: 
-                /* ells: 第一层 - 核心阴影收敛且减淡 (Alpha 0.45 -> 0.32) */
-                drop-shadow(15px 25px 12px rgba(0,0,0,0.32))
-                /* 第二层 - 方向性投影收缩 (Y 70px -> 45px, Alpha 0.25 -> 0.18) */
-                drop-shadow(30px 45px 35px rgba(0,0,0,0.18))
-                /* 第三层 - 微弱的接触细节 */
-                drop-shadow(5px 5px 5px rgba(0,0,0,0.07));
+                drop-shadow(25px 40px 15px rgba(0,0,0,0.32))
+                drop-shadow(45px 70px 45px rgba(0,0,0,0.18));
             margin-bottom: 5vh; 
             animation: case-breath 18s ease-in-out infinite;
         }
 
         @keyframes case-breath { 
-            0%, 100% { transform: rotateX(8deg) translateY(0); } 
-            50% { transform: rotateX(8.8deg) translateY(-8px); } 
+            0%, 100% { transform: rotateX(8deg) translateY(0) translateZ(0); } 
+            50% { transform: rotateX(8.8deg) translateY(-8px) translateZ(0); } 
         }
 
         canvas {
