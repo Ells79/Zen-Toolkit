@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ells | 送给20岁的我们</title>
+    <title>送给20岁的我们</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -69,42 +69,34 @@
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带容器及影子层：物理层阴影方案，确保手机端显示且不遮挡按钮 */
-        .specimen-case-container {
+        /* 磁带：强制硬件加速 + 锐利投影 */
+        .specimen-case {
             position: relative;
             z-index: 10;
-            margin-bottom: 6vh; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .physical-shadow {
-            position: absolute;
-            width: 70%; 
-            height: 65%;
-            background: transparent;
-            /* 影子紧凑收敛，向右下方偏移 */
-            box-shadow: 25px 35px 30px rgba(0,0,0,0.35);
-            border-radius: 40px;
-            z-index: -1;
-        }
-
-        #tapeCanvas {
-            max-width: 80vw;
-            max-height: 38vh;
-            display: block;
-            border-radius: 40px;
-            transform: rotateX(8deg);
+            transform: rotateX(8deg) translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            filter: 
+                drop-shadow(25px 40px 15px rgba(0,0,0,0.32))
+                drop-shadow(45px 70px 45px rgba(0,0,0,0.18));
+            margin-bottom: 4vh; 
             animation: case-breath 18s ease-in-out infinite;
         }
 
         @keyframes case-breath { 
-            0%, 100% { transform: rotateX(8deg) translateY(0); } 
-            50% { transform: rotateX(8.8deg) translateY(-8px); } 
+            0%, 100% { transform: rotateX(8deg) translateY(0) translateZ(0); } 
+            50% { transform: rotateX(8.8deg) translateY(-8px) translateZ(0); } 
         }
 
-        /* 交互区布局 */
+        canvas {
+            max-width: 80vw;
+            max-height: 38vh;
+            display: block;
+            border-radius: 40px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
         .interaction-area {
             display: flex; flex-direction: column; align-items: center; 
             width: 100%; 
@@ -160,7 +152,7 @@
         }
         .mode-label.active { opacity: 0.65; color: #000; }
 
-        /* 选歌波轮 */
+        /* 波轮 */
         .selector-box {
             position: relative;
             width: 100%; height: 50px;
@@ -199,7 +191,7 @@
 
         .track-num.active { color: var(--apple-text); transform: scale(1.35); }
 
-        /* 进度条：橘色填充胶囊 */
+        /* 进度条：橘色拉动填充 */
         .progress-bar-wrapper {
             width: 200px;
             margin-bottom: 1vh;
@@ -230,7 +222,7 @@
             transition: transform 0.2s, background 0.2s;
         }
 
-        /* 控制按键：深凹陷物理感 */
+        /* 控制面板：强化物理凹陷 */
         .controls-panel {
             display: flex; flex-direction: column; align-items: center; gap: 2vh;
         }
@@ -245,8 +237,8 @@
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             box-shadow: 
-                inset 2px 3.5px 6px rgba(0,0,0,0.18), 
-                inset -1.5px -2px 4px rgba(255,255,255,0.8);
+                inset 2px 3px 6px rgba(0,0,0,0.18), 
+                inset -1.5px -2px 4px rgba(255,255,255,0.75);
         }
 
         .button-well.large { width: 72px; height: 72px; }
@@ -260,22 +252,22 @@
             display: flex; justify-content: center; align-items: center;
             cursor: pointer; 
             transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1); 
-            color: rgba(0,0,0,0.22);
+            color: rgba(0,0,0,0.18);
         }
 
         .control-btn:hover { background: rgba(255, 255, 255, 0.35); color: #000; }
         
-        /* 播放键 */
+        /* 播放键更白一点 */
         .control-btn.main { 
             width: 62px; height: 62px; 
             color: var(--accent-orange);
-            background: rgba(255, 255, 255, 0.38); 
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.35); 
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
         }
         
         .control-btn:active { transform: scale(0.96); }
 
-        /* 脚注 */
+        /* 底部脚注：50% 灰色，减小字间距 */
         .status-footer { 
             font-size: 7px;
             letter-spacing: 0.25em; 
@@ -289,8 +281,8 @@
 
         @media (min-width: 1024px) {
             #app { padding: 12vh 0 6vh 0; }
-            .specimen-case-container { margin-bottom: 7vh; }
-            #tapeCanvas { max-width: 65vw; }
+            .specimen-case { margin-bottom: 5vh; }
+            canvas { max-width: 65vw; }
             .interaction-area { gap: 3.5vh; }
         }
     </style>
@@ -302,8 +294,7 @@
     <div id="app">
         <div id="lyrics-container"></div>
 
-        <div class="specimen-case-container">
-            <div class="physical-shadow"></div>
+        <div class="specimen-case">
             <canvas id="tapeCanvas"></canvas>
         </div>
 
@@ -351,6 +342,8 @@
     <audio id="audio" crossorigin="anonymous"></audio>
 
     <script>
+        // DPR 适配逻辑，确保 Retina 屏幕清晰
+        const dpr = window.devicePixelRatio || 1;
         const config = {
             leftReel:  { x: 454, y: 460 },
             rightReel: { x: 739, y: 460 }, 
@@ -370,7 +363,13 @@
         assets.reel.onload = () => loaded++;
 
         const playlist = [
-            { id: 1, title: "笑话", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke_ai.mp3", humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }], aiLyrics: [{ time: 0, text: "笑话 (AI)" }] },
+            { 
+                id: 1, title: "笑话", 
+                humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke.mp3",
+                aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke_ai.mp3",
+                humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }],
+                aiLyrics: [{ time: 0, text: "笑话 (AI)" }]
+            },
             { id: 2, title: "Forget It", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "FORGET IT (HUMAN)" }], aiLyrics: [{ time: 0, text: "FORGET IT (AI)" }] },
             { id: 3, title: "Boat", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat_ai.mp3", humanLyrics: [{ time: 0, text: "BOAT (HUMAN)" }], aiLyrics: [{ time: 0, text: "BOAT (AI)" }] },
             { id: 4, title: "Hi Blue", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/hiblue.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/hiblue_ai.mp3", humanLyrics: [{ time: 0, text: "HI BLUE (HUMAN)" }], aiLyrics: [{ time: 0, text: "HI BLUE (AI)" }] },
@@ -440,10 +439,16 @@
         };
 
         function draw() {
-            const w = canvas.width = 1200, h = canvas.height = 953; 
-            ctx.clearRect(0, 0, w, h);
+            const logicalW = 1200, logicalH = 953;
+            if (canvas.width !== logicalW * dpr) {
+                canvas.width = logicalW * dpr;
+                canvas.height = logicalH * dpr;
+                ctx.scale(dpr, dpr);
+            }
+            
+            ctx.clearRect(0, 0, logicalW, logicalH);
             if (loaded >= 2) {
-                ctx.drawImage(assets.shell, 0, 0, w, h);
+                ctx.drawImage(assets.shell, 0, 0, logicalW, logicalH);
                 if (REEL_ON_TOP) {
                     drawReel(config.leftReel.x, config.leftReel.y, rotation);
                     drawReel(config.rightReel.x, config.rightReel.y, rotation);
