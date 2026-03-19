@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>送给20岁的我们</title>
+    
+    <!-- ells: 预连接 CDN，提升大陆地区握手速度 -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -26,6 +31,17 @@
             touch-action: none;
         }
 
+        /* 极简 Loading 遮罩 */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f7f7f9; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 999;
+            transition: opacity 0.8s ease;
+        }
+        .loader-bar { width: 40px; height: 1px; background: rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        .loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-orange); transition: width 0.3s; }
+        .loading-text { font-size: 8px; letter-spacing: 0.4em; opacity: 0.3; text-transform: uppercase; margin-top: 16px; }
+
         .noise-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -34,52 +50,41 @@
         }
 
         #app {
-            position: relative;
-            width: 100%; height: 100%;
+            position: relative; width: 100%; height: 100%;
             display: flex; flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            z-index: 2;
-            perspective: 2500px;
+            justify-content: flex-start; align-items: center;
+            z-index: 2; perspective: 2500px;
             padding: 10vh 0 4vh 0;
+            opacity: 0; transition: opacity 1.5s ease;
         }
 
         /* 3D 穿梭歌词 */
         #lyrics-container {
-            position: relative;
-            width: 100%; height: 5vh;
+            position: relative; width: 100%; height: 5vh;
             display: flex; justify-content: center; align-items: center;
-            transform-style: preserve-3d;
-            margin-bottom: 2vh;
+            transform-style: preserve-3d; margin-bottom: 2vh;
         }
 
         .lyric-line {
-            position: absolute;
-            text-align: center;
-            width: 80%;
-            font-size: clamp(0.75rem, 2.5vw, 0.9rem);
-            font-weight: 300;
-            letter-spacing: 0.6em;
-            transition: all 2.2s cubic-bezier(0.1, 0.4, 0.2, 1);
-            opacity: 0;
-            filter: blur(12px);
+            position: absolute; text-align: center; width: 80%;
+            font-size: clamp(0.75rem, 2.5vw, 0.9rem); font-weight: 300;
+            letter-spacing: 0.6em; transition: all 2.2s cubic-bezier(0.1, 0.4, 0.2, 1);
+            opacity: 0; filter: blur(12px);
         }
 
         .lyric-line.active { opacity: 0.9; transform: translateZ(100px); filter: blur(0px); color: #000; }
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带：阴影减重并收缩，避免投影面积过大 */
+        /* 磁带：根据 ells 要求减重、向左上收缩 30% 的影子 */
         .specimen-case {
-            position: relative;
-            z-index: 10;
+            position: relative; z-index: 10;
             transform: rotateX(8deg) translateZ(0);
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
             filter: 
-                /* 第一层核心影：偏移缩减 30%，透明度降低 (0.32 -> 0.22)，模糊度收紧 (15px -> 10px) */
+                /* ells: 核心影 - 偏移量回收至 17px/28px，浓度降至 0.22 */
                 drop-shadow(17px 28px 10px rgba(0,0,0,0.22))
-                /* 第二层方向影：偏移缩减 30%，透明度降低 (0.18 -> 0.13)，模糊度收紧 (45px -> 30px) */
+                /* ells: 环境影 - 偏移量回收至 31px/49px，浓度降至 0.13 */
                 drop-shadow(31px 49px 30px rgba(0,0,0,0.13));
             margin-bottom: 4vh; 
             animation: case-breath 18s ease-in-out infinite;
@@ -91,194 +96,58 @@
         }
 
         canvas {
-            max-width: 80vw;
-            max-height: 38vh;
-            display: block;
-            border-radius: 40px;
+            max-width: 80vw; max-height: 38vh;
+            display: block; border-radius: 40px;
+            /* ells: 增加高清显示优化 */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
 
+        /* 交互区 */
         .interaction-area {
             display: flex; flex-direction: column; align-items: center; 
-            width: 100%; 
-            gap: 2.5vh;
-            padding-bottom: 2vh;
+            width: 100%; gap: 2.5vh; padding-bottom: 2vh;
         }
 
-        /* 模式切换 */
-        .mode-toggle-container {
-            display: flex; align-items: center; gap: 12px;
-        }
-
+        .mode-toggle-container { display: flex; align-items: center; gap: 12px; }
         .toggle-well {
-            padding: 2.5px;
-            background: rgba(0,0,0,0.02);
-            border-radius: 18px;
-            box-shadow: inset 1px 2px 4px rgba(0,0,0,0.08);
-            display: flex; align-items: center;
+            padding: 2.5px; background: rgba(0,0,0,0.02); border-radius: 18px;
+            box-shadow: inset 1px 2px 4px rgba(0,0,0,0.08); display: flex; align-items: center;
         }
-
-        .toggle-plate {
-            width: 50px; height: 20px;
-            background: rgba(0,0,0,0.04);
-            border-radius: 10px;
-            position: relative;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .toggle-bg-color {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            opacity: 0.85;
-        }
-
+        .toggle-plate { width: 50px; height: 20px; background: rgba(0,0,0,0.04); border-radius: 10px; position: relative; cursor: pointer; overflow: hidden; }
+        .toggle-bg-color { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); opacity: 0.85; }
         .mode-toggle-group.human .toggle-bg-color { background: var(--color-human); }
         .mode-toggle-group.ai .toggle-bg-color { background: var(--color-ai); }
-
-        .toggle-lever {
-            position: absolute; top: 2px; left: 2px;
-            width: 16px; height: 16px;
-            background: linear-gradient(145deg, #f0f0f3, #dcdce0);
-            border-radius: 50%;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-
+        .toggle-lever { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: linear-gradient(145deg, #f0f0f3, #dcdce0); border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.1); transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
         .mode-toggle-group.ai .toggle-lever { transform: translateX(30px); }
-        
-        .mode-label { 
-            font-size: 8px; font-weight: 800; letter-spacing: 0.22em; opacity: 0.2; 
-            transition: 0.4s; min-width: 45px; text-align: center; 
-        }
+        .mode-label { font-size: 8px; font-weight: 800; letter-spacing: 0.22em; opacity: 0.2; transition: 0.4s; min-width: 45px; text-align: center; }
         .mode-label.active { opacity: 0.65; color: #000; }
 
-        /* 波轮 */
-        .selector-box {
-            position: relative;
-            width: 100%; height: 50px;
-            overflow: visible;
-            mask-image: linear-gradient(to right, transparent, black 35%, black 65%, transparent);
-        }
-
-        .selection-indicator {
-            position: absolute; top: -5px; left: 50%; width: 3px; height: 3px;
-            background: #fff; border-radius: 50%; margin-left: -1.5px;
-            z-index: 10;
-            box-shadow: 0 0 0 1px var(--apple-text);
-        }
-
-        #track-dial {
-            position: absolute; top: 10px; left: 50%; margin-left: -250px;
-            width: 500px; height: 500px; border-radius: 50%;
-            transition: transform 0.85s cubic-bezier(0.15, 1, 0.3, 1);
-            cursor: grab;
-            z-index: 5;
-        }
-
-        .track-num {
-            position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px;
-            text-align: center; transform-origin: center 238px;
-            font-weight: 900; font-size: 14px; 
-            color: rgba(0,0,0,0.25); 
-            transition: all 0.4s;
-        }
-
-        .track-tick {
-            position: absolute; top: 8px; left: 50%; width: 1px; height: 3px;
-            background: rgba(0,0,0,0.15); 
-            transform-origin: center 242px;
-        }
-
+        /* 拨轮选歌 */
+        .selector-box { position: relative; width: 100%; height: 50px; overflow: visible; mask-image: linear-gradient(to right, transparent, black 35%, black 65%, transparent); }
+        .selection-indicator { position: absolute; top: -5px; left: 50%; width: 3px; height: 3px; background: #fff; border-radius: 50%; margin-left: -1.5px; z-index: 10; box-shadow: 0 0 0 1px var(--apple-text); }
+        #track-dial { position: absolute; top: 10px; left: 50%; margin-left: -250px; width: 500px; height: 500px; border-radius: 50%; transition: transform 0.85s cubic-bezier(0.15, 1, 0.3, 1); cursor: grab; z-index: 5; }
+        .track-num { position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px; text-align: center; transform-origin: center 238px; font-weight: 900; font-size: 14px; color: rgba(0,0,0,0.25); transition: all 0.4s; }
+        .track-tick { position: absolute; top: 8px; left: 50%; width: 1px; height: 3px; background: rgba(0,0,0,0.15); transform-origin: center 242px; }
         .track-num.active { color: var(--apple-text); transform: scale(1.35); }
 
-        /* 进度条：橘色拉动填充 */
-        .progress-bar-wrapper {
-            width: 200px;
-            margin-bottom: 1vh;
-            position: relative;
-        }
+        /* 进度条：橘色填充胶囊 */
+        .progress-bar-wrapper { width: 200px; margin-bottom: 1vh; position: relative; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.05) var(--slider-progress), rgba(0,0,0,0.05) 100%); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 10px; width: 18px; border-radius: 5px; background: #fbfbfb; box-shadow: 0 2px 5px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.1); margin-top: -3px; transition: transform 0.2s, background 0.2s; }
 
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        input[type=range]::-webkit-slider-runnable-track {
-            height: 4px;
-            border-radius: 2px;
-            background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.05) var(--slider-progress), rgba(0,0,0,0.05) 100%);
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 10px;
-            width: 18px; 
-            border-radius: 5px;
-            background: #fbfbfb;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.1);
-            margin-top: -3px; 
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        /* 控制面板：强化物理凹陷 */
-        .controls-panel {
-            display: flex; flex-direction: column; align-items: center; gap: 2vh;
-        }
-
-        .button-group {
-            display: flex; align-items: center; justify-content: center; gap: 28px;
-        }
-
-        .button-well {
-            width: 50px; height: 50px;
-            background: rgba(0,0,0,0.03);
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: 
-                inset 2px 3px 6px rgba(0,0,0,0.18), 
-                inset -1.5px -2px 4px rgba(255,255,255,0.75);
-        }
-
+        /* 控制面板：高对比度物理凹陷 */
+        .controls-panel { display: flex; flex-direction: column; align-items: center; gap: 2vh; }
+        .button-group { display: flex; align-items: center; justify-content: center; gap: 28px; }
+        .button-well { width: 50px; height: 50px; background: rgba(0,0,0,0.03); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: inset 2.5px 3.5px 7px rgba(0,0,0,0.18), inset -1.5px -2px 4px rgba(255,255,255,0.75); }
         .button-well.large { width: 72px; height: 72px; }
-
-        .control-btn {
-            width: 42px; height: 42px; border-radius: 50%; 
-            background: rgba(255, 255, 255, 0.22); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 0.5px solid rgba(255, 255, 255, 0.4);
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer; 
-            transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1); 
-            color: rgba(0,0,0,0.18);
-        }
-
+        .control-btn { width: 42px; height: 42px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 0.5px solid rgba(255, 255, 255, 0.4); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1); color: rgba(0,0,0,0.18); }
         .control-btn:hover { background: rgba(255, 255, 255, 0.35); color: #000; }
-        
-        /* 播放键更白一点 */
-        .control-btn.main { 
-            width: 62px; height: 62px; 
-            color: var(--accent-orange);
-            background: rgba(255, 255, 255, 0.35); 
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-        }
-        
+        .control-btn.main { width: 62px; height: 62px; color: var(--accent-orange); background: rgba(255, 255, 255, 0.35); box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1); }
         .control-btn:active { transform: scale(0.96); }
 
-        /* 底部脚注：50% 灰色，减小字间距 */
-        .status-footer { 
-            font-size: 7px;
-            letter-spacing: 0.25em; 
-            color: #808080; 
-            text-transform: uppercase;
-            font-weight: 400;
-            margin-top: 3vh;
-            transition: color 0.5s;
-        }
+        .status-footer { font-size: 7px; letter-spacing: 0.25em; color: #808080; text-transform: uppercase; font-weight: 400; margin-top: 3vh; transition: color 0.5s; }
         .status-footer:hover { color: var(--apple-text); }
 
         @media (min-width: 1024px) {
@@ -291,51 +160,32 @@
 </head>
 <body>
 
+    <div id="loading-overlay">
+        <div class="loader-bar"><div id="loader-inner" class="loader-progress"></div></div>
+        <div class="loading-text">Collecting specimen</div>
+    </div>
+
     <div class="noise-bg"></div>
 
     <div id="app">
         <div id="lyrics-container"></div>
-
-        <div class="specimen-case">
-            <canvas id="tapeCanvas"></canvas>
-        </div>
-
+        <div class="specimen-case"><canvas id="tapeCanvas"></canvas></div>
         <div class="interaction-area">
             <div class="mode-toggle-container">
                 <span class="mode-label active">HUMAN</span>
                 <div class="toggle-well">
-                    <div id="modeWrapper" class="mode-toggle-group human">
-                        <div class="toggle-plate" onclick="toggleMode()">
-                            <div class="toggle-bg-color"></div>
-                            <div class="toggle-lever"></div>
-                        </div>
-                    </div>
+                    <div id="modeWrapper" class="mode-toggle-group human"><div class="toggle-plate" onclick="toggleMode()"><div class="toggle-bg-color"></div><div class="toggle-lever"></div></div></div>
                 </div>
                 <span class="mode-label">AI</span>
             </div>
-
-            <div class="selector-box">
-                <div class="selection-indicator"></div>
-                <div id="track-dial"></div>
-            </div>
-
+            <div class="selector-box"><div class="selection-indicator"></div><div id="track-dial"></div></div>
             <div class="controls-panel">
-                <div class="progress-bar-wrapper">
-                    <input type="range" id="seekSlider" value="0" step="0.1">
-                </div>
-                
+                <div class="progress-bar-wrapper"><input type="range" id="seekSlider" value="0" step="0.1"></div>
                 <div class="button-group">
-                    <div class="button-well">
-                        <button id="rewindBtn" class="control-btn"><svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
-                    </div>
-                    <div class="button-well large">
-                        <button id="playBtn" class="control-btn main"><svg id="playIcon" width="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
-                    </div>
-                    <div class="button-well">
-                        <button id="forwardBtn" class="control-btn"><svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button>
-                    </div>
+                    <div class="button-well"><button id="rewindBtn" class="control-btn"><svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
+                    <div class="button-well large"><button id="playBtn" class="control-btn main"><svg id="playIcon" width="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+                    <div class="button-well"><button id="forwardBtn" class="control-btn"><svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button></div>
                 </div>
-                
                 <div id="statusText" class="status-footer">Sealed in 2007 / Opened in 2026</div>
             </div>
         </div>
@@ -344,180 +194,93 @@
     <audio id="audio" crossorigin="anonymous"></audio>
 
     <script>
-        // DPR 适配逻辑，确保 Retina 屏幕清晰
+        // ells: DPI 高清适配逻辑
         const dpr = window.devicePixelRatio || 1;
-        const config = {
-            leftReel:  { x: 454, y: 460 },
-            rightReel: { x: 739, y: 460 }, 
-            reelSize: 108,                 
-            rotationStep: 36
-        };
-
-        const REEL_ON_TOP = true; 
-
+        const config = { leftReel: { x: 454, y: 460 }, rightReel: { x: 739, y: 460 }, reelSize: 108, rotationStep: 36 };
+        
+        // ells: 使用 jsDelivr CDN 加速资源，绕过 GitHub 的限制
+        const CDN_BASE = "https://cdn.jsdelivr.net/gh/Ells79/Zen-Toolkit@main/tools/mytape/";
         const assets = { shell: new Image(), reel: new Image() };
         assets.shell.crossOrigin = assets.reel.crossOrigin = "anonymous";
-        assets.shell.src = "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/tape.webp";
-        assets.reel.src = "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/wheel.webp";
-        
-        let loaded = 0;
-        assets.shell.onload = () => loaded++;
-        assets.reel.onload = () => loaded++;
+        assets.shell.src = CDN_BASE + "tape.webp";
+        assets.reel.src = CDN_BASE + "wheel.webp";
+
+        let assetsLoaded = 0;
+        const checkReady = () => {
+            assetsLoaded++;
+            document.getElementById('loader-inner').style.width = (assetsLoaded / 2) * 100 + "%";
+            if(assetsLoaded >= 2) {
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.opacity = '0';
+                    document.getElementById('app').style.opacity = '1';
+                    setTimeout(() => document.getElementById('loading-overlay').remove(), 800);
+                }, 500);
+            }
+        };
+        assets.shell.onload = checkReady;
+        assets.reel.onload = checkReady;
 
         const playlist = [
-            { 
-                id: 1, title: "笑话", 
-                humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke.mp3",
-                aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke_ai.mp3",
-                humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }],
-                aiLyrics: [{ time: 0, text: "笑话 (AI)" }]
-            },
-            { id: 2, title: "Forget It", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "FORGET IT (HUMAN)" }], aiLyrics: [{ time: 0, text: "FORGET IT (AI)" }] },
-            { id: 3, title: "Boat", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat_ai.mp3", humanLyrics: [{ time: 0, text: "BOAT (HUMAN)" }], aiLyrics: [{ time: 0, text: "BOAT (AI)" }] },
-            { id: 4, title: "Hi Blue", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/hiblue.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/hiblue_ai.mp3", humanLyrics: [{ time: 0, text: "HI BLUE (HUMAN)" }], aiLyrics: [{ time: 0, text: "HI BLUE (AI)" }] },
-            { id: 5, title: "Overthing", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/overthing.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/overthing_ai.mp3", humanLyrics: [{ time: 0, text: "OVERTHING (HUMAN)" }], aiLyrics: [{ time: 0, text: "OVERTHING (AI)" }] }
+            { id: 1, title: "笑话", humanSrc: CDN_BASE + "audio/joke.mp3", aiSrc: CDN_BASE + "audio/joke_ai.mp3", humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }], aiLyrics: [{ time: 0, text: "笑话 (AI)" }] },
+            { id: 2, title: "Forget It", humanSrc: CDN_BASE + "audio/forgetit.mp3", aiSrc: CDN_BASE + "audio/forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "FORGET IT (HUMAN)" }], aiLyrics: [{ time: 0, text: "FORGET IT (AI)" }] },
+            { id: 3, title: "Boat", humanSrc: CDN_BASE + "audio/boat.mp3", aiSrc: CDN_BASE + "audio/boat_ai.mp3", humanLyrics: [{ time: 0, text: "BOAT (HUMAN)" }], aiLyrics: [{ time: 0, text: "BOAT (AI)" }] },
+            { id: 4, title: "Hi Blue", humanSrc: CDN_BASE + "audio/hiblue.mp3", aiSrc: CDN_BASE + "audio/hiblue_ai.mp3", humanLyrics: [{ time: 0, text: "HI BLUE (HUMAN)" }], aiLyrics: [{ time: 0, text: "HI BLUE (AI)" }] },
+            { id: 5, title: "Overthing", humanSrc: CDN_BASE + "audio/overthing.mp3", aiSrc: CDN_BASE + "audio/overthing_ai.mp3", humanLyrics: [{ time: 0, text: "OVERTHING (HUMAN)" }], aiLyrics: [{ time: 0, text: "OVERTHING (AI)" }] }
         ];
 
         let currentTrackIndex = 0, isPlaying = false, rotation = 0, currentMode = 'human';
+        const canvas = document.getElementById('tapeCanvas'), ctx = canvas.getContext('2d'), audio = document.getElementById('audio');
+        const trackDial = document.getElementById('track-dial'), playBtn = document.getElementById('playBtn'), playIcon = document.getElementById('playIcon'), seekSlider = document.getElementById('seekSlider'), lyricsContainer = document.getElementById('lyrics-container');
 
-        const safePlay = async () => {
-            try {
-                await audio.play();
-                isPlaying = true;
-                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-            } catch (e) {
-                if (e.name !== 'AbortError') console.error("Audio play failed:", e);
-            }
-        };
-
+        const safePlay = async () => { try { await audio.play(); isPlaying = true; playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; } catch (e) {} };
         function toggleMode() {
-            const wrapper = document.getElementById('modeWrapper');
-            const labels = document.querySelectorAll('.mode-label');
+            const wrapper = document.getElementById('modeWrapper'), labels = document.querySelectorAll('.mode-label');
             let percent = audio.duration ? audio.currentTime / audio.duration : 0;
-
-            if (currentMode === 'human') {
-                currentMode = 'ai';
-                wrapper.classList.remove('human'); wrapper.classList.add('ai');
-                labels[0].classList.remove('active'); labels[1].classList.add('active');
-            } else {
-                currentMode = 'human';
-                wrapper.classList.remove('ai'); wrapper.classList.add('human');
-                labels[1].classList.remove('active'); labels[0].classList.add('active');
-            }
-
+            currentMode = currentMode === 'human' ? 'ai' : 'human';
+            wrapper.className = `mode-toggle-group ${currentMode}`;
+            labels[0].classList.toggle('active', currentMode === 'human'); labels[1].classList.toggle('active', currentMode === 'ai');
             const song = playlist[currentTrackIndex];
-            if (song) {
-                audio.pause();
-                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc;
-                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics);
-                audio.load();
-                audio.onloadedmetadata = () => {
-                    audio.currentTime = audio.duration * percent;
-                    if (isPlaying) safePlay();
-                    audio.onloadedmetadata = null;
-                };
-            }
+            if (song) { audio.pause(); audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); audio.load(); audio.onloadedmetadata = () => { audio.currentTime = audio.duration * percent; if (isPlaying) safePlay(); audio.onloadedmetadata = null; }; }
         }
-
-        const canvas = document.getElementById('tapeCanvas');
-        const ctx = canvas.getContext('2d');
-        const audio = document.getElementById('audio');
-        const trackDial = document.getElementById('track-dial');
-        const playBtn = document.getElementById('playBtn');
-        const playIcon = document.getElementById('playIcon');
-        const seekSlider = document.getElementById('seekSlider');
-        const lyricsContainer = document.getElementById('lyrics-container');
-
-        function updateSliderStyle() {
-            const percent = seekSlider.value;
-            document.documentElement.style.setProperty('--slider-progress', `${percent}%`);
-        }
-
-        seekSlider.oninput = () => {
-            if (audio.duration) {
-                audio.currentTime = (seekSlider.value / 100) * audio.duration;
-            }
-            updateSliderStyle();
-        };
 
         function draw() {
-            const logicalW = 1200, logicalH = 953;
-            if (canvas.width !== logicalW * dpr) {
-                canvas.width = logicalW * dpr;
-                canvas.height = logicalH * dpr;
-                ctx.scale(dpr, dpr);
-            }
-            
-            ctx.clearRect(0, 0, logicalW, logicalH);
-            if (loaded >= 2) {
-                ctx.drawImage(assets.shell, 0, 0, logicalW, logicalH);
-                if (REEL_ON_TOP) {
-                    drawReel(config.leftReel.x, config.leftReel.y, rotation);
-                    drawReel(config.rightReel.x, config.rightReel.y, rotation);
-                }
+            const lw = 1200, lh = 953;
+            // ells: 动态调整画布内部比例，确保高清
+            if (canvas.width !== lw * dpr) { canvas.width = lw * dpr; canvas.height = lh * dpr; ctx.scale(dpr, dpr); }
+            ctx.clearRect(0, 0, lw, lh);
+            if (assetsLoaded >= 2) {
+                ctx.drawImage(assets.shell, 0, 0, lw, lh);
+                drawReel(config.leftReel.x, config.leftReel.y, rotation);
+                drawReel(config.rightReel.x, config.rightReel.y, rotation);
             }
             if (isPlaying) rotation += 0.045;
             requestAnimationFrame(draw);
         }
-
-        function drawReel(x, y, angle) {
-            ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-            ctx.drawImage(assets.reel, -config.reelSize/2, -config.reelSize/2, config.reelSize, config.reelSize);
-            ctx.restore();
-        }
+        function drawReel(x, y, angle) { ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.drawImage(assets.reel, -config.reelSize/2, -config.reelSize/2, config.reelSize, config.reelSize); ctx.restore(); }
 
         function initDial() {
             trackDial.innerHTML = '';
             playlist.forEach((song, i) => {
-                const angle = i * config.rotationStep;
-                const div = document.createElement('div');
-                div.className = `track-num ${i === 0 ? 'active' : ''}`;
-                div.innerText = (i + 1).toString().padStart(2, '0');
-                div.style.transform = `rotate(${angle}deg)`;
-                trackDial.appendChild(div);
-                for(let j=1; j<=4; j++) {
-                    const tickAngle = angle + (j * (config.rotationStep / 5));
-                    const tick = document.createElement('div');
-                    tick.className = 'track-tick';
-                    tick.style.transform = `rotate(${tickAngle}deg)`;
-                    trackDial.appendChild(tick);
-                }
+                const angle = i * config.rotationStep, div = document.createElement('div');
+                div.className = `track-num ${i === 0 ? 'active' : ''}`; div.innerText = (i + 1).toString().padStart(2, '0'); div.style.transform = `rotate(${angle}deg)`; trackDial.appendChild(div);
+                for(let j=1; j<=4; j++) { const tick = document.createElement('div'); tick.className = 'track-tick'; tick.style.transform = `rotate(${angle + (j * (config.rotationStep / 5))}deg)`; trackDial.appendChild(tick); }
             });
         }
 
         function selectTrack(index) {
             if (currentTrackIndex === index && audio.src) return;
-            currentTrackIndex = index;
-            trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
+            currentTrackIndex = index; trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
             document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
             const song = playlist[index];
-            if (song) {
-                const wasPlaying = isPlaying;
-                audio.pause();
-                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc;
-                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics);
-                if (wasPlaying) safePlay();
-            }
+            if (song) { const wasPlaying = isPlaying; audio.pause(); audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); if (wasPlaying) safePlay(); }
         }
 
-        playBtn.onclick = () => {
-            if (audio.paused) safePlay();
-            else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; }
-        };
-
-        audio.onplaying = () => { isPlaying = true; playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; };
-        audio.onpause = () => { if (!audio.seeking) isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; };
-        audio.ontimeupdate = () => { 
-            if (isFinite(audio.duration)) { 
-                seekSlider.value = (audio.currentTime / audio.duration) * 100; 
-                updateSliderStyle();
-                updateLyrics(audio.currentTime); 
-            } 
-        };
+        playBtn.onclick = () => { if (audio.paused) safePlay(); else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; } };
+        audio.ontimeupdate = () => { if (isFinite(audio.duration)) { seekSlider.value = (audio.currentTime / audio.duration) * 100; document.documentElement.style.setProperty('--slider-progress', `${seekSlider.value}%`); updateLyrics(audio.currentTime); } };
+        seekSlider.oninput = () => { if (audio.duration) audio.currentTime = (seekSlider.value / 100) * audio.duration; document.documentElement.style.setProperty('--slider-progress', `${seekSlider.value}%`); };
 
         function updateLyrics(time) {
-            const song = playlist[currentTrackIndex];
-            const lyrics = currentMode === 'human' ? song.humanLyrics : song.aiLyrics;
+            const song = playlist[currentTrackIndex], lyrics = currentMode === 'human' ? song.humanLyrics : song.aiLyrics;
             if(!lyrics) return;
             lyrics.forEach((l, i) => {
                 const el = document.getElementById(`l-${i}`);
@@ -528,41 +291,15 @@
                 }
             });
         }
-
-        function initLyrics(data) {
-            lyricsContainer.innerHTML = '';
-            if(!data) return;
-            data.forEach((l, i) => {
-                const div = document.createElement('div');
-                div.className = 'lyric-line future';
-                div.id = `l-${i}`;
-                div.innerText = l.text;
-                lyricsContainer.appendChild(div);
-            });
-        }
+        function initLyrics(data) { lyricsContainer.innerHTML = ''; if(!data) return; data.forEach((l, i) => { const div = document.createElement('div'); div.className = 'lyric-line future'; div.id = `l-${i}`; div.innerText = l.text; lyricsContainer.appendChild(div); }); }
 
         let isDragging = false, startX, currentRotation = 0;
         const startInt = (x) => { isDragging = true; startX = x; trackDial.style.transition = 'none'; };
         const moveInt = (x) => { if (!isDragging) return; const diff = (x - startX) * 0.12; trackDial.style.transform = `rotate(${currentRotation + diff}deg)`; };
-        const endInt = (x) => { 
-            if (!isDragging) return; 
-            const diff = (x - startX) * 0.12; 
-            currentRotation += diff; 
-            const index = Math.round(-currentRotation / config.rotationStep);
-            const boundedIndex = Math.max(0, Math.min(playlist.length - 1, index));
-            selectTrack(boundedIndex); 
-            isDragging = false; 
-            trackDial.style.transition = 'transform 0.85s cubic-bezier(0.15, 1, 0.3, 1)'; 
-            currentRotation = -boundedIndex * config.rotationStep;
-            trackDial.style.transform = `rotate(${currentRotation}deg)`;
-        };
+        const endInt = (x) => { if (!isDragging) return; const diff = (x - startX) * 0.12; currentRotation += diff; const index = Math.round(-currentRotation / config.rotationStep); const boundedIndex = Math.max(0, Math.min(playlist.length - 1, index)); selectTrack(boundedIndex); isDragging = false; trackDial.style.transition = 'transform 0.85s cubic-bezier(0.15, 1, 0.3, 1)'; currentRotation = -boundedIndex * config.rotationStep; trackDial.style.transform = `rotate(${currentRotation}deg)`; };
         
-        trackDial.addEventListener('mousedown', (e) => startInt(e.clientX));
-        window.addEventListener('mousemove', (e) => moveInt(e.clientX));
-        window.addEventListener('mouseup', (e) => endInt(e.clientX));
-        trackDial.addEventListener('touchstart', (startEvent) => startInt(startEvent.touches[0].clientX));
-        window.addEventListener('touchmove', (moveEvent) => moveInt(moveEvent.touches[0].clientX));
-        window.addEventListener('touchend', (endEvent) => endInt(endEvent.changedTouches[0].clientX));
+        trackDial.addEventListener('mousedown', (e) => startInt(e.clientX)); window.addEventListener('mousemove', (e) => moveInt(e.clientX)); window.addEventListener('mouseup', (e) => endInt(e.clientX));
+        trackDial.addEventListener('touchstart', (e) => startInt(e.touches[0].clientX)); window.addEventListener('touchmove', (e) => moveInt(e.touches[0].clientX)); window.addEventListener('touchend', (e) => endInt(e.changedTouches[0].clientX));
 
         window.onload = () => { initDial(); initLyrics(playlist[0].humanLyrics); audio.src = playlist[0].humanSrc; draw(); };
     </script>
