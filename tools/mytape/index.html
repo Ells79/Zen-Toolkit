@@ -69,7 +69,7 @@
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带：强制硬件加速 + 锐利投影 */
+        /* 磁带：阴影减重并收缩，避免投影面积过大 */
         .specimen-case {
             position: relative;
             z-index: 10;
@@ -77,8 +77,10 @@
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             filter: 
-                drop-shadow(25px 40px 15px rgba(0,0,0,0.32))
-                drop-shadow(45px 70px 45px rgba(0,0,0,0.18));
+                /* 第一层核心影：偏移缩减 30%，透明度降低 (0.32 -> 0.22)，模糊度收紧 (15px -> 10px) */
+                drop-shadow(17px 28px 10px rgba(0,0,0,0.22))
+                /* 第二层方向影：偏移缩减 30%，透明度降低 (0.18 -> 0.13)，模糊度收紧 (45px -> 30px) */
+                drop-shadow(31px 49px 30px rgba(0,0,0,0.13));
             margin-bottom: 4vh; 
             animation: case-breath 18s ease-in-out infinite;
         }
