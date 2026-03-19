@@ -3,194 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ells | 极简磁带音乐盒</title>
+    <title>Ells | 极简磁带音乐盒 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --apple-bg: #f5f5f7;
+            --bg-color: #dcdcdf;
             --apple-text: #1d1d1f;
-            --soft-shadow: rgba(0,0,0,0.06);
-            --hard-shadow: rgba(0,0,0,0.12);
-            --inner-light: rgba(255,255,255,0.8);
+            --accent-orange: #e97850; /* ells: 更新为更鲜亮的橘红色 */
+            --color-human: #e2e2e5;    /* 暖灰色 */
+            --color-ai: #e97850;       /* AI 模式同步鲜亮橘红 */
         }
 
         body, html {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
             overflow: hidden;
-            background: var(--apple-bg);
+            background: linear-gradient(180deg, #f7f7f9 0%, var(--bg-color) 100%);
             color: var(--apple-text);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            user-select: none;
+            touch-action: none;
         }
 
-        /* 颗粒感背景 */
         .noise-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: url('https://grainy-gradients.vercel.app/noise.svg');
-            opacity: 0.05; pointer-events: none; z-index: 1;
+            opacity: 0.04; pointer-events: none; z-index: 1;
         }
 
         #app {
             position: relative;
             width: 100%; height: 100%;
             display: flex; flex-direction: column;
-            justify-content: flex-start; align-items: center;
+            justify-content: space-between; align-items: center;
             z-index: 2;
-            perspective: 2000px;
-            padding-top: 6vh;
+            perspective: 2500px;
+            padding: 4vh 0 6vh 0;
         }
 
-        /* 3D 漂浮歌词空间 */
+        /* 3D 穿梭歌词 */
         #lyrics-container {
             position: relative;
-            width: 100%; height: 22vh;
-            pointer-events: none;
-            transform-style: preserve-3d;
+            width: 100%; height: 8vh;
             display: flex; justify-content: center; align-items: center;
-            z-index: 5;
+            transform-style: preserve-3d;
         }
 
         .lyric-line {
             position: absolute;
             text-align: center;
-            width: 90%;
-            font-size: clamp(1rem, 4vw, 1.4rem);
+            width: 85%;
+            font-size: clamp(0.9rem, 3.5vw, 1.05rem);
             font-weight: 200;
-            letter-spacing: 0.15em;
-            line-height: 1.6;
-            transition: all 2.8s cubic-bezier(0.1, 0.4, 0.2, 1);
+            letter-spacing: 0.4em;
+            transition: all 2.5s cubic-bezier(0.1, 0.4, 0.2, 1);
             opacity: 0;
             filter: blur(12px);
-            will-change: transform, opacity, filter;
         }
 
-        .lyric-line.active {
-            opacity: 0.8;
-            transform: translateZ(100px) translateY(0);
-            filter: blur(0px);
-            animation: deep-float 10s ease-in-out infinite;
-        }
+        .lyric-line.active { opacity: 0.95; transform: translateZ(150px); filter: blur(0px); color: #000; }
+        .lyric-line.past { opacity: 0; transform: translateZ(500px) translateY(-50px); }
+        .lyric-line.future { opacity: 0; transform: translateZ(-400px) translateY(50px); }
 
-        .lyric-line.past {
-            opacity: 0;
-            transform: translateZ(500px) translateY(-140px) scale(1.5);
-            filter: blur(20px);
-        }
-
-        .lyric-line.future {
-            opacity: 0;
-            transform: translateZ(-400px) translateY(100px);
-            filter: blur(15px);
-        }
-
-        @keyframes deep-float {
-            0%, 100% { transform: translateZ(100px) rotateX(1deg) translateY(0); }
-            50% { transform: translateZ(130px) rotateX(-1deg) translateY(-10px); }
-        }
-
-        /* 磁带容器 - 增加拟物厚度感 */
-        .tape-stage {
+        /* 标本盒视觉 */
+        .specimen-case {
             position: relative;
-            margin-top: 1vh;
             z-index: 10;
             transform: rotateX(8deg);
-            /* 多层阴影营造实体悬浮感 */
             filter: 
-                drop-shadow(0 10px 20px var(--soft-shadow))
-                drop-shadow(0 30px 60px var(--soft-shadow));
-            animation: tape-sway 12s ease-in-out infinite;
+                drop-shadow(35px 65px 110px rgba(0,0,0,0.14))
+                drop-shadow(15px 30px 50px rgba(0,0,0,0.08));
+            animation: case-breath 15s ease-in-out infinite;
         }
 
-        @keyframes tape-sway {
-            0%, 100% { transform: rotateX(8deg) translateY(0); }
-            50% { transform: rotateX(10deg) translateY(-10px); }
+        @keyframes case-breath { 
+            0%, 100% { transform: rotateX(8deg) translateY(0); } 
+            50% { transform: rotateX(9.2deg) translateY(-10px); } 
         }
 
         canvas {
-            max-width: 85vw;
-            max-height: 40vh;
+            max-width: 90vw;
+            max-height: 46vh;
             display: block;
-            border-radius: 32px;
+            border-radius: 40px;
         }
 
-        /* 拟物化控制面板 */
-        .controls-panel {
+        /* 交互区总容器 */
+        .interaction-area {
+            display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px;
+        }
+
+        /* 模式切换组 */
+        .mode-toggle-container {
+            display: flex; align-items: center; gap: 12px;
+        }
+
+        .toggle-well {
+            padding: 4px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 20px;
+            box-shadow: 
+                inset 1px 2px 4px rgba(0,0,0,0.1), 
+                inset -1px -1px 2px rgba(255,255,255,0.5);
+            display: flex; align-items: center;
+        }
+
+        .mode-toggle-group {
+            display: flex; align-items: center;
+            position: relative;
+        }
+
+        .toggle-plate {
+            width: 72px; height: 30px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .toggle-bg-color {
             position: absolute;
-            bottom: 5vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-            max-width: 440px;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            opacity: 0.9;
+        }
+
+        .mode-toggle-group.human .toggle-bg-color { background: var(--color-human); }
+        .mode-toggle-group.ai .toggle-bg-color { background: var(--color-ai); }
+
+        .toggle-lever {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 24px; height: 24px;
+            background: linear-gradient(145deg, #efeff2, #d4d4d9);
+            border-radius: 50%;
+            box-shadow: 
+                0 2px 6px rgba(0,0,0,0.15), 
+                inset 0 1px 0px #fff;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 2;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .toggle-lever::after {
+            content: ''; width: 4px; height: 4px; border-radius: 50%;
+            background: rgba(0,0,0,0.04);
+        }
+
+        .mode-toggle-group.ai .toggle-lever { transform: translateX(42px); }
+        
+        .mode-label { 
+            font-size: 10px; 
+            font-weight: 900; 
+            letter-spacing: 0.18em; 
+            opacity: 0.2; 
+            transition: 0.4s; 
+            min-width: 55px; 
+            text-align: center; 
+        }
+        .mode-label.active { opacity: 0.85; color: #000; }
+
+        /* 半弧拨盘 */
+        .selector-box {
+            position: relative;
+            width: 100%; height: 80px;
+            overflow: visible;
+            mask-image: linear-gradient(to right, transparent, black 35%, black 65%, transparent);
+        }
+
+        .selection-indicator {
+            position: absolute; top: -8px; left: 50%; width: 6px; height: 6px;
+            background: #fff; border-radius: 50%; margin-left: -3px;
+            z-index: 10;
+            box-shadow: 
+                0 0 0 1.5px var(--apple-text),
+                0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #track-dial {
+            position: absolute; top: 15px; left: 50%; margin-left: -250px;
+            width: 500px; height: 500px; border-radius: 50%;
+            transition: transform 0.8s cubic-bezier(0.15, 1, 0.3, 1);
+            cursor: grab;
+            z-index: 5;
+        }
+
+        .track-num {
+            position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px;
+            text-align: center; transform-origin: center 238px;
+            font-weight: 900; font-size: 18px; color: rgba(0,0,0,0.1);
+            transition: all 0.4s;
+        }
+
+        .track-tick {
+            position: absolute; top: 8px; left: 50%; width: 1px; height: 5px;
+            background: rgba(0,0,0,0.08); transform-origin: center 242px;
+        }
+
+        .track-num.active { color: var(--apple-text); transform: scale(1.45); }
+
+        /* 物理感按钮槽 */
+        .button-well {
+            width: 66px; height: 66px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: inset 2px 3px 6px rgba(0,0,0,0.1), inset -2px -3px 6px rgba(255,255,255,0.6);
+        }
+
+        .button-well.large { width: 94px; height: 94px; }
+
+        /* Apple 玻璃控制按钮 */
+        .controls-panel {
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
         }
 
         .button-group {
-            display: flex;
-            align-items: center;
-            gap: 28px;
+            display: flex; align-items: center; justify-content: center; gap: 35px;
         }
 
-        /* 拟物风格按钮 (Neumorphism) */
         .control-btn {
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            background: var(--apple-bg);
-            border: 1px solid rgba(255,255,255,0.4);
+            width: 58px; height: 58px; border-radius: 50%; 
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 0.5px solid rgba(255, 255, 255, 0.45);
             display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            box-shadow: 
-                6px 6px 12px var(--soft-shadow), 
-                -6px -6px 12px var(--inner-light);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: rgba(0,0,0,0.3);
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1); 
+            color: rgba(0,0,0,0.25);
         }
 
-        .control-btn:hover { 
-            color: #000;
-            transform: translateY(-2px);
+        .control-btn:hover { background: rgba(255, 255, 255, 0.4); color: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        
+        .control-btn.main { 
+            width: 84px; height: 84px; 
+            color: var(--accent-orange);
+            background: rgba(255, 255, 255, 0.25);
         }
+        
+        .control-btn:active { transform: scale(0.95); opacity: 0.8; }
 
-        .control-btn:active { 
-            box-shadow: 
-                inset 4px 4px 8px var(--soft-shadow), 
-                inset -4px -4px 8px var(--inner-light);
-            transform: translateY(0px);
+        .progress-bar { width: 260px; opacity: 0.35; }
+        input[type=range] { width: 100%; accent-color: var(--accent-orange); cursor: pointer; height: 2px; background: rgba(0,0,0,0.08); }
+
+        .status-footer { 
+            text-[7px] tracking-[0.8em] opacity-8 font-bold uppercase; 
+            margin-top: 5px;
         }
-
-        .control-btn.main {
-            width: 72px; height: 72px;
-            color: #000;
-        }
-
-        .progress-wrapper {
-            width: 80%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            opacity: 0.4;
-        }
-
-        .time-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            font-family: ui-monospace, monospace;
-            letter-spacing: 0.1em;
-        }
-
-        input[type=range] {
-            width: 100%;
-            accent-color: #000;
-            cursor: pointer;
-            height: 2px;
-            background: rgba(0,0,0,0.05);
-            border-radius: 2px;
-        }
-
-        .loading-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     </style>
 </head>
 <body>
@@ -198,98 +261,212 @@
     <div class="noise-bg"></div>
 
     <div id="app">
-        <!-- 歌词容器 -->
         <div id="lyrics-container"></div>
 
-        <!-- 磁带展示 -->
-        <div class="tape-stage">
+        <div class="specimen-case">
             <canvas id="tapeCanvas"></canvas>
         </div>
 
-        <!-- 拟物控制台 -->
-        <div class="controls-panel">
-            <div class="progress-wrapper">
-                <input type="range" id="seekSlider" value="0" step="0.1">
-                <div class="time-labels">
-                    <span id="currentTime">00:00</span>
-                    <span id="durationTime">--:--</span>
+        <div class="interaction-area">
+            <!-- 模式切换 -->
+            <div class="mode-toggle-container">
+                <span class="mode-label active">HUMAN</span>
+                <div class="toggle-well">
+                    <div id="modeWrapper" class="mode-toggle-group human">
+                        <div class="toggle-plate" onclick="toggleMode()">
+                            <div class="toggle-bg-color"></div>
+                            <div class="toggle-lever"></div>
+                        </div>
+                    </div>
                 </div>
+                <span class="mode-label">AI</span>
             </div>
 
-            <div class="button-group">
-                <button id="rewindBtn" class="control-btn" title="-10s">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
-                </button>
-
-                <button id="playBtn" class="control-btn main">
-                    <svg id="playIcon" width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </button>
-
-                <button id="forwardBtn" class="control-btn" title="+10s">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
-                </button>
+            <!-- 半弧拨盘 -->
+            <div class="selector-box">
+                <div class="selection-indicator"></div>
+                <div id="track-dial"></div>
             </div>
-            
-            <div id="statusText" class="text-[8px] tracking-[0.5em] font-light opacity-20 uppercase">Linear Mechanical Interaction</div>
+
+            <div class="controls-panel">
+                <div class="progress-bar">
+                    <input type="range" id="seekSlider" value="0" step="0.1">
+                </div>
+                
+                <div class="button-group">
+                    <div class="button-well">
+                        <button id="rewindBtn" class="control-btn"><svg width="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button>
+                    </div>
+                    <div class="button-well large">
+                        <button id="playBtn" class="control-btn main"><svg id="playIcon" width="36" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                    </div>
+                    <div class="button-well">
+                        <button id="forwardBtn" class="control-btn"><svg width="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button>
+                    </div>
+                </div>
+                
+                <div id="statusText" class="status-footer">Sealed in 2007 / Opened in 2026</div>
+            </div>
         </div>
     </div>
 
-    <!-- 磁带音频源 -->
-    <audio id="audio" crossorigin="anonymous" src="https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke%20test.mp3"></audio>
+    <audio id="audio" crossorigin="anonymous"></audio>
 
     <script>
+        const config = {
+            leftReel:  { x: 454, y: 460 },
+            rightReel: { x: 739, y: 460 }, 
+            reelSize: 108,                 
+            rotationStep: 36
+        };
+
+        const DEBUG_ALIGNMENT = false; 
+        const assets = { shell: new Image(), reel: new Image() };
+        assets.shell.crossOrigin = assets.reel.crossOrigin = "anonymous";
+        assets.shell.src = "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/tape.webp";
+        assets.reel.src = "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/wheel.webp";
+        
+        let loaded = 0;
+        assets.shell.onload = () => loaded++;
+        assets.reel.onload = () => loaded++;
+
+        const playlist = [
+            { id: 1, title: "笑话", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke_ai.mp3", humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }, { time: 7.29, text: "某个阳光不错的下午" }], aiLyrics: [{ time: 0, text: "笑话 (AI)" }] },
+            { id: 2, title: "Forget It", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "FORGET IT (HUMAN)" }], aiLyrics: [{ time: 0, text: "FORGET IT (AI)" }] },
+            { id: 3, title: "Boat", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat_ai.mp3", humanLyrics: [{ time: 0, text: "BOAT (HUMAN)" }], aiLyrics: [{ time: 0, text: "BOAT (AI)" }] },
+            { id: 4, title: "Hi Blue", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/hiblue.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/hiblue_ai.mp3", humanLyrics: [{ time: 0, text: "HI BLUE (HUMAN)" }], aiLyrics: [{ time: 0, text: "HI BLUE (AI)" }] },
+            { id: 5, title: "Overthing", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/overthing.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/overthing_ai.mp3", humanLyrics: [{ time: 0, text: "OVERTHING (HUMAN)" }], aiLyrics: [{ time: 0, text: "OVERTHING (AI)" }] }
+        ];
+
+        let currentTrackIndex = 0, isPlaying = false, rotation = 0, currentMode = 'human';
+
+        const safePlay = async () => {
+            try {
+                await audio.play();
+                isPlaying = true;
+                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error("Audio play failed:", e);
+            }
+        };
+
+        function toggleMode() {
+            const wrapper = document.getElementById('modeWrapper');
+            const labels = document.querySelectorAll('.mode-label');
+            let percent = audio.duration ? audio.currentTime / audio.duration : 0;
+
+            if (currentMode === 'human') {
+                currentMode = 'ai';
+                wrapper.classList.remove('human'); wrapper.classList.add('ai');
+                labels[0].classList.remove('active'); labels[1].classList.add('active');
+            } else {
+                currentMode = 'human';
+                wrapper.classList.remove('ai'); wrapper.classList.add('human');
+                labels[1].classList.remove('active'); labels[0].classList.add('active');
+            }
+
+            const song = playlist[currentTrackIndex];
+            if (song) {
+                audio.pause();
+                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc;
+                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics);
+                audio.load();
+                audio.onloadedmetadata = () => {
+                    audio.currentTime = audio.duration * percent;
+                    if (isPlaying) safePlay();
+                    audio.onloadedmetadata = null;
+                };
+            }
+        }
+
         const canvas = document.getElementById('tapeCanvas');
         const ctx = canvas.getContext('2d');
         const audio = document.getElementById('audio');
-        
+        const trackDial = document.getElementById('track-dial');
         const playBtn = document.getElementById('playBtn');
-        const rewindBtn = document.getElementById('rewindBtn');
-        const forwardBtn = document.getElementById('forwardBtn');
         const playIcon = document.getElementById('playIcon');
         const seekSlider = document.getElementById('seekSlider');
-        const currentTimeText = document.getElementById('currentTime');
-        const durationTimeText = document.getElementById('durationTime');
-        const statusText = document.getElementById('statusText');
         const lyricsContainer = document.getElementById('lyrics-container');
 
-        let isPlaying = false;
-        let rotation = 0;
-        let progress = 0;
+        function draw() {
+            const w = canvas.width = 1200, h = canvas.height = 953; 
+            ctx.clearRect(0, 0, w, h);
+            if (loaded >= 2) {
+                drawReel(config.leftReel.x, config.leftReel.y, rotation);
+                drawReel(config.rightReel.x, config.rightReel.y, rotation);
+                ctx.drawImage(assets.shell, 0, 0, w, h);
+            }
+            if (isPlaying) rotation += 0.045;
+            requestAnimationFrame(draw);
+        }
 
-        const lyricsData = [
-            { time: 0.00, text: "笑话" },
-            { time: 7.29, text: "某个阳光不错的下午" },
-            { time: 9.94, text: "你突然发出笑声 引来行人侧目" },
-            { time: 13.08, text: "身旁的女人 问你 笑什么" },
-            { time: 16.25, text: "你直不起腰 只比划手" },
-            { time: 19.99, text: "你自己心里 当然最明白" },
-            { time: 22.84, text: "那是很多很多很多年以前" },
-            { time: 26.19, text: "她 对你说过的笑话" },
-            { time: 29.31, text: "直到 刚才一刻才领悟" },
-            { time: 32.65, text: "很多事情 就这样 突然涌上心头" },
-            { time: 35.87, text: "你趁着笑的机会尽情把泪流" },
-            { time: 39.25, text: "有点可惜 这么好笑" },
-            { time: 40.82, text: "当时却 没参透" },
-            { time: 45.62, text: "前面一对恋人 望着飘远的气球" },
-            { time: 49.00, text: "何苦去争执 是谁先放的手" },
-            { time: 52.09, text: "总有天 会明白" },
-            { time: 53.61, text: "誓言 不比笑话长久" },
-            { time: 58.64, text: "阳光轻轻 划过你的白日梦" },
-            { time: 61.74, text: "原来是身边的人 对你 摇着手" },
-            { time: 64.97, text: "你说抱歉 让她等了这么久" },
-            { time: 68.23, text: "她微笑着摇摇头" },
-            { time: 71.59, text: "还是忍不住想看看那对小朋友" },
-            { time: 74.82, text: "还有那个 渐渐消失在天空的气球" },
-            { time: 78.16, text: "原来一秒一分一生一世 都不够" },
-            { time: 81.59, text: "因为离别就在前头" },
-            { time: 85.77, text: "笑话 好笑却让人泪流" }
-        ];
+        function drawReel(x, y, angle) {
+            ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+            ctx.drawImage(assets.reel, -config.reelSize/2, -config.reelSize/2, config.reelSize, config.reelSize);
+            ctx.restore();
+        }
 
-        function initLyrics() {
+        function initDial() {
+            trackDial.innerHTML = '';
+            playlist.forEach((song, i) => {
+                const angle = i * config.rotationStep;
+                const div = document.createElement('div');
+                div.className = `track-num ${i === 0 ? 'active' : ''}`;
+                div.innerText = (i + 1).toString().padStart(2, '0');
+                div.style.transform = `rotate(${angle}deg)`;
+                trackDial.appendChild(div);
+                for(let j=1; j<=4; j++) {
+                    const tickAngle = angle + (j * (config.rotationStep / 5));
+                    const tick = document.createElement('div');
+                    tick.className = 'track-tick';
+                    tick.style.transform = `rotate(${tickAngle}deg)`;
+                    trackDial.appendChild(tick);
+                }
+            });
+        }
+
+        function selectTrack(index) {
+            if (currentTrackIndex === index && audio.src) return;
+            currentTrackIndex = index;
+            trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
+            document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
+            const song = playlist[index];
+            if (song) {
+                const wasPlaying = isPlaying;
+                audio.pause();
+                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc;
+                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics);
+                if (wasPlaying) safePlay();
+            }
+        }
+
+        playBtn.onclick = () => {
+            if (audio.paused) safePlay();
+            else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; }
+        };
+
+        audio.onplaying = () => { isPlaying = true; playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; };
+        audio.onpause = () => { if (!audio.seeking) isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; };
+        audio.ontimeupdate = () => { if (isFinite(audio.duration)) { seekSlider.value = (audio.currentTime / audio.duration) * 100; updateLyrics(audio.currentTime); } };
+
+        function updateLyrics(time) {
+            const song = playlist[currentTrackIndex];
+            const lyrics = currentMode === 'human' ? song.humanLyrics : song.aiLyrics;
+            if(!lyrics) return;
+            lyrics.forEach((l, i) => {
+                const el = document.getElementById(`l-${i}`);
+                if (el) {
+                    if (time >= l.time && (lyrics[i+1] ? time < lyrics[i+1].time : true)) el.className = 'lyric-line active';
+                    else if (time >= (lyrics[i+1] ? lyrics[i+1].time : 999)) el.className = 'lyric-line past';
+                    else el.className = 'lyric-line future';
+                }
+            });
+        }
+
+        function initLyrics(data) {
             lyricsContainer.innerHTML = '';
-            lyricsData.forEach((l, i) => {
+            if(!data) return;
+            data.forEach((l, i) => {
                 const div = document.createElement('div');
                 div.className = 'lyric-line future';
                 div.id = `l-${i}`;
@@ -298,223 +475,30 @@
             });
         }
 
-        function formatTime(seconds) {
-            if (isNaN(seconds) || !isFinite(seconds)) return "00:00";
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-
-        function draw() {
-            const w = canvas.width = 1200;
-            const h = canvas.height = 750;
-            ctx.clearRect(0, 0, w, h);
-
-            // 1. 磁带主体外壳 (#01 修改：加重边框并模拟倒角)
-            ctx.lineJoin = "round";
-            ctx.lineWidth = 8; 
-            ctx.strokeStyle = "#111";
-            ctx.fillStyle = "#fff";
-            roundRect(ctx, 40, 40, 1120, 670, 40, true, true);
-
-            // 内部凹陷阴影效果 (用二次路径模拟厚度)
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = "rgba(0,0,0,0.05)";
-            roundRect(ctx, 48, 48, 1104, 654, 36, false, true);
-
-            // 2. 复古排版
-            ctx.fillStyle = "rgba(0,0,0,0.35)";
-            ctx.font = "bold 95px Helvetica, Arial, sans-serif";
-            ctx.fillText("THIS", 90, 155);
-            ctx.fillText("WAY", 90, 240);
-            ctx.fillText("UP", 90, 325);
-            ctx.font = "32px Helvetica";
-            ctx.fillText("stereo cassette tape", 90, 400);
-
-            // 3. 螺丝细节
-            drawScrew(ctx, 85, 85);
-            drawScrew(ctx, 1115, 85);
-            drawScrew(ctx, 85, 665);
-            drawScrew(ctx, 1115, 665);
-            drawScrew(ctx, 600, 645);
-
-            // 4. 透明观测窗 (#01 修改：线条略微加重并添加内阴影感)
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = "#222";
-            ctx.fillStyle = "rgba(0,0,0,0.02)";
-            roundRect(ctx, 230, 110, 740, 480, 12, true, true);
-            
-            // 梯形区
-            ctx.beginPath();
-            ctx.moveTo(420, 590); ctx.lineTo(780, 590);
-            ctx.lineTo(820, 710); ctx.lineTo(380, 710);
-            ctx.closePath();
-            ctx.fillStyle = "rgba(0,0,0,0.04)";
-            ctx.fill(); ctx.stroke();
-
-            // 模拟 VU 表 (极客元素：细微的刻度线)
-            ctx.strokeStyle = "rgba(0,0,0,0.1)";
-            ctx.lineWidth = 1;
-            for(let i=0; i<10; i++) {
-                ctx.beginPath();
-                ctx.moveTo(300 + i*60, 125); ctx.lineTo(300 + i*60, 135);
-                ctx.stroke();
-            }
-
-            // 5. 卷轴物理细节 (左减右增)
-            const leftX = 410;
-            const rightX = 790;
-            const centerY = 350;
-            const maxR = 190, minR = 55;
-            const safeProgress = isFinite(progress) ? progress : 0;
-            const leftR = maxR - (maxR - minR) * safeProgress;
-            const rightR = minR + (maxR - minR) * safeProgress;
-
-            // 磁带本体
-            ctx.beginPath();
-            ctx.arc(leftX, centerY, leftR, 0, Math.PI * 2);
-            ctx.fillStyle = "#1a1a1a";
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(rightX, centerY, rightR, 0, Math.PI * 2);
-            ctx.fillStyle = "#1a1a1a";
-            ctx.fill();
-
-            drawHub(ctx, leftX, centerY, rotation);
-            drawHub(ctx, rightX, centerY, rotation);
-
-            if (isPlaying) rotation += 0.04;
-            requestAnimationFrame(draw);
-        }
-
-        function drawHub(ctx, x, y, angle) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.beginPath();
-            ctx.arc(0, 0, 50, 0, Math.PI * 2);
-            ctx.fillStyle = "#fff";
-            ctx.fill();
-            ctx.strokeStyle = "#111";
-            ctx.lineWidth = 7; 
-            ctx.stroke();
-            ctx.rotate(angle);
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = "#333";
-            for(let i=0; i<6; i++) {
-                ctx.rotate(Math.PI/3);
-                ctx.beginPath();
-                ctx.moveTo(14, 0); ctx.lineTo(42, 0); ctx.stroke();
-            }
-            ctx.restore();
-        }
-
-        function drawScrew(ctx, x, y) {
-            ctx.beginPath();
-            ctx.arc(x, y, 18, 0, Math.PI * 2);
-            ctx.fillStyle = "#f8f8f8";
-            ctx.fill();
-            ctx.strokeStyle = "#111";
-            ctx.lineWidth = 5; 
-            ctx.stroke();
-            // 十字头
-            ctx.beginPath();
-            ctx.moveTo(x-10, y-10); ctx.lineTo(x+10, y+10);
-            ctx.moveTo(x+10, y-10); ctx.lineTo(x-10, y+10);
-            ctx.strokeStyle = "#444";
-            ctx.lineWidth = 4;
-            ctx.stroke();
-        }
-
-        function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-            if (fill) ctx.fill();
-            if (stroke) stroke && ctx.stroke();
-        }
-
-        // --- 核心控制 ---
-        playBtn.onclick = async () => {
-            if (audio.paused) {
-                statusText.innerText = "Accessing Memory...";
-                statusText.classList.add('loading-pulse');
-                try {
-                    await audio.play();
-                } catch(e) {
-                    statusText.innerText = "Playback failed";
-                    statusText.classList.remove('loading-pulse');
-                }
-            } else {
-                audio.pause();
-            }
-        };
-
-        audio.onplaying = () => {
-            isPlaying = true;
-            statusText.innerText = "Memory Active";
-            statusText.classList.remove('loading-pulse');
-            playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-        };
-
-        audio.onpause = () => {
-            isPlaying = false;
-            statusText.innerText = "Reliving moments";
-            playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-        };
-
-        rewindBtn.onclick = () => {
-            if (isFinite(audio.duration)) audio.currentTime = Math.max(0, audio.currentTime - 10);
+        let isDragging = false, startX, currentRotation = 0;
+        const startInt = (x) => { isDragging = true; startX = x; trackDial.style.transition = 'none'; };
+        const moveInt = (x) => { if (!isDragging) return; const diff = (x - startX) * 0.12; trackDial.style.transform = `rotate(${currentRotation + diff}deg)`; };
+        const endInt = (x) => { 
+            if (!isDragging) return; 
+            const diff = (x - startX) * 0.12; 
+            currentRotation += diff; 
+            const index = Math.round(-currentRotation / config.rotationStep);
+            const boundedIndex = Math.max(0, Math.min(playlist.length - 1, index));
+            selectTrack(boundedIndex); 
+            isDragging = false; 
+            trackDial.style.transition = 'transform 0.8s cubic-bezier(0.15, 1, 0.3, 1)'; 
+            currentRotation = -boundedIndex * config.rotationStep;
+            trackDial.style.transform = `rotate(${currentRotation}deg)`;
         };
         
-        forwardBtn.onclick = () => {
-            if (isFinite(audio.duration)) audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
-        };
+        trackDial.addEventListener('mousedown', (e) => startInt(e.clientX));
+        window.addEventListener('mousemove', (e) => moveInt(e.clientX));
+        window.addEventListener('mouseup', (e) => endInt(e.clientX));
+        trackDial.addEventListener('touchstart', (e) => startInt(e.touches[0].clientX));
+        window.addEventListener('touchmove', (e) => moveInt(e.touches[0].clientX));
+        window.addEventListener('touchend', (e) => endInt(e.changedTouches[0].clientX));
 
-        seekSlider.oninput = () => {
-            const val = parseFloat(seekSlider.value);
-            if (isFinite(audio.duration) && audio.duration > 0) {
-                audio.currentTime = (val / 100) * audio.duration;
-            }
-        };
-
-        audio.ontimeupdate = () => {
-            const time = audio.currentTime;
-            const duration = audio.duration;
-            
-            if (isFinite(duration) && duration > 0) {
-                progress = time / duration;
-                seekSlider.value = progress * 100;
-                durationTimeText.innerText = formatTime(duration);
-            }
-            
-            currentTimeText.innerText = formatTime(time);
-
-            lyricsData.forEach((l, i) => {
-                const el = document.getElementById(`l-${i}`);
-                if (!el) return;
-                if (time >= l.time && (lyricsData[i+1] ? time < lyricsData[i+1].time : true)) {
-                    el.className = 'lyric-line active';
-                } else if (time >= (lyricsData[i+1] ? lyricsData[i+1].time : 999)) {
-                    el.className = 'lyric-line past';
-                } else {
-                    el.className = 'lyric-line future';
-                }
-            });
-        };
-
-        window.onload = () => {
-            initLyrics();
-            draw();
-        };
+        window.onload = () => { initDial(); initLyrics(playlist[0].humanLyrics); audio.src = playlist[0].humanSrc; draw(); };
     </script>
 </body>
 </html>
