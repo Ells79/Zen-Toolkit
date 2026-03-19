@@ -41,7 +41,7 @@
             align-items: center;
             z-index: 2;
             perspective: 2500px;
-            padding: 8vh 0 4vh 0;
+            padding: 10vh 0 4vh 0;
         }
 
         /* 3D 穿梭歌词 */
@@ -50,7 +50,7 @@
             width: 100%; height: 5vh;
             display: flex; justify-content: center; align-items: center;
             transform-style: preserve-3d;
-            margin-bottom: 3vh;
+            margin-bottom: 2vh;
         }
 
         .lyric-line {
@@ -69,15 +69,19 @@
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带：视觉中心偏上 + 深邃影子 */
+        /* 磁带：影子重量减少 30%，并向内收回，避免影响按钮 */
         .specimen-case {
             position: relative;
             z-index: 10;
             transform: rotateX(8deg);
             filter: 
-                drop-shadow(45px 85px 130px rgba(0,0,0,0.22))
-                drop-shadow(15px 30px 50px rgba(0,0,0,0.08));
-            margin-bottom: 6vh;
+                /* ells: 第一层 - 核心阴影收敛且减淡 (Alpha 0.45 -> 0.32) */
+                drop-shadow(15px 25px 12px rgba(0,0,0,0.32))
+                /* 第二层 - 方向性投影收缩 (Y 70px -> 45px, Alpha 0.25 -> 0.18) */
+                drop-shadow(30px 45px 35px rgba(0,0,0,0.18))
+                /* 第三层 - 微弱的接触细节 */
+                drop-shadow(5px 5px 5px rgba(0,0,0,0.07));
+            margin-bottom: 5vh; 
             animation: case-breath 18s ease-in-out infinite;
         }
 
@@ -93,16 +97,13 @@
             border-radius: 40px;
         }
 
-        /* 底部交互区：整合且紧凑 */
         .interaction-area {
             display: flex; flex-direction: column; align-items: center; 
             width: 100%; 
-            margin-top: auto; 
-            padding-bottom: 4vh;
             gap: 2.5vh;
+            padding-bottom: 2vh;
         }
 
-        /* 模式切换：文字在外 */
         .mode-toggle-container {
             display: flex; align-items: center; gap: 12px;
         }
@@ -145,12 +146,11 @@
         .mode-toggle-group.ai .toggle-lever { transform: translateX(30px); }
         
         .mode-label { 
-            font-size: 8px; font-weight: 800; letter-spacing: 0.22em; opacity: 0.15; 
+            font-size: 8px; font-weight: 800; letter-spacing: 0.22em; opacity: 0.2; 
             transition: 0.4s; min-width: 45px; text-align: center; 
         }
         .mode-label.active { opacity: 0.65; color: #000; }
 
-        /* 半弧拨盘 */
         .selector-box {
             position: relative;
             width: 100%; height: 50px;
@@ -176,18 +176,19 @@
         .track-num {
             position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px;
             text-align: center; transform-origin: center 238px;
-            font-weight: 900; font-size: 14px; color: rgba(0,0,0,0.06);
+            font-weight: 900; font-size: 14px; 
+            color: rgba(0,0,0,0.25); 
             transition: all 0.4s;
         }
 
         .track-tick {
             position: absolute; top: 8px; left: 50%; width: 1px; height: 3px;
-            background: rgba(0,0,0,0.05); transform-origin: center 242px;
+            background: rgba(0,0,0,0.15); 
+            transform-origin: center 242px;
         }
 
         .track-num.active { color: var(--apple-text); transform: scale(1.35); }
 
-        /* 复刻 18.27.25：高级感橘色进度条 */
         .progress-bar-wrapper {
             width: 200px;
             margin-bottom: 1vh;
@@ -201,33 +202,23 @@
             cursor: pointer;
         }
 
-        /* 轨道样式：动态橘色填充 */
         input[type=range]::-webkit-slider-runnable-track {
             height: 4px;
             border-radius: 2px;
             background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.05) var(--slider-progress), rgba(0,0,0,0.05) 100%);
         }
 
-        /* 复刻截图中的“横过来”的胶囊滑块 */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 10px; /* 纵向短 */
-            width: 18px;  /* 横向长，形成横向胶囊 */
+            height: 10px;
+            width: 18px; 
             border-radius: 5px;
             background: #fbfbfb;
-            box-shadow: 
-                0 2px 5px rgba(0,0,0,0.08), 
-                0 0 0 0.5px rgba(0,0,0,0.1);
-            margin-top: -3px; /* 居中校准 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.1);
+            margin-top: -3px; 
             transition: transform 0.2s, background 0.2s;
         }
 
-        input[type=range]:active::-webkit-slider-thumb {
-            transform: scale(1.05);
-            background: #fff;
-        }
-
-        /* 按钮集群整体缩小 20% */
         .controls-panel {
             display: flex; flex-direction: column; align-items: center; gap: 2vh;
         }
@@ -238,53 +229,53 @@
 
         .button-well {
             width: 50px; height: 50px;
-            background: rgba(0,0,0,0.02);
+            background: rgba(0,0,0,0.03);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            box-shadow: inset 1px 2px 4px rgba(0,0,0,0.06), inset -1px -1px 2px rgba(255,255,255,0.4);
+            box-shadow: 
+                inset 2px 3px 6px rgba(0,0,0,0.15), 
+                inset -1.5px -2px 4px rgba(255,255,255,0.7);
         }
 
         .button-well.large { width: 72px; height: 72px; }
 
         .control-btn {
             width: 42px; height: 42px; border-radius: 50%; 
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.22); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 0.5px solid rgba(255, 255, 255, 0.4);
             display: flex; justify-content: center; align-items: center;
             cursor: pointer; 
             transition: all 0.4s cubic-bezier(0.2, 0, 0.2, 1); 
-            color: rgba(0,0,0,0.15);
+            color: rgba(0,0,0,0.2);
         }
 
-        .control-btn:hover { background: rgba(255, 255, 255, 0.3); color: #000; }
+        .control-btn:hover { background: rgba(255, 255, 255, 0.35); color: #000; }
         
         .control-btn.main { 
             width: 62px; height: 62px; 
             color: var(--accent-orange);
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.38); 
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
         }
         
         .control-btn:active { transform: scale(0.96); }
 
-        /* 极度弱化的版权脚注 */
         .status-footer { 
-            font-size: 6px;
-            letter-spacing: 0.8em;
-            opacity: 0.12;
-            color: var(--apple-text);
+            font-size: 7px;
+            letter-spacing: 0.25em; 
+            color: #808080; 
             text-transform: uppercase;
-            font-weight: 300;
-            margin-top: 2vh;
-            transition: opacity 0.5s;
+            font-weight: 400;
+            margin-top: 3vh;
+            transition: color 0.5s;
         }
-        .status-footer:hover { opacity: 0.5; }
+        .status-footer:hover { color: var(--apple-text); }
 
-        /* 响应式优化 */
         @media (min-width: 1024px) {
-            #app { padding: 10vh 0 6vh 0; }
-            .specimen-case { margin-bottom: 8vh; }
+            #app { padding: 12vh 0 6vh 0; }
+            .specimen-case { margin-bottom: 5vh; }
             canvas { max-width: 65vw; }
             .interaction-area { gap: 3.5vh; }
         }
@@ -297,14 +288,11 @@
     <div id="app">
         <div id="lyrics-container"></div>
 
-        <!-- 磁带标本盒 -->
         <div class="specimen-case">
             <canvas id="tapeCanvas"></canvas>
         </div>
 
         <div class="interaction-area">
-            
-            <!-- 模式选择 -->
             <div class="mode-toggle-container">
                 <span class="mode-label active">HUMAN</span>
                 <div class="toggle-well">
@@ -318,13 +306,11 @@
                 <span class="mode-label">AI</span>
             </div>
 
-            <!-- 拨盘选歌 -->
             <div class="selector-box">
                 <div class="selection-indicator"></div>
                 <div id="track-dial"></div>
             </div>
 
-            <!-- 物理控制台 -->
             <div class="controls-panel">
                 <div class="progress-bar-wrapper">
                     <input type="range" id="seekSlider" value="0" step="0.1">
@@ -373,12 +359,8 @@
                 id: 1, title: "笑话", 
                 humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke.mp3",
                 aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/joke_ai.mp3",
-                humanLyrics: [
-                    { time: 5.15, text: "某个阳光不错的下午" }, { time: 35.45, text: "有点可惜 这么好笑" }, { time: 81.5, text: "笑话 好笑却让人泪流" }
-                ],
-                aiLyrics: [
-                    { time: 7.29, text: "某个阳光不错的下午" }, { time: 39.25, text: "有点可惜 这么好笑" }, { time: 85.77, text: "笑话 好笑却让人泪流" }
-                ]
+                humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }],
+                aiLyrics: [{ time: 0, text: "笑话 (AI)" }]
             },
             { id: 2, title: "Forget It", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "FORGET IT (HUMAN)" }], aiLyrics: [{ time: 0, text: "FORGET IT (AI)" }] },
             { id: 3, title: "Boat", humanSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat.mp3", aiSrc: "https://raw.githubusercontent.com/Ells79/Zen-Toolkit/main/tools/mytape/audio/boat_ai.mp3", humanLyrics: [{ time: 0, text: "BOAT (HUMAN)" }], aiLyrics: [{ time: 0, text: "BOAT (AI)" }] },
@@ -436,7 +418,6 @@
         const seekSlider = document.getElementById('seekSlider');
         const lyricsContainer = document.getElementById('lyrics-container');
 
-        // 动态更新进度条样式的 CSS 变量
         function updateSliderStyle() {
             const percent = seekSlider.value;
             document.documentElement.style.setProperty('--slider-progress', `${percent}%`);
@@ -453,9 +434,7 @@
             const w = canvas.width = 1200, h = canvas.height = 953; 
             ctx.clearRect(0, 0, w, h);
             if (loaded >= 2) {
-                // ells: 修复图层逻辑 - 滚轮必须在磁带壳之上渲染
                 ctx.drawImage(assets.shell, 0, 0, w, h);
-                
                 if (REEL_ON_TOP) {
                     drawReel(config.leftReel.x, config.leftReel.y, rotation);
                     drawReel(config.rightReel.x, config.rightReel.y, rotation);
@@ -546,7 +525,6 @@
             });
         }
 
-        // 交互逻辑
         let isDragging = false, startX, currentRotation = 0;
         const startInt = (x) => { isDragging = true; startX = x; trackDial.style.transition = 'none'; };
         const moveInt = (x) => { if (!isDragging) return; const diff = (x - startX) * 0.12; trackDial.style.transform = `rotate(${currentRotation + diff}deg)`; };
@@ -566,9 +544,9 @@
         trackDial.addEventListener('mousedown', (e) => startInt(e.clientX));
         window.addEventListener('mousemove', (e) => moveInt(e.clientX));
         window.addEventListener('mouseup', (e) => endInt(e.clientX));
-        trackDial.addEventListener('touchstart', (e) => startInt(e.touches[0].clientX));
-        window.addEventListener('touchmove', (e) => moveInt(e.touches[0].clientX));
-        window.addEventListener('touchend', (e) => endInt(e.changedTouches[0].clientX));
+        trackDial.addEventListener('touchstart', (startEvent) => startInt(startEvent.touches[0].clientX));
+        window.addEventListener('touchmove', (moveEvent) => moveInt(moveEvent.touches[0].clientX));
+        window.addEventListener('touchend', (endEvent) => endInt(endEvent.changedTouches[0].clientX));
 
         window.onload = () => { initDial(); initLyrics(playlist[0].humanLyrics); audio.src = playlist[0].humanSrc; draw(); };
     </script>
