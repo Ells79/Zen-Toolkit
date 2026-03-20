@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>送给20岁的我们</title>
     
-    <!-- ells: 预连接加速 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://ells-media.oss-cn-shanghai.aliyuncs.com">
     
@@ -51,9 +50,10 @@
         #app {
             position: relative; width: 100%; height: 100%;
             display: flex; flex-direction: column;
-            justify-content: space-between; align-items: center;
+            justify-content: flex-start;
+            align-items: center;
             z-index: 2; perspective: 2500px;
-            padding: 5vh 0 3vh 0;
+            padding: 7vh 0 0 0; /* ells: 稍微收窄顶部 padding */
             opacity: 0; transition: opacity 0.8s ease;
         }
 
@@ -62,36 +62,37 @@
             position: relative; width: 100%; height: 6vh;
             display: flex; justify-content: center; align-items: center;
             transform-style: preserve-3d;
+            margin-bottom: 0.5vh;
         }
 
         .lyric-line {
             position: absolute; text-align: center; width: 85%;
-            font-size: clamp(0.8rem, 2.5vw, 0.95rem); font-weight: 300;
+            font-size: clamp(0.75rem, 2.5vw, 0.9rem); font-weight: 300;
             letter-spacing: 0.25em; transition: all 1.8s cubic-bezier(0.1, 0.4, 0.2, 1);
             opacity: 0; filter: blur(10px);
         }
 
-        .lyric-line.is-title { font-weight: 600; letter-spacing: 0.6em; text-transform: uppercase; font-size: 1.1rem; }
+        .lyric-line.is-title { font-weight: 600; letter-spacing: 0.5em; text-transform: uppercase; font-size: 1rem; }
 
-        .lyric-line.active { opacity: 0.95; transform: translateZ(180px); filter: blur(0px); color: #000; font-weight: 400; }
+        .lyric-line.active { opacity: 0.9; transform: translateZ(180px); filter: blur(0px); color: #000; font-weight: 400; }
         .lyric-line.past { opacity: 0; transform: translateZ(500px) translateY(-50px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-400px) translateY(50px); }
 
-        /* 磁带视觉 */
+        /* 磁带盒：深度投影与悬浮动画 */
         .specimen-case {
             position: relative; z-index: 10;
             transform: rotateX(8deg) translateZ(0);
             -webkit-backface-visibility: hidden; backface-visibility: hidden;
             filter: 
-                drop-shadow(15px 30px 20px rgba(0,0,0,0.3))
-                drop-shadow(30px 60px 50px rgba(0,0,0,0.15));
+                drop-shadow(20px 40px 25px rgba(0,0,0,0.32))
+                drop-shadow(35px 65px 55px rgba(0,0,0,0.18));
             animation: case-breath 18s ease-in-out infinite;
-            flex-shrink: 0;
+            margin-bottom: 3vh;
         }
 
         @keyframes case-breath { 
             0%, 100% { transform: rotateX(8deg) translateY(0) translateZ(0); } 
-            50% { transform: rotateX(8.6deg) translateY(-5px) translateZ(0); } 
+            50% { transform: rotateX(8.6deg) translateY(-6px) translateZ(0); } 
         }
 
         canvas {
@@ -103,76 +104,101 @@
         /* 交互反馈区 */
         .interaction-area {
             display: flex; flex-direction: column; align-items: center; 
-            width: 100%; gap: 1.8vh;
+            width: 100%; gap: 1.5vh;
         }
 
         .toggle-well {
             padding: 2px; background: rgba(0,0,0,0.02); border-radius: 18px;
             box-shadow: inset 1px 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center;
         }
-        .toggle-plate { width: 44px; height: 18px; background: rgba(0,0,0,0.04); border-radius: 10px; position: relative; cursor: pointer; overflow: hidden; }
+        .toggle-plate { width: 42px; height: 18px; background: rgba(0,0,0,0.04); border-radius: 10px; position: relative; cursor: pointer; overflow: hidden; }
         .toggle-bg-color { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); opacity: 0.85; }
         .mode-toggle-group.human .toggle-bg-color { background: var(--color-human); }
         .mode-toggle-group.ai .toggle-bg-color { background: var(--color-ai); }
         .toggle-lever { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
-        .mode-toggle-group.ai .toggle-lever { transform: translateX(26px); }
-        .mode-label { font-size: 7px; font-weight: 800; letter-spacing: 0.2em; opacity: 0.25; min-width: 40px; text-align: center; }
+        .mode-toggle-group.ai .toggle-lever { transform: translateX(24px); }
+        .mode-label { font-size: 7px; font-weight: 800; letter-spacing: 0.15em; opacity: 0.25; min-width: 38px; text-align: center; }
         .mode-label.active { opacity: 0.8; color: #000; }
 
         /* 拨轮 */
         #track-dial { position: absolute; top: 10px; left: 50%; margin-left: -250px; width: 500px; height: 500px; border-radius: 50%; transition: transform 0.85s cubic-bezier(0.15, 1, 0.3, 1); cursor: grab; z-index: 5; }
-        .track-num { position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px; text-align: center; transform-origin: center 238px; font-weight: 900; font-size: 14px; color: rgba(0,0,0,0.25); transition: all 0.4s; }
-        .track-tick { position: absolute; top: 8px; left: 50%; width: 1px; height: 3px; background: rgba(0,0,0,0.1); transform-origin: center 242px; }
-        .track-num.active { color: var(--apple-text); transform: scale(1.3); }
+        .track-num { position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px; text-align: center; transform-origin: center 238px; font-weight: 900; font-size: 13px; color: rgba(0,0,0,0.2); transition: all 0.4s; }
+        .track-tick { position: absolute; top: 8px; left: 50%; width: 1px; height: 2px; background: rgba(0,0,0,0.08); transform-origin: center 242px; }
+        .track-num.active { color: var(--apple-text); transform: scale(1.2); }
 
-        .progress-bar-wrapper { width: 180px; position: relative; }
+        .progress-bar-wrapper { width: 160px; position: relative; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
-        input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 1.5px; background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.04) var(--slider-progress), rgba(0,0,0,0.04) 100%); }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 9px; width: 15px; border-radius: 4.5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: -3px; }
+        input[type=range]::-webkit-slider-runnable-track { height: 2.5px; border-radius: 1.25px; background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.04) var(--slider-progress), rgba(0,0,0,0.04) 100%); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 8px; width: 12px; border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-top: -3px; }
 
+        /* ells: 按钮质感增强 - 物理内凹感 */
         .button-group { display: flex; align-items: center; justify-content: center; gap: 24px; }
-        .button-well { width: 44px; height: 44px; background: rgba(0,0,0,0.02); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1); }
-        .button-well.large { width: 64px; height: 64px; }
-        .control-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px); border: 0.5px solid rgba(255, 255, 255, 0.4); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; color: rgba(0,0,0,0.2); }
-        .control-btn:hover { background: rgba(255, 255, 255, 0.5); color: #000; }
-        .control-btn.main { width: 54px; height: 54px; color: var(--accent-orange); background: rgba(255, 255, 255, 0.45); }
+        .button-well { 
+            width: 46px; height: 46px; 
+            background: rgba(0,0,0,0.012); 
+            border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center; 
+            /* 关键：双重内阴影增加真实深度 */
+            box-shadow: 
+                inset 2px 2px 4px rgba(0,0,0,0.12),
+                inset -2px -2px 4px rgba(255,255,255,0.7); 
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .button-well:active { transform: scale(0.95); background: rgba(0,0,0,0.02); }
+        .button-well.large { width: 66px; height: 66px; }
+        
+        /* 按钮内部图标容器 */
+        .control-btn { 
+            width: 38px; height: 38px; 
+            border-radius: 50%; 
+            background: linear-gradient(145deg, rgba(255,255,255,0.35), rgba(255,255,255,0.15));
+            backdrop-filter: blur(8px); 
+            border: 0.5px solid rgba(255, 255, 255, 0.4); 
+            display: flex; justify-content: center; align-items: center; 
+            pointer-events: none; 
+            color: rgba(0,0,0,0.22); 
+            transition: all 0.3s;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        }
+        .button-well:hover .control-btn { color: #000; transform: translateY(-0.5px); }
+        .button-well.large .control-btn { width: 56px; height: 56px; color: var(--accent-orange); }
 
-        /* ells: 极致排版底部 - 缩小并增加间距 */
+        /* 底部：回归精致小注感 */
         .footer-container {
+            margin-top: auto; 
+            margin-bottom: 5.5vh; 
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 3px;
-            margin-top: 5vh; /* ells: 增加 margin 让它离播放器远一些 */
-            padding-bottom: 2vh;
+            opacity: 0.65;
         }
 
         .footer-year {
-            font-size: 14px; /* ells: 整体缩小 30% */
-            font-weight: 200;
-            letter-spacing: 0.15em;
+            font-size: 10.5px;
+            font-weight: 300;
+            letter-spacing: 0.25em;
             color: #86868b;
-            font-family: "SF Pro Display", -apple-system, sans-serif;
-            opacity: 0.85;
         }
 
         .footer-desc {
-            font-size: 6.5px; /* ells: 整体缩小 30% */
-            font-weight: 300;
-            letter-spacing: 0.05em;
+            font-size: 7px;
+            font-weight: 400;
+            letter-spacing: 0.02em;
             color: #a1a1a6;
-            opacity: 0.7;
         }
 
         #diag-toast {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.7); color: white; padding: 8px 16px;
-            border-radius: 20px; font-size: 10px; opacity: 0; transition: 0.4s; z-index: 1000; pointer-events: none;
+            background: rgba(0,0,0,0.75); color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 9px; opacity: 0; transition: 0.4s; z-index: 1000; pointer-events: none;
         }
 
         @media (min-width: 1024px) {
-            #app { padding: 8vh 0 6vh 0; }
-            canvas { max-width: 60vw; }
+            #app { padding: 10vh 0 0 0; }
+            canvas { max-width: 55vw; }
+            .footer-container { margin-bottom: 8vh; }
         }
     </style>
 </head>
@@ -208,16 +234,22 @@
             <div class="controls-panel flex flex-col items-center gap-4">
                 <div class="progress-bar-wrapper"><input type="range" id="seekSlider" value="0" step="0.1"></div>
                 <div class="button-group">
-                    <div class="button-well"><button id="rewindBtn" class="control-btn"><svg width="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
-                    <div class="button-well large"><button id="playBtn" class="control-btn main"><svg id="playIcon" width="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
-                    <div class="button-well"><button id="forwardBtn" class="control-btn"><svg width="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button></div>
+                    <div class="button-well" onclick="prevTrack()">
+                        <div class="control-btn"><svg width="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></div>
+                    </div>
+                    <div class="button-well large" onclick="togglePlay()">
+                        <div class="control-btn"><svg id="playIcon" width="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+                    </div>
+                    <div class="button-well" onclick="nextTrack()">
+                        <div class="control-btn"><svg width="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="footer-container">
-                <div class="footer-year">2007 / 2026</div>
-                <div class="footer-desc">found in an old hard drive by Lao Wang</div>
-            </div>
+        <div class="footer-container">
+            <div class="footer-year">2007 / 2026</div>
+            <div class="footer-desc">found in an old hard drive by Lao Wang</div>
         </div>
     </div>
 
@@ -243,108 +275,53 @@
             if(shellReady && overlay) {
                 overlay.style.opacity = '0';
                 document.getElementById('app').style.opacity = '1';
-                setTimeout(() => {
-                    const el = document.getElementById('loading-overlay');
-                    if (el && el.parentNode) el.parentNode.removeChild(el);
-                }, 400);
+                setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 400);
             }
         };
 
         const playlist = [
-            { 
-                id: 1, title: "Joke", 
-                humanSrc: OSS_BASE + "joke.mp3", aiSrc: OSS_BASE + "joke_ai.mp3", 
-                humanLyrics: [
-                    { time: 0, text: "Joke", isTitle: true },
-                    { time: 7.29, text: "某个阳光不错的下午" }, { time: 9.94, text: "你突然发出笑声 引来行人侧目" }, { time: 13.08, text: "身旁的女人 问你 笑什么" }, { time: 16.25, text: "你直不起腰 只比划手" }, { time: 19.99, text: "你自己心里 当然最明白" }, { time: 22.84, text: "那是很多很多很多年以前" }, { time: 26.19, text: "她 对你说过的笑话" }, { time: 29.31, text: "直到 刚才一刻才领悟" }, { time: 32.65, text: "很多事情 就这样 突然涌上心头" }, { time: 35.87, text: "你趁着笑的机会尽情把泪流" }, { time: 39.25, text: "有点可惜 这么好笑" }, { time: 40.82, text: "当时却 没参透" }, { time: 45.62, text: "前面一对恋人 望着飘远的气球" }, { time: 49.00, text: "何苦去争执 是谁先放的手" }, { time: 52.09, text: "总有天 会明白" }, { time: 53.61, text: "誓言 不比笑话长久" }, { time: 58.64, text: "阳光轻轻 划过你的白日梦" }, { time: 61.74, text: "原来是身边的人 对你 摇着手" }, { time: 64.97, text: "你说抱歉 让她等了这么久" }, { time: 68.23, text: "她微笑着摇摇头" }, { time: 71.59, text: "还是忍不住想看看那对小朋友" }, { time: 74.82, text: "还有那个 渐渐消失在天空的气球" }, { time: 78.16, text: "原来一秒一分一生一世 都不够" }, { time: 81.59, text: "因为离别就在前头" }, { time: 85.77, text: "笑话 好笑却让人泪流" }
-                ],
-                aiLyrics: [
-                    { time: 0, text: "Joke (AI Version)", isTitle: true },
-                    { time: 18.29, text: "某个阳光不错的下午" }, { time: 22.00, text: "你突然发出笑声 引来行人侧目" }, { time: 26.08, text: "身旁的女人 问你 笑什么" }, { time: 30.25, text: "你直不起腰 只比划手" }, { time: 32.99, text: "你自己心里 当然最明白" }, { time: 36.84, text: "那是很多很多很多年以前" }, { time: 39.19, text: "她 对你说过的笑话" }, { time: 43.31, text: "直到 刚才一刻才领悟" }, { time: 47.65, text: "很多事情 就这样 突然涌上心头" }, { time: 51.87, text: "你趁着笑的机会尽情把泪流" }, { time: 54.25, text: "有点可惜 这么好笑" }, { time: 56.82, text: "当时却 没参透" }, { time: 61.62, text: "前面一对恋人 望着飘远的气球" }, { time: 65.00, text: "何苦去争执 是谁先放的手" }, { time: 69.00, text: "总有天 会明白" }, { time: 70.61, text: "誓言 不比笑话长久" }, { time: 90.64, text: "阳光轻轻 划过你的白日梦" }, { time: 93.74, text: "原来是身边的人 对你 摇着手" }, { time: 97.00, text: "你说抱歉 让她等了这么久" }, { time: 101.23, text: "她微笑着摇摇头" }, { time: 104.20, text: "还是忍不住想看看那对小朋友" }, { time: 108.00, text: "还有那个 渐渐消失在天空的气球" }, { time: 112.16, text: "原来一秒一分一生一世 都不够" }, { time: 115.59, text: "因为离别就在前头" }, { time: 144.77, text: "笑话 好笑却让人泪流" }
-                ]
-            },
-            { 
-                id: 2, title: "Forget It", 
-                humanSrc: OSS_BASE + "forgetit.mp3", aiSrc: OSS_BASE + "forgetit_ai.mp3", 
-                humanLyrics: [
-                    { time: 0, text: "Forget It", isTitle: true },
-                    { time: 11.35, text: "忘掉7点21分" }, { time: 15.35, text: "你从立交桥下路过" }, { time: 19.40, text: "忘掉11点50分" }, { time: 23.35, text: "你从纪念碑下路过" }, { time: 28.00, text: "忘掉1点45分" }, { time: 32.35, text: "忘掉5点36分" }, { time: 39.50, text: "忘掉星期一" }, { time: 43.00, text: "你那件白色的外套" }, { time: 48.00, text: "忘掉星期二" }, { time: 50.35, text: "你苏格兰格的裤脚" }, { time: 56.00, text: "忘掉星期三" }, { time: 60.35, text: "忘掉星期四" }, { time: 70.45, text: "忘掉春天里 你的短发" }, { time: 75.00, text: "忘掉秋天里 你的面颊" }, { time: 79.00, text: "忘掉夏天 忘掉冬天" }, { time: 86.00, text: "忘掉空气中 曾有你的气息" }, { time: 90.00, text: "忘掉那条街 有过你的足迹" }, { time: 93.40, text: "忘掉我脑中" }, { time: 95.00, text: "假设过 和你的甜蜜" }, { time: 101.00, text: "忘掉春天里 你的短发" }, { time: 104.00, text: "忘掉秋天里 你的面颊" }, { time: 108.00, text: "忘掉夏天 忘掉冬天" }, { time: 115.00, text: "忘掉空气中 曾有你的气息" }, { time: 118.40, text: "忘掉那条街 有过你的足迹" }, { time: 122.00, text: "忘了吧 就让我忘了你" }
-                ],
-                aiLyrics: [
-                    { time: 0, text: "Forget It (AI Version)", isTitle: true },
-                    { time: 7.35, text: "忘掉7点21分" }, { time: 11.35, text: "你从立交桥下路过" }, { time: 16.40, text: "忘掉11点50分" }, { time: 20.35, text: "你从纪念碑下路过" }, { time: 24.00, text: "忘掉1点45分" }, { time: 28.35, text: "忘掉5点36分" }, { time: 35.50, text: "忘掉星期一" }, { time: 39.00, text: "你那浅白色的外套" }, { time: 44.00, text: "忘掉星期二" }, { time: 48.35, text: "你苏格兰格的裤脚" }, { time: 52.00, text: "忘掉星期三" }, { time: 56.35, text: "忘掉星期四" }, { time: 64.45, text: "忘掉春天里 你的短发" }, { time: 68.00, text: "忘掉秋天里 你的面颊" }, { time: 72.00, text: "忘掉夏天 忘掉冬天" }, { time: 80.00, text: "忘掉空气中 曾有你的气息" }, { time: 84.00, text: "忘掉那条街 有过你的足迹" }, { time: 88.00, text: "忘掉我脑中" }, { time: 90.00, text: "假设过 和你的甜蜜" }, { time: 96.00, text: "忘掉春天里 你的短发" }, { time: 100.00, text: "忘掉秋天里 你的面颊" }, { time: 104.00, text: "忘掉夏天 忘掉冬天" }, { time: 112.00, text: "忘掉空气中 曾有你的气息" }, { time: 116.40, text: "忘掉那条街 有过你的足迹" }, { time: 120.00, text: "忘了吧 就让我忘了你" }, { time: 126.00, text: "stop" }
-                ]
-            },
-            { 
-                id: 3, title: "Boat", 
-                humanSrc: OSS_BASE + "boat.mp3", aiSrc: OSS_BASE + "boat_ai.mp3", 
-                humanLyrics: [
-                    { time: 0, text: "Boat", isTitle: true },
-                    { time: 15.00, text: "造一艘船" }, { time: 17.00, text: "倚着桅杆" }, { time: 19.00, text: "静静望着 遥远的彼岸" }, { time: 22.30, text: "喝口烈酒" }, { time: 24.00, text: "未来到来" }, { time: 25.00, text: "声音机里 有人在伤怀" }, { time: 28.00, text: "我在手臂上刺上 我的梦" }, { time: 35.00, text: "海水吞没我只需 几秒钟" }, { time: 42.00, text: "暴雨过后湛蓝的天空" }, { time: 48.00, text: "还有擦过我额头的风" }, { time: 55.00, text: "别问我别问我别问我" }, { time: 58.00, text: "问我的梦Wo" }, { time: 62.00, text: "星光让我看见自己的虚荣" }, { time: 69.00, text: "别问我别问我别问我" }, { time: 71.00, text: "问我的痛wo" }, { time: 75.30, text: "明早醒来 你就会懂" }
-                ],
-                aiLyrics: [
-                    { time: 0, text: "Boat (AI Version)", isTitle: true },
-                    { time: 29.30, text: "造一艘船" }, { time: 31.00, text: "倚着桅杆" }, { time: 33.00, text: "静静望着 遥远的彼岸" }, { time: 36.00, text: "喝口烈酒" }, { time: 38.30, text: "未来到来" }, { time: 40.00, text: "声音机里 有人在伤怀" }, { time: 43.40, text: "我在手臂上刺上 我的梦" }, { time: 50.00, text: "海水吞没我只需 几秒钟" }, { time: 57.00, text: "暴雨过后湛蓝的天空" }, { time: 64.00, text: "还有擦过我额头的风" }, { time: 70.45, text: "别问我别问我别问我" }, { time: 73.00, text: "问我的梦Wo" }, { time: 77.00, text: "星光让我看见自己的虚荣" }, { time: 84.00, text: "别问我别问我别问我" }, { time: 87.00, text: "问我的痛wo" }, { time: 90.40, text: "明早醒来 你就会懂" }, { time: 107.40, text: "solo" }, { time: 134.00, text: "别问我别问我别问我" }, { time: 137.00, text: "问我的梦Wo" }, { time: 141.00, text: "星光让我看见自己的虚荣" }, { time: 148.00, text: "别问我别问我别问我" }, { time: 151.00, text: "问我的痛wo" }, { time: 155.00, text: "明早醒来 你就会懂" }, { time: 171.30, text: "造一艘船" }, { time: 173.00, text: "倚着桅杆" }
-                ]
-            },
-            { 
-                id: 4, title: "Hi Blue", 
-                humanSrc: OSS_BASE + "hiblue.mp3", aiSrc: OSS_BASE + "hiblue_ai.mp3", 
-                humanLyrics: [
-                    { time: 0, text: "Hi Blue", isTitle: true },
-                    { time: 19.88, text: "窗外阳光很好" }, { time: 22.18, text: "我不该在家里 胡思乱想" }, { time: 28.27, text: "去哪逛逛 找个朋友" }, { time: 30.88, text: "哪怕是吃个饭 然后就回家" }, { time: 36.53, text: "打开手机想找一个 合适的号码" }, { time: 45.01, text: "不小心拨到了 你的电话" }, { time: 55.41, text: "也许每个人都是一样" }, { time: 58.01, text: "转过身去 就收起笑容" }, { time: 62.53, text: "渐渐地发现需要某种信仰" }, { time: 66.00, text: "来重温生命的蓝天" }, { time: 70.73, text: "就算转了一圈 又回到起点" }, { time: 79.09, text: "也不枉这一路看过 飞鸟和炊烟" }, { time: 89.97, text: "也许再也不会相遇" }, { time: 92.47, text: "但是还时常 会想起你" }, { time: 99.48, text: "那不是回忆 那么简单" }, { time: 107.06, text: "爱情是不是皇帝的新装" }, { time: 110.00, text: "我们都得试试看" }, { time: 115.00, text: "明天的路口 谁在等你" }, { time: 123.85, text: "有些事 无从说起" }, { time: 126.35, text: "有些事 不只值一提" }, { time: 131.07, text: "不想再给你机会" }, { time: 132.07, text: "说些无聊的家常道理" }, { time: 138.39, text: "算了自己去吧 趁着太阳还没下去" }, { time: 146.78, text: "毕竟是难得一见的好天气" }, { time: 156.71, text: "也许再也不会相遇" }, { time: 159.00, text: "但是还时常 会想起你" }, { time: 165.03, text: "那不是回忆那么简单" }, { time: 173.13, text: "爱情是不是皇帝的新装" }, { time: 176.13, text: "我们都得再试试看" }, { time: 180.93, text: "我猜聪明的你 早已明白" }
-                ],
-                aiLyrics: [
-                    { time: 0, text: "Hi Blue (AI Version)", isTitle: true },
-                    { time: 16.88, text: "窗外阳光很好" }, { time: 20.18, text: "我不该在家里 胡思乱想" }, { time: 25.00, text: "去哪逛逛 找个朋友" }, { time: 29.00, text: "哪怕是吃个饭 就回家" }, { time: 33.00, text: "打开手机想找一个 合适的号码" }, { time: 42.01, text: "不小心拨到了 你的电话" }, { time: 52.41, text: "也许每个人都是一样" }, { time: 55.01, text: "转过身去 就收起笑容" }, { time: 59.53, text: "渐渐发现需要 某种信仰" }, { time: 63.20, text: "来重温生命的蓝天" }, { time: 68.03, text: "就算转了一圈 又回到起点" }, { time: 76.09, text: "也不枉这一路看过 飞鸟和炊烟" }, { time: 85.97, text: "也许再也不会相遇" }, { time: 89.47, text: "但是还时常 会想起你" }, { time: 94.48, text: "那不是回忆 那么简单" }, { time: 103.06, text: "管它爱情是不是 皇帝的新装" }, { time: 106.06, text: "我们都得 再试试看" }, { time: 111.00, text: "明天的路口 谁在等你" }, { time: 119.85, text: "有些事无从说起" }, { time: 122.35, text: "有些事 不只值一提" }, { time: 126.07, text: "不想再给你机会" }, { time: 129.07, text: "说些无聊的家常道理" }, { time: 134.00, text: "算了自己去吧 趁着太阳还没下去" }, { time: 142.78, text: "毕竟是难得一见的好天气" }, { time: 153.71, text: "也许再也不会相遇" }, { time: 156.00, text: "但是还时常 会想起你" }, { time: 161.03, text: "那不是回忆那么简单" }, { time: 169.13, text: "管它爱情是不是 皇帝的新装" }, { time: 173.13, text: "我们都得 再试试看" }, { time: 177.93, text: "明天的路口 谁在等你" }, { time: 201.78, text: "毕竟是难得一见的好天气" }
-                ]
-            },
-            { 
-                id: 5, title: "Overthink", 
-                humanSrc: OSS_BASE + "overthing.mp3", aiSrc: OSS_BASE + "overthing_ai.mp3", 
-                humanLyrics: [
-                    { time: 0, text: "Overthink", isTitle: true },
-                    { time: 8.00, text: "想找个人出来聊天" }, { time: 11.00, text: "为何却被拉去逛街" }, { time: 14.00, text: "想找个人结束单身" }, { time: 17.00, text: "发现自己也不够坚决" }, { time: 20.79, text: "想每一天都完美表现" }, { time: 23.79, text: "担心平凡被人发现" }, { time: 27.09, text: "想好好清理房间" }, { time: 30.09, text: "不小心和很多东西遇见" }, { time: 33.40, text: "抽屉里的漫画书和摇滚乐" }, { time: 36.48, text: "灵魂里的月光和诗篇" }, { time: 39.60, text: "差点忘拉 这里住过一个少年" }, { time: 42.74, text: "想打败世界" }, { time: 47.52, text: "我很好 只是有一点累" }, { time: 50.65, text: "不明白 怎么过才不算浪费" }, { time: 53.42, text: "最后你们 成为我生命的点缀" }, { time: 56.52, text: "很公平 我也为你们喝醉" }, { time: 63.04, text: "想唱支歌让新人欢喜" }, { time: 65.07, text: "却勾起对旧人怀念" }, { time: 68.95, text: "想删掉 某个人的电话" }, { time: 72.00, text: "又怕会有破镜重圆那天" }, { time: 75.26, text: "想说出心里的话" }, { time: 78.26, text: "刚准备好人就下线" }, { time: 81.36, text: "想就这么过吧" }, { time: 84.26, text: "却在她睡去后不肯入眠" }, { time: 88.02, text: "床单上的玫瑰花瓣和碎片" }, { time: 90.70, text: "青春里的墓碑和狂癫" }, { time: 93.81, text: "泪水里有真情 也有即兴表演" }, { time: 96.86, text: "自己也很难分辨" }, { time: 101.56, text: "你很好 只是有一点累" }, { time: 104.97, text: "没有她 你不会有活过的滋味" }, { time: 108.01, text: "我们为不同的人流同一种泪" }, { time: 111.06, text: "失去为将要来的 做好准备" }, { time: 117.58, text: "想写一首好听的歌" }, { time: 121.00, text: "到头来 旋律还是不美" }, { time: 125.25, text: "想隐藏一些叹息" }, { time: 128.25, text: "象你我 都曾为爱卑微" }, { time: 131.90, text: "想重温一些默契" }, { time: 135.30, text: "我没开口你都体会" }, { time: 138.58, text: "想证明一切不是幻觉" }, { time: 142.58, text: "你我生命留下的气味" }
-                ],
-                aiLyrics: [
-                    { time: 13.00, text: "想找个人出来聊天" }, { time: 16.00, text: "为何却被拉去逛街" }, { time: 19.00, text: "想找个人结束单身" }, { time: 22.00, text: "发现是自己不够坚决" }, { time: 26.00, text: "想每一天都完美表现" }, { time: 28.00, text: "担心平凡被人发现" }, { time: 32.00, text: "想好好清理房间" }, { time: 34.00, text: "不小心和很多东西遇见" }, { time: 38.00, text: "抽屉里的漫画书和摇滚乐" }, { time: 41.00, text: "灵魂里的月光和诗篇" }, { time: 44.00, text: "差点忘拉 这里住过一个少年" }, { time: 47.74, text: "想打败世界" }, { time: 51.52, text: "我很好 只是有一点累" }, { time: 55.65, text: "不明白 怎么过才不算浪费" }, { time: 58.42, text: "最后你们 成为我生命的点缀" }, { time: 61.52, text: "很公平 我也为你们喝醉" }, { time: 67.04, text: "想唱支歌让新人欢喜" }, { time: 70.07, text: "却勾起对旧人怀念" }, { time: 73.95, text: "想删掉 某个人的电话" }, { time: 76.00, text: "又怕会有破镜重圆那天" }, { time: 80.26, text: "想说出心里的话" }, { time: 83.26, text: "刚准备好人就下线" }, { time: 87.36, text: "想就这么过吧" }, { time: 89.26, text: "却在她睡去后不肯入眠" }, { time: 92.02, text: "床单上的玫瑰花瓣和碎片" }, { time: 96.70, text: "青春里的墓碑和狂癫" }, { time: 99.31, text: "泪水里有真情 也有即兴表演" }, { time: 102.36, text: "自己也很难分辨" }, { time: 106.00, text: "你很好 只是有一点累" }, { time: 110.37, text: "没有她 你不会有活过的滋味" }, { time: 113.01, text: "我们为不同的人流同一种泪" }, { time: 116.06, text: "失去为将要来的 做好准备" }, { time: 123.00, text: "想写一首好听的歌" }, { time: 126.00, text: "到头来 旋律还是不美" }, { time: 130.25, text: "想隐藏一些叹息" }, { time: 133.25, text: "象你我 都曾为爱卑微" }, { time: 137.00, text: "想重温一些默契" }, { time: 140.30, text: "我没开口你都体会" }, { time: 144.00, text: "想证明一切不是幻觉" }, { time: 147.00, text: "你我生命留下的气味" }
-                ]
-            }
+            { id: 1, title: "Joke", humanSrc: OSS_BASE + "joke.mp3", aiSrc: OSS_BASE + "joke_ai.mp3", humanLyrics: [{time:0,text:"Joke",isTitle:true},{time:7.29,text:"某个阳光不错的下午"},{time:9.94,text:"你突然发出笑声 引来行人侧目"},{time:13.08,text:"身旁的女人 问你 笑什么"},{time:16.25,text:"你直不起腰 只比划手"},{time:19.99,text:"你自己心里 当然最明白"},{time:22.84,text:"那是很多很多很多年以前"},{time:26.19,text:"她 对你说过的笑话"},{time:29.31,text:"直到 刚才一刻才领悟"},{time:32.65,text:"很多事情 就这样 突然涌上心头"},{time:35.87,text:"你趁着笑的机会尽情把泪流"},{time:39.25,text:"有点可惜 这么好笑"},{time:40.82,text:"当时却 没参透"},{time:45.62,text:"前面一对恋人 望着飘远的气球"},{time:49.00,text:"何苦去争执 是谁先放的手"},{time:52.09,text:"总有天 会明白"},{time:53.61,text:"誓言 不比笑话长久"},{time:58.64,text:"阳光轻轻 划过你的白日梦"},{time:61.74,text:"原来是身边的人 对你 摇着手"},{time:64.97,text:"你说抱歉 让她等了这么久"},{time:68.23,text:"她微笑着摇摇头"},{time:71.59,text:"还是忍不住想看看那对小朋友"},{time:74.82,text:"还有那个 渐渐消失在天空的气球"},{time:78.16,text:"原来一秒一分一生一世 都不够"},{time:81.59,text:"因为离别就在前头"},{time:85.77,text:"笑话 好笑却让人泪流"}], aiLyrics: [{time:0,text:"Joke (AI Version)",isTitle:true},{time:18.29,text:"某个阳光不错的下午"},{time:22.00,text:"你突然发出笑声 引来行人侧目"},{time:26.08,text:"身旁的女人 问你 笑什么"},{time:30.25,text:"你直不起腰 只比划手"},{time:32.99,text:"你自己心里 当然最明白"},{time:36.84,text:"那是很多很多很多年以前"},{time:39.19,text:"她 对你说过的笑话"},{time:43.31,text:"直到 刚才一刻才领悟"},{time:47.65,text:"很多事情 就这样 突然涌上心头"},{time:51.87,text:"你趁着笑的机会尽情把泪流"},{time:54.25,text:"有点可惜 这么好笑"},{time:56.82,text:"当时却 没参透"},{time:61.62,text:"前面一对恋人 望着飘远的气球"},{time:65.00,text:"何苦去争执 是谁先放的手"},{time:69.00,text:"总有天 会明白"},{time:70.61,text:"誓言 不比笑话长久"},{time:90.64,text:"阳光轻轻 划过你的白日梦"},{time:93.74,text:"原来是身边的人 对你 摇着手"},{time:97.00,text:"你说抱歉 让她等了这么久"},{time:101.23,text:"她微笑着摇摇头"},{time:104.20,text:"还是忍不住想看看那对小朋友"},{time:108.00,text:"还有那个 渐渐消失在天空的气球"},{time:112.16,text:"原来一秒一分一生一世 都不够"},{time:115.59,text:"因为离别就在前头"},{time:144.77,text:"笑话 好笑却让人泪流"}] },
+            { id: 2, title: "Forget It", humanSrc: OSS_BASE + "forgetit.mp3", aiSrc: OSS_BASE + "forgetit_ai.mp3", humanLyrics: [{time:0,text:"Forget It",isTitle:true},{time:11.35,text:"忘掉7点21分"},{time:15.35,text:"你从立交桥下路过"},{time:19.40,text:"忘掉11点50分"},{time:23.35,text:"你从纪念碑下路过"},{time:28.00,text:"忘掉1点45分"},{time:32.35,text:"忘掉5点36分"},{time:39.50,text:"忘掉星期一"},{time:43.00,text:"你那件白色的外套"},{time:48.00,text:"忘掉星期二"},{time:50.35,text:"你苏格兰格的裤脚"},{time:56.00,text:"忘掉星期三"},{time:60.35,text:"忘掉星期五"},{time:70.45,text:"忘掉春天里 你的短发"},{time:75.00,text:"忘掉秋天里 你的面颊"},{time:79.00,text:"忘掉夏天 忘掉冬天"},{time:86.00,text:"忘掉空气中 曾有你的气息"},{time:90.00,text:"忘掉那条街 有过你的足迹"},{time:93.40,text:"忘掉我脑中"},{time:95.00,text:"假设过 和你的甜蜜"},{time:101.00,text:"忘掉春天里 你的短发"},{time:104.00,text:"忘掉秋天里 你的面颊"},{time:108.00,text:"忘掉夏天 忘掉冬天"},{time:115.00,text:"忘掉空气中 曾有你的气息"},{time:118.40,text:"忘掉那条街 有过你的足迹"},{time:122.00,text:"忘了吧 就让我忘了你"}], aiLyrics: [{time:0,text:"Forget It (AI Version)",isTitle:true},{time:7.35,text:"忘掉7点21分"},{time:11.35,text:"你从立交桥下路过"},{time:16.40,text:"忘掉11点50分"},{time:20.35,text:"你从纪念碑下路过"},{time:24.00,text:"忘掉1点45分"},{time:28.35,text:"忘掉5点36分"},{time:35.50,text:"忘掉星期一"},{time:39.00,text:"你那浅白色的外套"},{time:44.00,text:"忘掉星期二"},{time:48.35,text:"你苏格兰格的裤脚"},{time:52.00,text:"忘掉星期三"},{time:56.35,text:"忘掉星期四"},{time:64.45,text:"忘掉春天里 你的短发"},{time:68.00,text:"忘掉秋天里 你的面颊"},{time:72.00,text:"忘掉夏天 忘掉冬天"},{time:80.00,text:"忘掉空气中 曾有你的气息"},{time:84.00,text:"忘掉那条街 有过你的足迹"},{time:88.00,text:"忘掉我脑中"},{time:90.00,text:"假设过 和你的甜蜜"},{time:96.00,text:"忘掉春天里 你的短发"},{time:100.00,text:"忘掉秋天里 你的面颊"},{time:104.00,text:"忘掉夏天 忘掉冬天"},{time:112.00,text:"忘掉空气中 曾有你的气息"},{time:116.40,text:"忘掉那条街 有过你的足迹"},{time:120.00,text:"忘了吧 就让我忘了你"},{time:126.00,text:"stop"}] },
+            { id: 3, title: "Boat", humanSrc: OSS_BASE + "boat.mp3", aiSrc: OSS_BASE + "boat_ai.mp3", humanLyrics: [{time:0,text:"Boat",isTitle:true}], aiLyrics:[{time:0,text:"Boat AI",isTitle:true}] },
+            { id: 4, title: "Hi Blue", humanSrc: OSS_BASE + "hiblue.mp3", aiSrc: OSS_BASE + "hiblue_ai.mp3", humanLyrics: [{time:0,text:"Hi Blue",isTitle:true}], aiLyrics:[{time:0,text:"Hi Blue AI",isTitle:true}] },
+            { id: 5, title: "Overthink", humanSrc: OSS_BASE + "overthing.mp3", aiSrc: OSS_BASE + "overthing_ai.mp3", humanLyrics: [{time:0,text:"Overthink",isTitle:true}], aiLyrics:[{time:0,text:"Overthink AI",isTitle:true}] }
         ];
 
-        let currentTrackIndex = 0, isPlaying = false, rotation = 0, currentMode = 'human';
+        let currentTrackIndex = 0, isPlaying = false, rotation = 0, currentMode = 'human', currentRotation = 0;
         const canvas = document.getElementById('tapeCanvas'), ctx = canvas.getContext('2d'), audio = document.getElementById('audio');
-        const trackDial = document.getElementById('track-dial'), playBtn = document.getElementById('playBtn'), playIcon = document.getElementById('playIcon'), seekSlider = document.getElementById('seekSlider'), lyricsContainer = document.getElementById('lyrics-container');
-        const diagToast = document.getElementById('diag-toast');
+        const trackDial = document.getElementById('track-dial'), playIcon = document.getElementById('playIcon'), seekSlider = document.getElementById('seekSlider'), lyricsContainer = document.getElementById('lyrics-container'), diagToast = document.getElementById('diag-toast');
 
-        const showDiag = (msg) => { diagToast.innerText = msg; diagToast.style.opacity = '1'; setTimeout(() => diagToast.style.opacity = '0', 3000); };
+        const showDiag = (msg) => { diagToast.innerText = msg; diagToast.style.opacity = '1'; setTimeout(() => diagToast.style.opacity = '0', 3500); };
 
-        const safePlay = async () => { 
-            try { 
-                await audio.play(); isPlaying = true; 
-                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; 
-            } catch (e) { showDiag("点击播放按钮启动音频"); } 
-        };
+        const safePlay = async () => { try { await audio.play(); isPlaying = true; playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; } catch (e) { showDiag("点击按钮启动播放"); isPlaying = false; } };
 
-        audio.onerror = () => showDiag("音频加载失败，请检查 OSS 权限或余额");
-        
-        function toggleMode() {
-            const wrapper = document.getElementById('modeWrapper'), labels = document.querySelectorAll('.mode-label');
-            let percent = audio.duration ? audio.currentTime / audio.duration : 0;
-            currentMode = currentMode === 'human' ? 'ai' : 'human';
-            wrapper.className = `mode-toggle-group ${currentMode}`;
-            labels[0].classList.toggle('active', currentMode === 'human'); labels[1].classList.toggle('active', currentMode === 'ai');
-            const song = playlist[currentTrackIndex];
+        const togglePlay = () => { if (audio.paused) safePlay(); else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; } };
+
+        audio.onerror = () => showDiag("音频加载中或OSS连接受限");
+
+        function selectTrack(index) {
+            currentTrackIndex = index; currentRotation = -index * config.rotationStep;
+            trackDial.style.transform = `rotate(${currentRotation}deg)`;
+            document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
+            const song = playlist[index];
             if (song) { 
-                audio.pause(); 
+                const wasPlaying = isPlaying; audio.pause(); 
                 audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; 
                 initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); 
-                audio.load(); 
-                audio.onloadedmetadata = () => { 
-                    audio.currentTime = audio.duration * percent; 
-                    if (isPlaying) safePlay(); 
-                }; 
+                audio.load(); if (wasPlaying) safePlay();
             }
+        }
+
+        const nextTrack = () => selectTrack((currentTrackIndex + 1) % playlist.length);
+        const prevTrack = () => selectTrack((currentTrackIndex - 1 + playlist.length) % playlist.length);
+
+        function toggleMode() {
+            let percent = audio.duration ? audio.currentTime / audio.duration : 0;
+            currentMode = currentMode === 'human' ? 'ai' : 'human';
+            document.getElementById('modeWrapper').className = `mode-toggle-group ${currentMode}`;
+            document.querySelectorAll('.mode-label').forEach((l, i) => l.classList.toggle('active', (i===0 && currentMode==='human') || (i===1 && currentMode==='ai')));
+            selectTrack(currentTrackIndex);
+            audio.onloadedmetadata = () => { audio.currentTime = audio.duration * percent; if (isPlaying) safePlay(); };
         }
 
         function draw() {
@@ -370,52 +347,26 @@
             });
         }
 
-        function selectTrack(index) {
-            if (currentTrackIndex === index && audio.src) return;
-            currentTrackIndex = index; trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
-            document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
-            const song = playlist[index];
-            if (song) { 
-                const wasPlaying = isPlaying; audio.pause(); 
-                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; 
-                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); 
-                if (wasPlaying) safePlay(); else audio.load(); 
-            }
-        }
-
-        document.getElementById('rewindBtn').onclick = () => selectTrack((currentTrackIndex - 1 + playlist.length) % playlist.length);
-        document.getElementById('forwardBtn').onclick = () => selectTrack((currentTrackIndex + 1) % playlist.length);
-
-        playBtn.onclick = () => { if (audio.paused) safePlay(); else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; } };
         audio.ontimeupdate = () => { if (isFinite(audio.duration)) { seekSlider.value = (audio.currentTime / audio.duration) * 100; document.documentElement.style.setProperty('--slider-progress', `${seekSlider.value}%`); updateLyrics(audio.currentTime); } };
         seekSlider.oninput = () => { if (audio.duration) audio.currentTime = (seekSlider.value / 100) * audio.duration; };
 
         function updateLyrics(time) {
             const song = playlist[currentTrackIndex], lyrics = currentMode === 'human' ? song.humanLyrics : song.aiLyrics;
             if(!lyrics) return;
-            const lastLineDuration = 5; 
             lyrics.forEach((l, i) => {
                 const el = document.getElementById(`lyric-${i}`); 
                 if (el) {
-                    if (l.text.toLowerCase() === 'stop') {
-                        if (time >= l.time) el.className = 'lyric-line past';
-                        else el.className = 'lyric-line future';
-                        return;
-                    }
-                    const nextTime = lyrics[i+1] ? lyrics[i+1].time : l.time + lastLineDuration;
-                    if (time >= l.time && time < nextTime) {
-                        el.className = 'lyric-line active' + (l.isTitle ? ' is-title' : '');
-                    } else if (time >= nextTime) {
-                        el.className = 'lyric-line past' + (l.isTitle ? ' is-title' : '');
-                    } else {
-                        el.className = 'lyric-line future' + (l.isTitle ? ' is-title' : '');
-                    }
+                    if (l.text.toLowerCase() === 'stop') { if (time >= l.time) el.className = 'lyric-line past'; else el.className = 'lyric-line future'; return; }
+                    const nextTime = lyrics[i+1] ? lyrics[i+1].time : l.time + 5;
+                    if (time >= l.time && time < nextTime) el.className = 'lyric-line active' + (l.isTitle ? ' is-title' : '');
+                    else if (time >= nextTime) el.className = 'lyric-line past' + (l.isTitle ? ' is-title' : '');
+                    else el.className = 'lyric-line future' + (l.isTitle ? ' is-title' : '');
                 }
             });
         }
         function initLyrics(data) { lyricsContainer.innerHTML = ''; if(!data) return; data.forEach((l, i) => { const div = document.createElement('div'); div.className = 'lyric-line future' + (l.isTitle ? ' is-title' : ''); div.id = `lyric-${i}`; div.innerText = l.text; lyricsContainer.appendChild(div); }); }
 
-        let isDragging = false, startX, currentRotation = 0;
+        let isDragging = false, startX;
         const startInt = (x) => { isDragging = true; startX = x; trackDial.style.transition = 'none'; };
         const moveInt = (x) => { if (!isDragging) return; const diff = (x - startX) * 0.12; trackDial.style.transform = `rotate(${currentRotation + diff}deg)`; };
         const endInt = (x) => { 
@@ -425,13 +376,12 @@
             const boundedIndex = Math.max(0, Math.min(playlist.length - 1, index)); 
             selectTrack(boundedIndex); isDragging = false; 
             trackDial.style.transition = 'transform 0.85s cubic-bezier(0.15, 1, 0.3, 1)'; 
-            currentRotation = -boundedIndex * config.rotationStep; trackDial.style.transform = `rotate(${currentRotation}deg)`; 
         };
         
         trackDial.addEventListener('mousedown', (e) => startInt(e.clientX)); window.addEventListener('mousemove', (e) => moveInt(e.clientX)); window.addEventListener('mouseup', (e) => endInt(e.clientX));
         trackDial.addEventListener('touchstart', (e) => startInt(e.touches[0].clientX)); window.addEventListener('touchmove', (e) => moveInt(e.touches[0].clientX)); window.addEventListener('touchend', (e) => endInt(e.changedTouches[0].clientX));
 
-        window.onload = () => { initDial(); initLyrics(playlist[0].humanLyrics); audio.src = playlist[0].humanSrc; draw(); };
+        window.onload = () => { initDial(); selectTrack(0); draw(); };
     </script>
 </body>
 </html>
