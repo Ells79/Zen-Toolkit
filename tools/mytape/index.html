@@ -31,7 +31,7 @@
             touch-action: none;
         }
 
-        /* 加载遮罩 */
+        /* 极致加载遮罩 */
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #f7f7f9; display: flex; flex-direction: column;
@@ -51,105 +51,128 @@
         #app {
             position: relative; width: 100%; height: 100%;
             display: flex; flex-direction: column;
-            justify-content: flex-start; align-items: center;
+            justify-content: space-between; align-items: center;
             z-index: 2; perspective: 2500px;
-            padding: 10vh 0 4vh 0;
-            opacity: 0; transition: opacity 0.6s ease;
+            padding: 5vh 0 3vh 0;
+            opacity: 0; transition: opacity 0.8s ease;
         }
 
-        /* 3D 穿梭歌词容器 */
+        /* 3D 穿梭歌词 */
         #lyrics-container {
-            position: relative; width: 100%; height: 8vh;
+            position: relative; width: 100%; height: 6vh;
             display: flex; justify-content: center; align-items: center;
-            transform-style: preserve-3d; margin-bottom: 2vh;
+            transform-style: preserve-3d;
         }
 
         .lyric-line {
             position: absolute; text-align: center; width: 85%;
-            font-size: clamp(0.85rem, 3vw, 1rem); font-weight: 300;
+            font-size: clamp(0.8rem, 2.5vw, 0.95rem); font-weight: 300;
             letter-spacing: 0.25em; transition: all 1.8s cubic-bezier(0.1, 0.4, 0.2, 1);
             opacity: 0; filter: blur(10px);
         }
 
-        /* 曲名特有样式 */
         .lyric-line.is-title { font-weight: 600; letter-spacing: 0.6em; text-transform: uppercase; font-size: 1.1rem; }
 
         .lyric-line.active { opacity: 0.95; transform: translateZ(180px); filter: blur(0px); color: #000; font-weight: 400; }
         .lyric-line.past { opacity: 0; transform: translateZ(500px) translateY(-50px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-400px) translateY(50px); }
 
-        /* 磁带视觉：深度阴影 */
+        /* 磁带视觉 */
         .specimen-case {
             position: relative; z-index: 10;
             transform: rotateX(8deg) translateZ(0);
             -webkit-backface-visibility: hidden; backface-visibility: hidden;
             filter: 
-                drop-shadow(20px 40px 25px rgba(0,0,0,0.35))
-                drop-shadow(35px 70px 60px rgba(0,0,0,0.2));
-            margin-bottom: 4vh; 
+                drop-shadow(15px 30px 20px rgba(0,0,0,0.3))
+                drop-shadow(30px 60px 50px rgba(0,0,0,0.15));
             animation: case-breath 18s ease-in-out infinite;
+            flex-shrink: 0;
         }
 
         @keyframes case-breath { 
             0%, 100% { transform: rotateX(8deg) translateY(0) translateZ(0); } 
-            50% { transform: rotateX(8.8deg) translateY(-8px) translateZ(0); } 
+            50% { transform: rotateX(8.6deg) translateY(-5px) translateZ(0); } 
         }
 
         canvas {
-            max-width: 80vw; max-height: 38vh;
+            max-width: 75vw; max-height: 35vh;
             display: block; border-radius: 40px;
             image-rendering: -webkit-optimize-contrast;
         }
 
-        #diag-toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
-            border-radius: 20px; font-size: 11px; letter-spacing: 0.1em;
-            opacity: 0; transition: 0.4s; z-index: 1000; pointer-events: none;
-        }
-
+        /* 交互反馈区 */
         .interaction-area {
             display: flex; flex-direction: column; align-items: center; 
-            width: 100%; gap: 2.5vh; padding-bottom: 2vh;
+            width: 100%; gap: 1.8vh;
         }
 
-        .mode-toggle-container { display: flex; align-items: center; gap: 12px; }
         .toggle-well {
-            padding: 2.5px; background: rgba(0,0,0,0.02); border-radius: 18px;
-            box-shadow: inset 1px 2px 4px rgba(0,0,0,0.08); display: flex; align-items: center;
+            padding: 2px; background: rgba(0,0,0,0.02); border-radius: 18px;
+            box-shadow: inset 1px 2px 4px rgba(0,0,0,0.06); display: flex; align-items: center;
         }
-        .toggle-plate { width: 50px; height: 20px; background: rgba(0,0,0,0.04); border-radius: 10px; position: relative; cursor: pointer; overflow: hidden; }
+        .toggle-plate { width: 44px; height: 18px; background: rgba(0,0,0,0.04); border-radius: 10px; position: relative; cursor: pointer; overflow: hidden; }
         .toggle-bg-color { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); opacity: 0.85; }
         .mode-toggle-group.human .toggle-bg-color { background: var(--color-human); }
         .mode-toggle-group.ai .toggle-bg-color { background: var(--color-ai); }
-        .toggle-lever { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: linear-gradient(145deg, #f0f0f3, #dcdce0); border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.1); transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
-        .mode-toggle-group.ai .toggle-lever { transform: translateX(30px); }
-        .mode-label { font-size: 8px; font-weight: 800; letter-spacing: 0.22em; opacity: 0.2; transition: 0.4s; min-width: 45px; text-align: center; }
-        .mode-label.active { opacity: 0.65; color: #000; }
+        .toggle-lever { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .mode-toggle-group.ai .toggle-lever { transform: translateX(26px); }
+        .mode-label { font-size: 7px; font-weight: 800; letter-spacing: 0.2em; opacity: 0.25; min-width: 40px; text-align: center; }
+        .mode-label.active { opacity: 0.8; color: #000; }
 
-        .selector-box { position: relative; width: 100%; height: 50px; overflow: visible; mask-image: linear-gradient(to right, transparent, black 35%, black 65%, transparent); }
+        /* 拨轮 */
         #track-dial { position: absolute; top: 10px; left: 50%; margin-left: -250px; width: 500px; height: 500px; border-radius: 50%; transition: transform 0.85s cubic-bezier(0.15, 1, 0.3, 1); cursor: grab; z-index: 5; }
         .track-num { position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px; text-align: center; transform-origin: center 238px; font-weight: 900; font-size: 14px; color: rgba(0,0,0,0.25); transition: all 0.4s; }
-        .track-tick { position: absolute; top: 8px; left: 50%; width: 1px; height: 3px; background: rgba(0,0,0,0.15); transform-origin: center 242px; }
-        .track-num.active { color: var(--apple-text); transform: scale(1.35); }
+        .track-tick { position: absolute; top: 8px; left: 50%; width: 1px; height: 3px; background: rgba(0,0,0,0.1); transform-origin: center 242px; }
+        .track-num.active { color: var(--apple-text); transform: scale(1.3); }
 
-        .progress-bar-wrapper { width: 200px; margin-bottom: 1vh; position: relative; }
+        .progress-bar-wrapper { width: 180px; position: relative; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
-        input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.05) var(--slider-progress), rgba(0,0,0,0.05) 100%); }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 10px; width: 18px; border-radius: 5px; background: #fbfbfb; box-shadow: 0 2px 5px rgba(0,0,0,0.08); margin-top: -3px; }
+        input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 1.5px; background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.04) var(--slider-progress), rgba(0,0,0,0.04) 100%); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 9px; width: 15px; border-radius: 4.5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: -3px; }
 
-        .button-group { display: flex; align-items: center; justify-content: center; gap: 28px; }
-        .button-well { width: 50px; height: 50px; background: rgba(0,0,0,0.03); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: inset 2.5px 3.5px 7px rgba(0,0,0,0.18), inset -1.5px -2px 4px rgba(255,255,255,0.75); }
-        .button-well.large { width: 72px; height: 72px; }
-        .control-btn { width: 42px; height: 42px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(20px); border: 0.5px solid rgba(255, 255, 255, 0.4); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.4s; color: rgba(0,0,0,0.18); }
-        .control-btn:hover { background: rgba(255, 255, 255, 0.35); color: #000; }
-        .control-btn.main { width: 62px; height: 62px; color: var(--accent-orange); background: rgba(255, 255, 255, 0.35); }
+        .button-group { display: flex; align-items: center; justify-content: center; gap: 24px; }
+        .button-well { width: 44px; height: 44px; background: rgba(0,0,0,0.02); border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.1); }
+        .button-well.large { width: 64px; height: 64px; }
+        .control-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px); border: 0.5px solid rgba(255, 255, 255, 0.4); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s; color: rgba(0,0,0,0.2); }
+        .control-btn:hover { background: rgba(255, 255, 255, 0.5); color: #000; }
+        .control-btn.main { width: 54px; height: 54px; color: var(--accent-orange); background: rgba(255, 255, 255, 0.45); }
 
-        .status-footer { font-size: 7px; letter-spacing: 0.25em; color: #808080; text-transform: uppercase; font-weight: 400; margin-top: 3vh; }
+        /* ells: 极致排版底部 - 缩小并增加间距 */
+        .footer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            margin-top: 5vh; /* ells: 增加 margin 让它离播放器远一些 */
+            padding-bottom: 2vh;
+        }
+
+        .footer-year {
+            font-size: 14px; /* ells: 整体缩小 30% */
+            font-weight: 200;
+            letter-spacing: 0.15em;
+            color: #86868b;
+            font-family: "SF Pro Display", -apple-system, sans-serif;
+            opacity: 0.85;
+        }
+
+        .footer-desc {
+            font-size: 6.5px; /* ells: 整体缩小 30% */
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            color: #a1a1a6;
+            opacity: 0.7;
+        }
+
+        #diag-toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 10px; opacity: 0; transition: 0.4s; z-index: 1000; pointer-events: none;
+        }
 
         @media (min-width: 1024px) {
-            #app { padding: 12vh 0 6vh 0; }
-            canvas { max-width: 65vw; }
+            #app { padding: 8vh 0 6vh 0; }
+            canvas { max-width: 60vw; }
         }
     </style>
 </head>
@@ -160,29 +183,40 @@
     </div>
 
     <div id="diag-toast"></div>
-
     <div class="noise-bg"></div>
 
     <div id="app">
         <div id="lyrics-container"></div>
+        
         <div class="specimen-case"><canvas id="tapeCanvas"></canvas></div>
+        
         <div class="interaction-area">
-            <div class="mode-toggle-container">
+            <div class="mode-toggle-container flex items-center gap-3">
                 <span class="mode-label active">HUMAN</span>
                 <div class="toggle-well">
-                    <div id="modeWrapper" class="mode-toggle-group human"><div class="toggle-plate" onclick="toggleMode()"><div class="toggle-bg-color"></div><div class="toggle-lever"></div></div></div>
+                    <div id="modeWrapper" class="mode-toggle-group human">
+                        <div class="toggle-plate" onclick="toggleMode()"><div class="toggle-bg-color"></div><div class="toggle-lever"></div></div>
+                    </div>
                 </div>
                 <span class="mode-label">AI</span>
             </div>
-            <div class="selector-box"><div id="track-dial"></div></div>
-            <div class="controls-panel">
+            
+            <div class="selector-box relative w-full h-[40px] overflow-visible">
+                <div id="track-dial"></div>
+            </div>
+            
+            <div class="controls-panel flex flex-col items-center gap-4">
                 <div class="progress-bar-wrapper"><input type="range" id="seekSlider" value="0" step="0.1"></div>
                 <div class="button-group">
-                    <div class="button-well"><button id="rewindBtn" class="control-btn"><svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
-                    <div class="button-well large"><button id="playBtn" class="control-btn main"><svg id="playIcon" width="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
-                    <div class="button-well"><button id="forwardBtn" class="control-btn"><svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button></div>
+                    <div class="button-well"><button id="rewindBtn" class="control-btn"><svg width="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
+                    <div class="button-well large"><button id="playBtn" class="control-btn main"><svg id="playIcon" width="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+                    <div class="button-well"><button id="forwardBtn" class="control-btn"><svg width="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg></button></div>
                 </div>
-                <div id="statusText" class="status-footer">Sealed in 2007 / Opened in 2026</div>
+            </div>
+
+            <div class="footer-container">
+                <div class="footer-year">2007 / 2026</div>
+                <div class="footer-desc">found in an old hard drive by Lao Wang</div>
             </div>
         </div>
     </div>
@@ -210,8 +244,8 @@
                 overlay.style.opacity = '0';
                 document.getElementById('app').style.opacity = '1';
                 setTimeout(() => {
-                    const currentOverlay = document.getElementById('loading-overlay');
-                    if (currentOverlay && currentOverlay.parentNode) currentOverlay.parentNode.removeChild(currentOverlay);
+                    const el = document.getElementById('loading-overlay');
+                    if (el && el.parentNode) el.parentNode.removeChild(el);
                 }, 400);
             }
         };
@@ -273,7 +307,6 @@
                     { time: 8.00, text: "想找个人出来聊天" }, { time: 11.00, text: "为何却被拉去逛街" }, { time: 14.00, text: "想找个人结束单身" }, { time: 17.00, text: "发现自己也不够坚决" }, { time: 20.79, text: "想每一天都完美表现" }, { time: 23.79, text: "担心平凡被人发现" }, { time: 27.09, text: "想好好清理房间" }, { time: 30.09, text: "不小心和很多东西遇见" }, { time: 33.40, text: "抽屉里的漫画书和摇滚乐" }, { time: 36.48, text: "灵魂里的月光和诗篇" }, { time: 39.60, text: "差点忘拉 这里住过一个少年" }, { time: 42.74, text: "想打败世界" }, { time: 47.52, text: "我很好 只是有一点累" }, { time: 50.65, text: "不明白 怎么过才不算浪费" }, { time: 53.42, text: "最后你们 成为我生命的点缀" }, { time: 56.52, text: "很公平 我也为你们喝醉" }, { time: 63.04, text: "想唱支歌让新人欢喜" }, { time: 65.07, text: "却勾起对旧人怀念" }, { time: 68.95, text: "想删掉 某个人的电话" }, { time: 72.00, text: "又怕会有破镜重圆那天" }, { time: 75.26, text: "想说出心里的话" }, { time: 78.26, text: "刚准备好人就下线" }, { time: 81.36, text: "想就这么过吧" }, { time: 84.26, text: "却在她睡去后不肯入眠" }, { time: 88.02, text: "床单上的玫瑰花瓣和碎片" }, { time: 90.70, text: "青春里的墓碑和狂癫" }, { time: 93.81, text: "泪水里有真情 也有即兴表演" }, { time: 96.86, text: "自己也很难分辨" }, { time: 101.56, text: "你很好 只是有一点累" }, { time: 104.97, text: "没有她 你不会有活过的滋味" }, { time: 108.01, text: "我们为不同的人流同一种泪" }, { time: 111.06, text: "失去为将要来的 做好准备" }, { time: 117.58, text: "想写一首好听的歌" }, { time: 121.00, text: "到头来 旋律还是不美" }, { time: 125.25, text: "想隐藏一些叹息" }, { time: 128.25, text: "象你我 都曾为爱卑微" }, { time: 131.90, text: "想重温一些默契" }, { time: 135.30, text: "我没开口你都体会" }, { time: 138.58, text: "想证明一切不是幻觉" }, { time: 142.58, text: "你我生命留下的气味" }
                 ],
                 aiLyrics: [
-                    { time: 0, text: "Overthink (AI Version)", isTitle: true },
                     { time: 13.00, text: "想找个人出来聊天" }, { time: 16.00, text: "为何却被拉去逛街" }, { time: 19.00, text: "想找个人结束单身" }, { time: 22.00, text: "发现是自己不够坚决" }, { time: 26.00, text: "想每一天都完美表现" }, { time: 28.00, text: "担心平凡被人发现" }, { time: 32.00, text: "想好好清理房间" }, { time: 34.00, text: "不小心和很多东西遇见" }, { time: 38.00, text: "抽屉里的漫画书和摇滚乐" }, { time: 41.00, text: "灵魂里的月光和诗篇" }, { time: 44.00, text: "差点忘拉 这里住过一个少年" }, { time: 47.74, text: "想打败世界" }, { time: 51.52, text: "我很好 只是有一点累" }, { time: 55.65, text: "不明白 怎么过才不算浪费" }, { time: 58.42, text: "最后你们 成为我生命的点缀" }, { time: 61.52, text: "很公平 我也为你们喝醉" }, { time: 67.04, text: "想唱支歌让新人欢喜" }, { time: 70.07, text: "却勾起对旧人怀念" }, { time: 73.95, text: "想删掉 某个人的电话" }, { time: 76.00, text: "又怕会有破镜重圆那天" }, { time: 80.26, text: "想说出心里的话" }, { time: 83.26, text: "刚准备好人就下线" }, { time: 87.36, text: "想就这么过吧" }, { time: 89.26, text: "却在她睡去后不肯入眠" }, { time: 92.02, text: "床单上的玫瑰花瓣和碎片" }, { time: 96.70, text: "青春里的墓碑和狂癫" }, { time: 99.31, text: "泪水里有真情 也有即兴表演" }, { time: 102.36, text: "自己也很难分辨" }, { time: 106.00, text: "你很好 只是有一点累" }, { time: 110.37, text: "没有她 你不会有活过的滋味" }, { time: 113.01, text: "我们为不同的人流同一种泪" }, { time: 116.06, text: "失去为将要来的 做好准备" }, { time: 123.00, text: "想写一首好听的歌" }, { time: 126.00, text: "到头来 旋律还是不美" }, { time: 130.25, text: "想隐藏一些叹息" }, { time: 133.25, text: "象你我 都曾为爱卑微" }, { time: 137.00, text: "想重温一些默契" }, { time: 140.30, text: "我没开口你都体会" }, { time: 144.00, text: "想证明一切不是幻觉" }, { time: 147.00, text: "你我生命留下的气味" }
                 ]
             }
@@ -338,6 +371,7 @@
         }
 
         function selectTrack(index) {
+            if (currentTrackIndex === index && audio.src) return;
             currentTrackIndex = index; trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
             document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
             const song = playlist[index];
