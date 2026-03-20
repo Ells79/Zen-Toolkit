@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>送给20岁的我们</title>
     
+    <!-- ells: 预连接加速，提升加载稳定性 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://ells-media.oss-cn-shanghai.aliyuncs.com">
     
@@ -53,16 +54,16 @@
             justify-content: flex-start;
             align-items: center;
             z-index: 2; perspective: 2500px;
-            padding: 7vh 0 0 0; /* ells: 稍微收窄顶部 padding */
+            padding: 8vh 0 0 0; 
             opacity: 0; transition: opacity 0.8s ease;
         }
 
-        /* 3D 穿梭歌词 */
+        /* 3D 穿梭歌词容器 */
         #lyrics-container {
             position: relative; width: 100%; height: 6vh;
             display: flex; justify-content: center; align-items: center;
             transform-style: preserve-3d;
-            margin-bottom: 0.5vh;
+            margin-bottom: 1vh;
         }
 
         .lyric-line {
@@ -72,27 +73,28 @@
             opacity: 0; filter: blur(10px);
         }
 
+        /* 曲名特有样式 */
         .lyric-line.is-title { font-weight: 600; letter-spacing: 0.5em; text-transform: uppercase; font-size: 1rem; }
 
         .lyric-line.active { opacity: 0.9; transform: translateZ(180px); filter: blur(0px); color: #000; font-weight: 400; }
         .lyric-line.past { opacity: 0; transform: translateZ(500px) translateY(-50px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-400px) translateY(50px); }
 
-        /* 磁带盒：深度投影与悬浮动画 */
+        /* 磁带盒视觉：深度阴影与悬浮 */
         .specimen-case {
             position: relative; z-index: 10;
             transform: rotateX(8deg) translateZ(0);
             -webkit-backface-visibility: hidden; backface-visibility: hidden;
             filter: 
-                drop-shadow(20px 40px 25px rgba(0,0,0,0.32))
-                drop-shadow(35px 65px 55px rgba(0,0,0,0.18));
+                drop-shadow(15px 30px 20px rgba(0,0,0,0.32))
+                drop-shadow(30px 60px 50px rgba(0,0,0,0.15));
             animation: case-breath 18s ease-in-out infinite;
-            margin-bottom: 3vh;
+            margin-bottom: 4vh;
         }
 
         @keyframes case-breath { 
             0%, 100% { transform: rotateX(8deg) translateY(0) translateZ(0); } 
-            50% { transform: rotateX(8.6deg) translateY(-6px) translateZ(0); } 
+            50% { transform: rotateX(8.5deg) translateY(-5px) translateZ(0); } 
         }
 
         canvas {
@@ -101,10 +103,10 @@
             image-rendering: -webkit-optimize-contrast;
         }
 
-        /* 交互反馈区 */
+        /* 交互控制区 */
         .interaction-area {
             display: flex; flex-direction: column; align-items: center; 
-            width: 100%; gap: 1.5vh;
+            width: 100%; gap: 1.8vh;
         }
 
         .toggle-well {
@@ -120,7 +122,7 @@
         .mode-label { font-size: 7px; font-weight: 800; letter-spacing: 0.15em; opacity: 0.25; min-width: 38px; text-align: center; }
         .mode-label.active { opacity: 0.8; color: #000; }
 
-        /* 拨轮 */
+        /* 轨道拨轮 */
         #track-dial { position: absolute; top: 10px; left: 50%; margin-left: -250px; width: 500px; height: 500px; border-radius: 50%; transition: transform 0.85s cubic-bezier(0.15, 1, 0.3, 1); cursor: grab; z-index: 5; }
         .track-num { position: absolute; top: 12px; left: 50%; width: 60px; margin-left: -30px; text-align: center; transform-origin: center 238px; font-weight: 900; font-size: 13px; color: rgba(0,0,0,0.2); transition: all 0.4s; }
         .track-tick { position: absolute; top: 8px; left: 50%; width: 1px; height: 2px; background: rgba(0,0,0,0.08); transform-origin: center 242px; }
@@ -131,48 +133,46 @@
         input[type=range]::-webkit-slider-runnable-track { height: 2.5px; border-radius: 1.25px; background: linear-gradient(to right, var(--accent-orange) 0%, var(--accent-orange) var(--slider-progress), rgba(0,0,0,0.04) var(--slider-progress), rgba(0,0,0,0.04) 100%); }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 8px; width: 12px; border-radius: 4px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-top: -3px; }
 
-        /* ells: 按钮质感增强 - 物理内凹感 */
+        /* ells: 找回并增强按钮质感 (井深感) */
         .button-group { display: flex; align-items: center; justify-content: center; gap: 24px; }
         .button-well { 
-            width: 46px; height: 46px; 
-            background: rgba(0,0,0,0.012); 
+            width: 44px; height: 44px; 
+            background: rgba(0,0,0,0.015); 
             border-radius: 50%; 
             display: flex; justify-content: center; align-items: center; 
-            /* 关键：双重内阴影增加真实深度 */
+            /* 关键：双重内阴影营造物理下凹感 */
             box-shadow: 
-                inset 2px 2px 4px rgba(0,0,0,0.12),
+                inset 2px 2px 4px rgba(0,0,0,0.1),
                 inset -2px -2px 4px rgba(255,255,255,0.7); 
             cursor: pointer;
             transition: transform 0.1s ease;
         }
         .button-well:active { transform: scale(0.95); background: rgba(0,0,0,0.02); }
-        .button-well.large { width: 66px; height: 66px; }
+        .button-well.large { width: 64px; height: 64px; }
         
-        /* 按钮内部图标容器 */
         .control-btn { 
-            width: 38px; height: 38px; 
+            width: 36px; height: 36px; 
             border-radius: 50%; 
-            background: linear-gradient(145deg, rgba(255,255,255,0.35), rgba(255,255,255,0.15));
-            backdrop-filter: blur(8px); 
+            background: linear-gradient(145deg, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
+            backdrop-filter: blur(10px); 
             border: 0.5px solid rgba(255, 255, 255, 0.4); 
             display: flex; justify-content: center; align-items: center; 
             pointer-events: none; 
-            color: rgba(0,0,0,0.22); 
+            color: rgba(0,0,0,0.2); 
             transition: all 0.3s;
-            box-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
         }
-        .button-well:hover .control-btn { color: #000; transform: translateY(-0.5px); }
-        .button-well.large .control-btn { width: 56px; height: 56px; color: var(--accent-orange); }
+        .button-well:hover .control-btn { color: #000; }
+        .button-well.large .control-btn { width: 54px; height: 54px; color: var(--accent-orange); }
 
-        /* 底部：回归精致小注感 */
+        /* 底部：精致小巧的时光脚注 */
         .footer-container {
             margin-top: auto; 
-            margin-bottom: 5.5vh; 
+            margin-bottom: 5vh; 
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 3px;
-            opacity: 0.65;
         }
 
         .footer-year {
@@ -180,6 +180,7 @@
             font-weight: 300;
             letter-spacing: 0.25em;
             color: #86868b;
+            opacity: 0.6;
         }
 
         .footer-desc {
@@ -187,11 +188,12 @@
             font-weight: 400;
             letter-spacing: 0.02em;
             color: #a1a1a6;
+            opacity: 0.5;
         }
 
         #diag-toast {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.75); color: white; padding: 8px 16px;
+            background: rgba(0,0,0,0.7); color: white; padding: 10px 20px;
             border-radius: 20px; font-size: 9px; opacity: 0; transition: 0.4s; z-index: 1000; pointer-events: none;
         }
 
@@ -212,10 +214,13 @@
     <div class="noise-bg"></div>
 
     <div id="app">
+        <!-- 歌词层 -->
         <div id="lyrics-container"></div>
         
+        <!-- 磁带标本层 -->
         <div class="specimen-case"><canvas id="tapeCanvas"></canvas></div>
         
+        <!-- 交互与控制层 -->
         <div class="interaction-area">
             <div class="mode-toggle-container flex items-center gap-3">
                 <span class="mode-label active">HUMAN</span>
@@ -247,6 +252,7 @@
             </div>
         </div>
 
+        <!-- 底部时光脚注 -->
         <div class="footer-container">
             <div class="footer-year">2007 / 2026</div>
             <div class="footer-desc">found in an old hard drive by Lao Wang</div>
@@ -258,8 +264,8 @@
     <script>
         const dpr = window.devicePixelRatio || 1;
         const config = { leftReel: { x: 454, y: 460 }, rightReel: { x: 739, y: 460 }, reelSize: 108, rotationStep: 36 };
-        const CDN_BASE = "https://cdn.jsdelivr.net/gh/Ells79/Zen-Toolkit@main/tools/mytape/";
         const OSS_BASE = "https://ells-media.oss-cn-shanghai.aliyuncs.com/";
+        const CDN_BASE = "https://cdn.jsdelivr.net/gh/Ells79/Zen-Toolkit@main/tools/mytape/";
 
         const assets = { shell: new Image(), reel: new Image() };
         assets.shell.crossOrigin = assets.reel.crossOrigin = "anonymous";
@@ -280,11 +286,19 @@
         };
 
         const playlist = [
-            { id: 1, title: "Joke", humanSrc: OSS_BASE + "joke.mp3", aiSrc: OSS_BASE + "joke_ai.mp3", humanLyrics: [{time:0,text:"Joke",isTitle:true},{time:7.29,text:"某个阳光不错的下午"},{time:9.94,text:"你突然发出笑声 引来行人侧目"},{time:13.08,text:"身旁的女人 问你 笑什么"},{time:16.25,text:"你直不起腰 只比划手"},{time:19.99,text:"你自己心里 当然最明白"},{time:22.84,text:"那是很多很多很多年以前"},{time:26.19,text:"她 对你说过的笑话"},{time:29.31,text:"直到 刚才一刻才领悟"},{time:32.65,text:"很多事情 就这样 突然涌上心头"},{time:35.87,text:"你趁着笑的机会尽情把泪流"},{time:39.25,text:"有点可惜 这么好笑"},{time:40.82,text:"当时却 没参透"},{time:45.62,text:"前面一对恋人 望着飘远的气球"},{time:49.00,text:"何苦去争执 是谁先放的手"},{time:52.09,text:"总有天 会明白"},{time:53.61,text:"誓言 不比笑话长久"},{time:58.64,text:"阳光轻轻 划过你的白日梦"},{time:61.74,text:"原来是身边的人 对你 摇着手"},{time:64.97,text:"你说抱歉 让她等了这么久"},{time:68.23,text:"她微笑着摇摇头"},{time:71.59,text:"还是忍不住想看看那对小朋友"},{time:74.82,text:"还有那个 渐渐消失在天空的气球"},{time:78.16,text:"原来一秒一分一生一世 都不够"},{time:81.59,text:"因为离别就在前头"},{time:85.77,text:"笑话 好笑却让人泪流"}], aiLyrics: [{time:0,text:"Joke (AI Version)",isTitle:true},{time:18.29,text:"某个阳光不错的下午"},{time:22.00,text:"你突然发出笑声 引来行人侧目"},{time:26.08,text:"身旁的女人 问你 笑什么"},{time:30.25,text:"你直不起腰 只比划手"},{time:32.99,text:"你自己心里 当然最明白"},{time:36.84,text:"那是很多很多很多年以前"},{time:39.19,text:"她 对你说过的笑话"},{time:43.31,text:"直到 刚才一刻才领悟"},{time:47.65,text:"很多事情 就这样 突然涌上心头"},{time:51.87,text:"你趁着笑的机会尽情把泪流"},{time:54.25,text:"有点可惜 这么好笑"},{time:56.82,text:"当时却 没参透"},{time:61.62,text:"前面一对恋人 望着飘远的气球"},{time:65.00,text:"何苦去争执 是谁先放的手"},{time:69.00,text:"总有天 会明白"},{time:70.61,text:"誓言 不比笑话长久"},{time:90.64,text:"阳光轻轻 划过你的白日梦"},{time:93.74,text:"原来是身边的人 对你 摇着手"},{time:97.00,text:"你说抱歉 让她等了这么久"},{time:101.23,text:"她微笑着摇摇头"},{time:104.20,text:"还是忍不住想看看那对小朋友"},{time:108.00,text:"还有那个 渐渐消失在天空的气球"},{time:112.16,text:"原来一秒一分一生一世 都不够"},{time:115.59,text:"因为离别就在前头"},{time:144.77,text:"笑话 好笑却让人泪流"}] },
-            { id: 2, title: "Forget It", humanSrc: OSS_BASE + "forgetit.mp3", aiSrc: OSS_BASE + "forgetit_ai.mp3", humanLyrics: [{time:0,text:"Forget It",isTitle:true},{time:11.35,text:"忘掉7点21分"},{time:15.35,text:"你从立交桥下路过"},{time:19.40,text:"忘掉11点50分"},{time:23.35,text:"你从纪念碑下路过"},{time:28.00,text:"忘掉1点45分"},{time:32.35,text:"忘掉5点36分"},{time:39.50,text:"忘掉星期一"},{time:43.00,text:"你那件白色的外套"},{time:48.00,text:"忘掉星期二"},{time:50.35,text:"你苏格兰格的裤脚"},{time:56.00,text:"忘掉星期三"},{time:60.35,text:"忘掉星期五"},{time:70.45,text:"忘掉春天里 你的短发"},{time:75.00,text:"忘掉秋天里 你的面颊"},{time:79.00,text:"忘掉夏天 忘掉冬天"},{time:86.00,text:"忘掉空气中 曾有你的气息"},{time:90.00,text:"忘掉那条街 有过你的足迹"},{time:93.40,text:"忘掉我脑中"},{time:95.00,text:"假设过 和你的甜蜜"},{time:101.00,text:"忘掉春天里 你的短发"},{time:104.00,text:"忘掉秋天里 你的面颊"},{time:108.00,text:"忘掉夏天 忘掉冬天"},{time:115.00,text:"忘掉空气中 曾有你的气息"},{time:118.40,text:"忘掉那条街 有过你的足迹"},{time:122.00,text:"忘了吧 就让我忘了你"}], aiLyrics: [{time:0,text:"Forget It (AI Version)",isTitle:true},{time:7.35,text:"忘掉7点21分"},{time:11.35,text:"你从立交桥下路过"},{time:16.40,text:"忘掉11点50分"},{time:20.35,text:"你从纪念碑下路过"},{time:24.00,text:"忘掉1点45分"},{time:28.35,text:"忘掉5点36分"},{time:35.50,text:"忘掉星期一"},{time:39.00,text:"你那浅白色的外套"},{time:44.00,text:"忘掉星期二"},{time:48.35,text:"你苏格兰格的裤脚"},{time:52.00,text:"忘掉星期三"},{time:56.35,text:"忘掉星期四"},{time:64.45,text:"忘掉春天里 你的短发"},{time:68.00,text:"忘掉秋天里 你的面颊"},{time:72.00,text:"忘掉夏天 忘掉冬天"},{time:80.00,text:"忘掉空气中 曾有你的气息"},{time:84.00,text:"忘掉那条街 有过你的足迹"},{time:88.00,text:"忘掉我脑中"},{time:90.00,text:"假设过 和你的甜蜜"},{time:96.00,text:"忘掉春天里 你的短发"},{time:100.00,text:"忘掉秋天里 你的面颊"},{time:104.00,text:"忘掉夏天 忘掉冬天"},{time:112.00,text:"忘掉空气中 曾有你的气息"},{time:116.40,text:"忘掉那条街 有过你的足迹"},{time:120.00,text:"忘了吧 就让我忘了你"},{time:126.00,text:"stop"}] },
-            { id: 3, title: "Boat", humanSrc: OSS_BASE + "boat.mp3", aiSrc: OSS_BASE + "boat_ai.mp3", humanLyrics: [{time:0,text:"Boat",isTitle:true}], aiLyrics:[{time:0,text:"Boat AI",isTitle:true}] },
-            { id: 4, title: "Hi Blue", humanSrc: OSS_BASE + "hiblue.mp3", aiSrc: OSS_BASE + "hiblue_ai.mp3", humanLyrics: [{time:0,text:"Hi Blue",isTitle:true}], aiLyrics:[{time:0,text:"Hi Blue AI",isTitle:true}] },
-            { id: 5, title: "Overthink", humanSrc: OSS_BASE + "overthing.mp3", aiSrc: OSS_BASE + "overthing_ai.mp3", humanLyrics: [{time:0,text:"Overthink",isTitle:true}], aiLyrics:[{time:0,text:"Overthink AI",isTitle:true}] }
+            { 
+                id: 1, title: "Joke", humanSrc: OSS_BASE + "joke.mp3", aiSrc: OSS_BASE + "joke_ai.mp3", 
+                humanLyrics: [{time:0,text:"Joke",isTitle:true},{time:7.29,text:"某个阳光不错的下午"},{time:9.94,text:"你突然发出笑声 引来行人侧目"},{time:13.08,text:"身旁的女人 问你 笑什么"},{time:16.25,text:"你直不起腰 只比划手"},{time:19.99,text:"你自己心里 当然最明白"},{time:22.84,text:"那是很多很多很多年以前"},{time:26.19,text:"她 对你说过的笑话"},{time:29.31,text:"直到 刚才一刻才领悟"},{time:32.65,text:"很多事情 就这样 突然涌上心头"},{time:35.87,text:"你趁着笑的机会尽情把泪流"},{time:39.25,text:"有点可惜 这么好笑"},{time:40.82,text:"当时却 没参透"},{time:45.62,text:"前面一对恋人 望着飘远的气球"},{time:49.00,text:"何苦去争执 是谁先放的手"},{time:52.09,text:"总有天 会明白"},{time:53.61,text:"誓言 不比笑话长久"},{time:58.64,text:"阳光轻轻 划过你的白日梦"},{time:61.74,text:"原来是身边的人 对你 摇着手"},{time:64.97,text:"你说抱歉 让她等了这么久"},{time:68.23,text:"她微笑着摇摇头"},{time:71.59,text:"还是忍不住想看看那对小朋友"},{time:74.82,text:"还有那个 渐渐消失在天空的气球"},{time:78.16,text:"原来一秒一分一生一世 都不够"},{time:81.59,text:"因为离别就在前头"},{time:85.77,text:"笑话 好笑却让人泪流"}],
+                aiLyrics: [{time:0,text:"Joke (AI Version)",isTitle:true},{time:18.29,text:"某个阳光不错的下午"},{time:22.0,text:"你突然发出笑声 引来行人侧目"},{time:26.08,text:"身旁的女人 问你 笑什么"},{time:30.25,text:"你直不起腰 只比划手"},{time:32.99,text:"你自己心里 当然最明白"},{time:36.84,text:"那是很多很多很多年以前"},{time:39.19,text:"她 对你说过的笑话"},{time:43.31,text:"直到 刚才一刻才领悟"},{time:47.65,text:"很多事情 就这样 突然涌上心头"},{time:51.87,text:"你趁着笑的机会尽情把泪流"},{time:54.25,text:"有点可惜 这么好笑"},{time:56.82,text:"当时却 没参透"},{time:61.62,text:"前面一对恋人 望着飘远的气球"},{time:65.0,text:"何苦去争执 是谁先放的手"},{time:69.0,text:"总有天 会明白"},{time:70.61,text:"誓言 不比笑话长久"},{time:90.64,text:"阳光轻轻 划过你的白日梦"},{time:93.74,text:"原来是身边的人 对你 摇着手"},{time:97.0,text:"你说抱歉 让她等了这么久"},{time:101.23,text:"她微笑着摇摇头"},{time:104.2,text:"还是忍不住想看看那对小朋友"},{time:108.0,text:"还有那个 渐渐消失在天空的气球"},{time:112.16,text:"原来一秒一分一生一世 都不够"},{time:115.59,text:"因为离别就在前头"},{time:144.77,text:"笑话 好笑却让人泪流"}]
+            },
+            { 
+                id: 2, title: "Forget It", humanSrc: OSS_BASE + "forgetit.mp3", aiSrc: OSS_BASE + "forgetit_ai.mp3", 
+                humanLyrics: [{time:0,text:"Forget It",isTitle:true},{time:11.35,text:"忘掉7点21分"},{time:15.35,text:"你从立交桥下路过"},{time:19.4,text:"忘掉11点50分"},{time:23.35,text:"你从纪念碑下路过"},{time:28.0,text:"忘掉1点45分"},{time:32.35,text:"忘掉5点36分"},{time:39.5,text:"忘掉星期一"},{time:43.0,text:"你那件白色的外套"},{time:48.0,text:"忘掉星期二"},{time:50.35,text:"你苏格兰格的裤脚"},{time:56.0,text:"忘掉星期三"},{time:60.35,text:"忘掉星期五"},{time:70.45,text:"忘掉春天里 你的短发"},{time:75.0,text:"忘掉秋天里 你的面颊"},{time:79.0,text:"忘掉夏天 忘掉冬天"},{time:86.0,text:"忘掉空气中 曾有你的气息"},{time:90.0,text:"忘掉那条街 有过你的足迹"},{time:93.4,text:"忘掉我脑中"},{time:95.0,text:"假设过 和你的甜蜜"},{time:101.0,text:"忘掉春天里 你的短发"},{time:104.0,text:"忘掉秋天里 你的面颊"},{time:108.0,text:"忘掉夏天 忘掉冬天"},{time:115.0,text:"忘掉空气中 曾有你的气息"},{time:118.4,text:"忘掉那条街 有过你的足迹"},{time:122.0,text:"忘了吧 就让我忘了你"}],
+                aiLyrics: [{time:0,text:"Forget It (AI Version)",isTitle:true},{time:7.35,text:"忘掉7点21分"},{time:11.35,text:"你从立交桥下路过"},{time:16.4,text:"忘掉11点50分"},{time:20.35,text:"你从纪念碑下路过"},{time:24.0,text:"忘掉1点45分"},{time:28.35,text:"忘掉5点36分"},{time:35.5,text:"忘掉星期一"},{time:39.0,text:"你那浅白色的外套"},{time:44.0,text:"忘掉星期二"},{time:48.35,text:"你苏格兰格的裤脚"},{time:52.0,text:"忘掉星期三"},{time:56.35,text:"忘掉星期五"},{time:64.45,text:"忘掉春天里 你的短发"},{time:68.0,text:"忘掉秋天里 你的面颊"},{time:72.0,text:"忘掉夏天 忘掉冬天"},{time:80.0,text:"忘掉空气中 曾有你的气息"},{time:84.0,text:"忘掉那条街 有过你的足迹"},{time:88.0,text:"忘掉我脑中"},{time:90.0,text:"假设过 和你的甜蜜"},{time:96.0,text:"忘掉春天里 你的短发"},{time:100.0,text:"忘掉秋天里 你的面颊"},{time:104.0,text:"忘掉夏天 忘掉冬天"},{time:112.0,text:"忘掉空气中 曾有你的气息"},{time:116.4,text:"忘掉那条街 有过你的足迹"},{time:120.0,text:"忘了吧 就让我忘了你"},{time:126.0,text:"stop"}]
+            },
+            { id: 3, title: "Boat", humanSrc: OSS_BASE + "boat.mp3", aiSrc: OSS_BASE + "boat_ai.mp3", humanLyrics: [{time:0,text:"Boat",isTitle:true},{time:15.0,text:"造一艘船"},{time:17.0,text:"倚着桅杆"},{time:19.0,text:"静静望着 遥远的彼岸"},{time:22.3,text:"喝口烈酒"},{time:24.0,text:"未来到来"},{time:25.0,text:"声音机里 有人在伤怀"},{time:28.0,text:"我在手臂上刺上 我的梦"},{time:35.0,text:"海水吞没我只需 几秒钟"},{time:42.0,text:"暴雨过后湛蓝的天空"},{time:48.0,text:"还有擦过我额头的风"},{time:55.0,text:"别问我别问我别问我"},{time:58.0,text:"问我的梦Wo"},{time:62.0,text:"星光让我看见自己的虚荣"},{time:69.0,text:"别问我别问我别问我"},{time:71.0,text:"问我的痛wo"},{time:75.3,text:"明早醒来 你就会懂"}], aiLyrics: [{time:0,text:"Boat AI",isTitle:true},{time:29.3,text:"造一艘船"},{time:31.0,text:"倚着桅杆"}] },
+            { id: 4, title: "Hi Blue", humanSrc: OSS_BASE + "hiblue.mp3", aiSrc: OSS_BASE + "hiblue_ai.mp3", humanLyrics: [{time:0,text:"Hi Blue",isTitle:true},{time:19.88,text:"窗外阳光很好"},{time:22.18,text:"我不该在家里 胡思乱想"},{time:28.27,text:"去哪逛逛 找个朋友"},{time:30.88,text:"哪怕是吃个饭 然后就回家"}], aiLyrics: [{time:0,text:"Hi Blue AI",isTitle:true}] },
+            { id: 5, title: "Overthink", humanSrc: OSS_BASE + "overthing.mp3", aiSrc: OSS_BASE + "overthing_ai.mp3", humanLyrics: [{time:0,text:"Overthink",isTitle:true},{time:8.0,text:"想找个人出来聊天"},{time:11.0,text:"为何却被拉去逛街"}], aiLyrics: [{time:0,text:"Overthink AI",isTitle:true}] }
         ];
 
         let currentTrackIndex = 0, isPlaying = false, rotation = 0, currentMode = 'human', currentRotation = 0;
@@ -293,14 +307,20 @@
 
         const showDiag = (msg) => { diagToast.innerText = msg; diagToast.style.opacity = '1'; setTimeout(() => diagToast.style.opacity = '0', 3500); };
 
-        const safePlay = async () => { try { await audio.play(); isPlaying = true; playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; } catch (e) { showDiag("点击按钮启动播放"); isPlaying = false; } };
+        const safePlay = async () => { 
+            try { 
+                await audio.play(); isPlaying = true; 
+                playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; 
+            } catch (e) { showDiag("点击按钮启动播放"); isPlaying = false; } 
+        };
 
         const togglePlay = () => { if (audio.paused) safePlay(); else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; } };
 
-        audio.onerror = () => showDiag("音频加载中或OSS连接受限");
+        audio.onerror = () => showDiag("音频加载中或OSS权限限制");
 
         function selectTrack(index) {
-            currentTrackIndex = index; currentRotation = -index * config.rotationStep;
+            currentTrackIndex = index;
+            currentRotation = -index * config.rotationStep;
             trackDial.style.transform = `rotate(${currentRotation}deg)`;
             document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
             const song = playlist[index];
