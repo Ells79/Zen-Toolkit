@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>送给20岁的我们</title>
     
-    <!-- 预连接提升加载速度 -->
+    <!-- ells: 预连接提升加载速度 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://ells-media.oss-cn-shanghai.aliyuncs.com">
     
@@ -31,16 +31,15 @@
             touch-action: none;
         }
 
-        /* Loading 遮罩 */
+        /* 优化后的极简 Loading */
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #f7f7f9; display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 999;
-            transition: opacity 0.8s ease;
+            transition: opacity 0.5s ease;
         }
         .loader-bar { width: 40px; height: 1px; background: rgba(0,0,0,0.1); position: relative; overflow: hidden; }
-        .loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-orange); transition: width 0.3s; }
-        .loading-text { font-size: 8px; letter-spacing: 0.4em; opacity: 0.3; text-transform: uppercase; margin-top: 16px; }
+        .loader-progress { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--accent-orange); transition: width 0.2s; }
 
         .noise-bg {
             position: fixed;
@@ -55,7 +54,7 @@
             justify-content: flex-start; align-items: center;
             z-index: 2; perspective: 2500px;
             padding: 10vh 0 4vh 0;
-            opacity: 0; transition: opacity 1.5s ease;
+            opacity: 0; transition: opacity 0.8s ease;
         }
 
         /* 3D 穿梭歌词 */
@@ -76,14 +75,15 @@
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带：根据 ells 要求减重、影子收缩 */
+        /* 磁带：影子回归 & 呼吸感 */
         .specimen-case {
             position: relative; z-index: 10;
             transform: rotateX(8deg) translateZ(0);
             -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            /* ells: 增强影子对比度，防止消失 */
             filter: 
-                drop-shadow(17px 28px 10px rgba(0,0,0,0.22))
-                drop-shadow(31px 49px 30px rgba(0,0,0,0.13));
+                drop-shadow(20px 35px 15px rgba(0,0,0,0.25))
+                drop-shadow(40px 60px 40px rgba(0,0,0,0.15));
             margin-bottom: 4vh; 
             animation: case-breath 18s ease-in-out infinite;
         }
@@ -159,7 +159,6 @@
 
     <div id="loading-overlay">
         <div class="loader-bar"><div id="loader-inner" class="loader-progress"></div></div>
-        <div class="loading-text">Collecting specimen</div>
     </div>
 
     <div class="noise-bg"></div>
@@ -188,38 +187,42 @@
         </div>
     </div>
 
-    <!-- 跨域音频加载的关键 -->
     <audio id="audio" crossorigin="anonymous"></audio>
 
     <script>
         const dpr = window.devicePixelRatio || 1;
         const config = { leftReel: { x: 454, y: 460 }, rightReel: { x: 739, y: 460 }, reelSize: 108, rotationStep: 36 };
         
-        // ells: 资产使用 jsDelivr CDN 加速
         const CDN_BASE = "https://cdn.jsdelivr.net/gh/Ells79/Zen-Toolkit@main/tools/mytape/";
         const OSS_BASE = "https://ells-media.oss-cn-shanghai.aliyuncs.com/";
 
         const assets = { shell: new Image(), reel: new Image() };
         assets.shell.crossOrigin = assets.reel.crossOrigin = "anonymous";
+        
+        // 优化加载逻辑：外壳一旦加载完成，就显示 APP
+        let shellReady = false;
+        assets.shell.onload = () => {
+            shellReady = true;
+            document.getElementById('loader-inner').style.width = "70%";
+            checkReady();
+        };
+        assets.reel.onload = () => {
+            document.getElementById('loader-inner').style.width = "100%";
+            checkReady();
+        };
+        
         assets.shell.src = CDN_BASE + "tape.webp";
         assets.reel.src = CDN_BASE + "wheel.webp";
 
-        let assetsLoaded = 0;
         const checkReady = () => {
-            assetsLoaded++;
-            document.getElementById('loader-inner').style.width = (assetsLoaded / 2) * 100 + "%";
-            if(assetsLoaded >= 2) {
-                setTimeout(() => {
-                    document.getElementById('loading-overlay').style.opacity = '0';
-                    document.getElementById('app').style.opacity = '1';
-                    setTimeout(() => document.getElementById('loading-overlay').remove(), 800);
-                }, 500);
+            if(shellReady) {
+                // 加快出图速度，不设延迟
+                document.getElementById('loading-overlay').style.opacity = '0';
+                document.getElementById('app').style.opacity = '1';
+                setTimeout(() => document.getElementById('loading-overlay').remove(), 600);
             }
         };
-        assets.shell.onload = checkReady;
-        assets.reel.onload = checkReady;
 
-        // ells: 这里填入你导出的 10 个阿里云 OSS 链接
         const playlist = [
             { id: 1, title: "Overthing", humanSrc: OSS_BASE + "overthing.mp3", aiSrc: OSS_BASE + "overthing_ai.mp3", humanLyrics: [{ time: 0, text: "Overthing (HUMAN)" }, {time: 5, text: "我想过很多遍"}, {time: 10, text: "在二十岁的门前"}], aiLyrics: [{ time: 0, text: "Overthing (AI)" }] },
             { id: 2, title: "Joke", humanSrc: OSS_BASE + "joke.mp3", aiSrc: OSS_BASE + "joke_ai.mp3", humanLyrics: [{ time: 0, text: "Joke (HUMAN)" }, {time: 5, text: "生活像个玩笑"}], aiLyrics: [{ time: 0, text: "Joke (AI)" }] },
@@ -249,7 +252,6 @@
                 audio.onloadedmetadata = () => { 
                     audio.currentTime = audio.duration * percent; 
                     if (isPlaying) safePlay(); 
-                    audio.onloadedmetadata = null; 
                 }; 
             }
         }
@@ -258,7 +260,7 @@
             const lw = 1200, lh = 953;
             if (canvas.width !== lw * dpr) { canvas.width = lw * dpr; canvas.height = lh * dpr; ctx.scale(dpr, dpr); }
             ctx.clearRect(0, 0, lw, lh);
-            if (assetsLoaded >= 2) {
+            if (shellReady) {
                 ctx.drawImage(assets.shell, 0, 0, lw, lh);
                 drawReel(config.leftReel.x, config.leftReel.y, rotation);
                 drawReel(config.rightReel.x, config.rightReel.y, rotation);
@@ -266,7 +268,7 @@
             if (isPlaying) rotation += 0.045;
             requestAnimationFrame(draw);
         }
-        function drawReel(x, y, angle) { ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.drawImage(assets.reel, -config.reelSize/2, -config.reelSize/2, config.reelSize, config.reelSize); ctx.restore(); }
+        function drawReel(x, y, angle) { ctx.save(); ctx.translate(x, y); ctx.rotate(angle); if(assets.reel.complete) ctx.drawImage(assets.reel, -config.reelSize/2, -config.reelSize/2, config.reelSize, config.reelSize); ctx.restore(); }
 
         function initDial() {
             trackDial.innerHTML = '';
@@ -282,8 +284,24 @@
             currentTrackIndex = index; trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
             document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
             const song = playlist[index];
-            if (song) { const wasPlaying = isPlaying; audio.pause(); audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); if (wasPlaying) safePlay(); else audio.load(); }
+            if (song) { 
+                const wasPlaying = isPlaying; 
+                audio.pause(); 
+                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; 
+                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); 
+                if (wasPlaying) safePlay(); else audio.load(); 
+            }
         }
+
+        // ells: 修复快进后退键逻辑
+        document.getElementById('rewindBtn').onclick = () => {
+            let prevIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+            selectTrack(prevIndex);
+        };
+        document.getElementById('forwardBtn').onclick = () => {
+            let nextIndex = (currentTrackIndex + 1) % playlist.length;
+            selectTrack(nextIndex);
+        };
 
         playBtn.onclick = () => { if (audio.paused) safePlay(); else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; } };
         audio.ontimeupdate = () => { if (isFinite(audio.duration)) { seekSlider.value = (audio.currentTime / audio.duration) * 100; document.documentElement.style.setProperty('--slider-progress', `${seekSlider.value}%`); updateLyrics(audio.currentTime); } };
