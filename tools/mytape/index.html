@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>送给20岁的我们</title>
     
-    <!-- ells: 预连接 CDN，提升大陆地区握手速度 -->
+    <!-- 预连接提升加载速度 -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://ells-media.oss-cn-shanghai.aliyuncs.com">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -31,7 +31,7 @@
             touch-action: none;
         }
 
-        /* 极简 Loading 遮罩 */
+        /* Loading 遮罩 */
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #f7f7f9; display: flex; flex-direction: column;
@@ -76,15 +76,13 @@
         .lyric-line.past { opacity: 0; transform: translateZ(400px) translateY(-30px); }
         .lyric-line.future { opacity: 0; transform: translateZ(-300px) translateY(30px); }
 
-        /* 磁带：根据 ells 要求减重、向左上收缩 30% 的影子 */
+        /* 磁带：根据 ells 要求减重、影子收缩 */
         .specimen-case {
             position: relative; z-index: 10;
             transform: rotateX(8deg) translateZ(0);
             -webkit-backface-visibility: hidden; backface-visibility: hidden;
             filter: 
-                /* ells: 核心影 - 偏移量回收至 17px/28px，浓度降至 0.22 */
                 drop-shadow(17px 28px 10px rgba(0,0,0,0.22))
-                /* ells: 环境影 - 偏移量回收至 31px/49px，浓度降至 0.13 */
                 drop-shadow(31px 49px 30px rgba(0,0,0,0.13));
             margin-bottom: 4vh; 
             animation: case-breath 18s ease-in-out infinite;
@@ -98,7 +96,6 @@
         canvas {
             max-width: 80vw; max-height: 38vh;
             display: block; border-radius: 40px;
-            /* ells: 增加高清显示优化 */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
         }
@@ -191,15 +188,17 @@
         </div>
     </div>
 
+    <!-- 跨域音频加载的关键 -->
     <audio id="audio" crossorigin="anonymous"></audio>
 
     <script>
-        // ells: DPI 高清适配逻辑
         const dpr = window.devicePixelRatio || 1;
         const config = { leftReel: { x: 454, y: 460 }, rightReel: { x: 739, y: 460 }, reelSize: 108, rotationStep: 36 };
         
-        // ells: 使用 jsDelivr CDN 加速资源，绕过 GitHub 的限制
+        // ells: 资产使用 jsDelivr CDN 加速
         const CDN_BASE = "https://cdn.jsdelivr.net/gh/Ells79/Zen-Toolkit@main/tools/mytape/";
+        const OSS_BASE = "https://ells-media.oss-cn-shanghai.aliyuncs.com/";
+
         const assets = { shell: new Image(), reel: new Image() };
         assets.shell.crossOrigin = assets.reel.crossOrigin = "anonymous";
         assets.shell.src = CDN_BASE + "tape.webp";
@@ -220,12 +219,13 @@
         assets.shell.onload = checkReady;
         assets.reel.onload = checkReady;
 
+        // ells: 这里填入你导出的 10 个阿里云 OSS 链接
         const playlist = [
-            { id: 1, title: "笑话", humanSrc: CDN_BASE + "audio/joke.mp3", aiSrc: CDN_BASE + "audio/joke_ai.mp3", humanLyrics: [{ time: 0, text: "笑话 (HUMAN)" }], aiLyrics: [{ time: 0, text: "笑话 (AI)" }] },
-            { id: 2, title: "Forget It", humanSrc: CDN_BASE + "audio/forgetit.mp3", aiSrc: CDN_BASE + "audio/forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "FORGET IT (HUMAN)" }], aiLyrics: [{ time: 0, text: "FORGET IT (AI)" }] },
-            { id: 3, title: "Boat", humanSrc: CDN_BASE + "audio/boat.mp3", aiSrc: CDN_BASE + "audio/boat_ai.mp3", humanLyrics: [{ time: 0, text: "BOAT (HUMAN)" }], aiLyrics: [{ time: 0, text: "BOAT (AI)" }] },
-            { id: 4, title: "Hi Blue", humanSrc: CDN_BASE + "audio/hiblue.mp3", aiSrc: CDN_BASE + "audio/hiblue_ai.mp3", humanLyrics: [{ time: 0, text: "HI BLUE (HUMAN)" }], aiLyrics: [{ time: 0, text: "HI BLUE (AI)" }] },
-            { id: 5, title: "Overthing", humanSrc: CDN_BASE + "audio/overthing.mp3", aiSrc: CDN_BASE + "audio/overthing_ai.mp3", humanLyrics: [{ time: 0, text: "OVERTHING (HUMAN)" }], aiLyrics: [{ time: 0, text: "OVERTHING (AI)" }] }
+            { id: 1, title: "Overthing", humanSrc: OSS_BASE + "overthing.mp3", aiSrc: OSS_BASE + "overthing_ai.mp3", humanLyrics: [{ time: 0, text: "Overthing (HUMAN)" }, {time: 5, text: "我想过很多遍"}, {time: 10, text: "在二十岁的门前"}], aiLyrics: [{ time: 0, text: "Overthing (AI)" }] },
+            { id: 2, title: "Joke", humanSrc: OSS_BASE + "joke.mp3", aiSrc: OSS_BASE + "joke_ai.mp3", humanLyrics: [{ time: 0, text: "Joke (HUMAN)" }, {time: 5, text: "生活像个玩笑"}], aiLyrics: [{ time: 0, text: "Joke (AI)" }] },
+            { id: 3, title: "Hiblue", humanSrc: OSS_BASE + "hiblue.mp3", aiSrc: OSS_BASE + "hiblue_ai.mp3", humanLyrics: [{ time: 0, text: "Hiblue (HUMAN)" }, {time: 5, text: "蔚蓝色的忧郁"}], aiLyrics: [{ time: 0, text: "Hiblue (AI)" }] },
+            { id: 4, title: "Forget It", humanSrc: OSS_BASE + "forgetit.mp3", aiSrc: OSS_BASE + "forgetit_ai.mp3", humanLyrics: [{ time: 0, text: "Forget It (HUMAN)" }, {time: 5, text: "算了吧 就忘记"}], aiLyrics: [{ time: 0, text: "Forget It (AI)" }] },
+            { id: 5, title: "Boat", humanSrc: OSS_BASE + "boat.mp3", aiSrc: OSS_BASE + "boat_ai.mp3", humanLyrics: [{ time: 0, text: "Boat (HUMAN)" }, {time: 5, text: "一叶孤舟"}], aiLyrics: [{ time: 0, text: "Boat (AI)" }] }
         ];
 
         let currentTrackIndex = 0, isPlaying = false, rotation = 0, currentMode = 'human';
@@ -233,6 +233,7 @@
         const trackDial = document.getElementById('track-dial'), playBtn = document.getElementById('playBtn'), playIcon = document.getElementById('playIcon'), seekSlider = document.getElementById('seekSlider'), lyricsContainer = document.getElementById('lyrics-container');
 
         const safePlay = async () => { try { await audio.play(); isPlaying = true; playIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; } catch (e) {} };
+        
         function toggleMode() {
             const wrapper = document.getElementById('modeWrapper'), labels = document.querySelectorAll('.mode-label');
             let percent = audio.duration ? audio.currentTime / audio.duration : 0;
@@ -240,12 +241,21 @@
             wrapper.className = `mode-toggle-group ${currentMode}`;
             labels[0].classList.toggle('active', currentMode === 'human'); labels[1].classList.toggle('active', currentMode === 'ai');
             const song = playlist[currentTrackIndex];
-            if (song) { audio.pause(); audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); audio.load(); audio.onloadedmetadata = () => { audio.currentTime = audio.duration * percent; if (isPlaying) safePlay(); audio.onloadedmetadata = null; }; }
+            if (song) { 
+                audio.pause(); 
+                audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; 
+                initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); 
+                audio.load(); 
+                audio.onloadedmetadata = () => { 
+                    audio.currentTime = audio.duration * percent; 
+                    if (isPlaying) safePlay(); 
+                    audio.onloadedmetadata = null; 
+                }; 
+            }
         }
 
         function draw() {
             const lw = 1200, lh = 953;
-            // ells: 动态调整画布内部比例，确保高清
             if (canvas.width !== lw * dpr) { canvas.width = lw * dpr; canvas.height = lh * dpr; ctx.scale(dpr, dpr); }
             ctx.clearRect(0, 0, lw, lh);
             if (assetsLoaded >= 2) {
@@ -272,7 +282,7 @@
             currentTrackIndex = index; trackDial.style.transform = `rotate(${-index * config.rotationStep}deg)`;
             document.querySelectorAll('.track-num').forEach((el, i) => el.classList.toggle('active', i === index));
             const song = playlist[index];
-            if (song) { const wasPlaying = isPlaying; audio.pause(); audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); if (wasPlaying) safePlay(); }
+            if (song) { const wasPlaying = isPlaying; audio.pause(); audio.src = currentMode === 'human' ? song.humanSrc : song.aiSrc; initLyrics(currentMode === 'human' ? song.humanLyrics : song.aiLyrics); if (wasPlaying) safePlay(); else audio.load(); }
         }
 
         playBtn.onclick = () => { if (audio.paused) safePlay(); else { audio.pause(); isPlaying = false; playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; } };
