@@ -1,292 +1,468 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-<meta charset="UTF-8">
-<title>Fretboard Lab v6</title>
-<style>
-body{margin:0;font-family:Arial;background:#eef0f2;display:flex;justify-content:center;align-items:center;height:100vh;}
-.container{background:white;padding:40px;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,0.15);width:1300px;position:relative;}
-h1{text-align:center;font-family:Georgia;}
-.tabs{text-align:center;margin:15px 0;}
-.tab{padding:8px 16px;margin:4px;border-radius:6px;border:1px solid #999;background:#ddd;cursor:pointer;font-weight:bold;}
-.tab.active{background:#111;color:white;}
-#controls{text-align:center;margin-bottom:10px;}
-input,select{padding:8px;font-size:16px;}
-button{padding:8px 14px;margin-left:6px;border:none;border-radius:6px;background:#555;color:white;cursor:pointer;font-weight:bold;}
-button:hover{background:#111;}
-#chordInfo{text-align:center;margin:8px 0 12px;font-size:16px;color:#333;}
-.board{display:grid;grid-template-columns:50px 10px repeat(12,95px);grid-template-rows:repeat(6,45px);background:#4a2e1e;padding:10px;border-radius:10px;margin-bottom:20px;}
-.string-label{display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;}
-.nut{background:#ddd;}
-.cell{position:relative;border-right:4px solid #bbb;cursor:pointer;}
-.cell::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:#bbb;transform:translateY(-50%);}
-[data-string="6"]::before{height:3px}[data-string="5"]::before{height:2.6px}[data-string="4"]::before{height:2.3px}
-[data-string="3"]::before{height:2px}[data-string="2"]::before{height:1.7px}[data-string="1"]::before{height:1.4px}
-.marker{position:absolute;top:50%;left:50%;width:10px;height:10px;background:#ddd;border-radius:50%;transform:translate(-50%,-50%);}
-.double-marker{display:flex;gap:6px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
-.double-marker div{width:8px;height:8px;background:#ddd;border-radius:50%;}
-.note{width:18px;height:18px;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
-.root{background:#e53935}.third{background:#1e88e5}.fifth{background:#757575}.seventh{background:#fdd835}
-.correct{background:#4CAF50}.wrong{background:#e53935}
-.legend{position:absolute;right:25px;bottom:25px;font-size:12px;color:#555;line-height:1.6;}
-#question{text-align:center;margin:10px;font-size:18px;}
-#score{text-align:center;font-size:14px;margin-top:4px;}
-#library{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:10px;}
-.chordBtn{padding:8px 14px;background:#ddd;border-radius:6px;cursor:pointer;font-weight:bold;}
-.chordBtn:hover{background:#bbb;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fretboard Lab | ells79.me</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=JetBrains+Mono:wght@200;400&display=swap');
+
+        :root {
+            --bg: #f2f2f0;
+            --fg: #000000;
+            --fret-color: #4a2e1e;
+            --string-color: #a0a0a0;
+            --root-color: #e53935;
+            --third-color: #1e88e5;
+            --fifth-color: #757575;
+            --seventh-color: #fdd835;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .grain-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3BaseFilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/baseFilter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* 响应式指板容器 */
+        .fretboard-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 40px 0;
+            cursor: grab;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: 40px 10px repeat(12, 100px);
+            grid-template-rows: repeat(6, 45px);
+            background: var(--fret-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin: 0 auto;
+            min-width: fit-content;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        /* 全屏模式下的指板调整 */
+        body.fullscreen-mode {
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+        body.fullscreen-mode header, 
+        body.fullscreen-mode footer,
+        body.fullscreen-mode .legend-section {
+            display: none;
+        }
+        body.fullscreen-mode .fretboard-scroll-wrapper {
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            background: #111;
+        }
+
+        .string-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.3);
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .nut { background: #ddd; border-radius: 2px 0 0 2px; }
+
+        .cell {
+            position: relative;
+            border-right: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        .cell::before {
+            content: "";
+            position: absolute;
+            left: 0; right: 0;
+            top: 50%;
+            height: 1px;
+            background: var(--string-color);
+            transform: translateY(-50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        [data-string="6"]::before { height: 3px; }
+        [data-string="5"]::before { height: 2.5px; }
+        [data-string="4"]::before { height: 2px; }
+        [data-string="3"]::before { height: 1.5px; }
+        [data-string="2"]::before { height: 1.2px; }
+        [data-string="1"]::before { height: 1px; }
+
+        .marker {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 8px; height: 8px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+        }
+
+        .note {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: notePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes notePop {
+            from { transform: translate(-50%, -50%) scale(0); }
+            to { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .root { background: var(--root-color); }
+        .third { background: var(--third-color); }
+        .fifth { background: var(--fifth-color); }
+        .seventh { background: var(--seventh-color); }
+        .correct { background: #4CAF50; }
+        .wrong { background: #e53935; }
+
+        .tab {
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: var(--fg);
+            font-weight: bold;
+        }
+
+        /* 横屏提示 */
+        #orientation-tip {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 10px;
+            z-index: 1000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            #orientation-tip { display: block; }
+        }
+    </style>
 </head>
-<body>
-<div class="container">
-<h1>Fretboard Lab</h1>
+<body class="selection:bg-orange-500 selection:text-white pb-20">
+    <div class="grain-overlay"></div>
+    
+    <div id="orientation-tip" class="mono">Rotate device for best view / 请旋转设备</div>
 
-<div class="tabs">
-<button class="tab active" onclick="setMode('explorer',this)">Explorer</button>
-<button class="tab" onclick="setMode('trainer',this)">Trainer</button>
-<button class="tab" onclick="setMode('library',this)">Chord Library</button>
-</div>
+    <!-- 头部 -->
+    <header class="p-6 md:px-12 md:py-8 border-b border-black border-opacity-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <a href="../../index.html" class="mono text-[10px] uppercase tracking-widest hover:underline opacity-50 block mb-2">← Return_to_Archive</a>
+            <h1 class="text-3xl font-bold tracking-tighter uppercase leading-none">Fretboard Lab</h1>
+        </div>
+        
+        <div class="flex border-b border-black border-opacity-10 w-full md:w-auto overflow-x-auto">
+            <button class="tab active px-6 py-3 mono text-[10px] uppercase tracking-widest whitespace-nowrap" onclick="setMode('explorer',this)">Explorer</button>
+            <button class="tab px-6 py-3 mono text-[10px] uppercase tracking-widest whitespace-nowrap" onclick="setMode('trainer',this)">Trainer</button>
+            <button class="tab px-6 py-3 mono text-[10px] uppercase tracking-widest whitespace-nowrap" onclick="setMode('library',this)">Library</button>
+        </div>
+    </header>
 
-<div id="controls"></div>
-<div id="chordInfo"></div>
-<div id="question"></div>
-<div id="board" class="board"></div>
-<div id="library"></div>
-<div id="score"></div>
+    <main class="max-w-7xl mx-auto px-6 mt-8 md:mt-12">
+        
+        <!-- 工具栏 -->
+        <div id="controls-panel" class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div id="controls" class="flex flex-wrap gap-3"></div>
+            <div class="flex items-center gap-4">
+                <div id="status-area" class="text-right hidden md:block">
+                    <div id="chordInfo" class="text-lg font-medium tracking-tight italic opacity-70"></div>
+                    <div id="question" class="text-xl font-bold tracking-tight"></div>
+                    <div id="score" class="mono text-[10px] uppercase opacity-40 mt-1 tracking-widest"></div>
+                </div>
+                <!-- 全屏切换按钮 -->
+                <button onclick="toggleFullscreen()" class="p-3 border border-black border-opacity-10 rounded-sm hover:bg-black hover:text-white transition-all group">
+                    <svg id="fs-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="group-hover:scale-110 transition-transform">
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
-<div class="legend">
-<span style="color:#e53935">●</span> Root<br>
-<span style="color:#1e88e5">●</span> 3rd<br>
-<span style="color:#757575">●</span> 5th<br>
-<span style="color:#fdd835">●</span> 7th
-</div>
+        <!-- 指板交互区 -->
+        <div class="fretboard-scroll-wrapper bg-white rounded-sm border border-black border-opacity-5">
+            <div id="board" class="board"></div>
+        </div>
 
-</div>
+        <!-- 底部说明 (在全屏时隐藏) -->
+        <div class="legend-section mt-16 grid grid-cols-1 md:grid-cols-12 gap-12">
+            <div id="library" class="md:col-span-8 flex flex-wrap gap-2"></div>
+            <div class="md:col-span-4">
+                <div class="p-6 border border-black border-opacity-10 rounded-sm">
+                    <h4 class="mono text-[10px] uppercase opacity-40 mb-6">Color DNA / 图例</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3 text-[10px] mono uppercase"><span class="w-3 h-3 rounded-full bg-[#e53935]"></span> Root</div>
+                        <div class="flex items-center gap-3 text-[10px] mono uppercase"><span class="w-3 h-3 rounded-full bg-[#1e88e5]"></span> 3rd</div>
+                        <div class="flex items-center gap-3 text-[10px] mono uppercase"><span class="w-3 h-3 rounded-full bg-[#757575]"></span> 5th</div>
+                        <div class="flex items-center gap-3 text-[10px] mono uppercase"><span class="w-3 h-3 rounded-full bg-[#fdd835]"></span> 7th</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-<script>
+    <footer class="mt-40 px-6 text-center opacity-20 mono text-[8px] uppercase tracking-[0.2em]">
+        © 2026 Fretboard Lab / Digital Business Card of ELLS
+    </footer>
 
-const tuning={1:"E",2:"B",3:"G",4:"D",5:"A",6:"E"};
-const notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    <script>
+        const tuning = { 1: "E", 2: "B", 3: "G", 4: "D", 5: "A", 6: "E" };
+        const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const chordFormulas = {
+            maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], 7: [0, 4, 7, 10], m: [0, 3, 7], maj: [0, 4, 7]
+        };
+        const keyChords = {
+            C: ["Cmaj7", "Dm7", "Em7", "Fmaj7", "G7", "Am7"],
+            G: ["Gmaj7", "Am7", "Bm7", "Cmaj7", "D7", "Em7"],
+            F: ["Fmaj7", "Gm7", "Am7", "Bbmaj7", "C7", "Dm7"]
+        };
 
-const chordFormulas={
-maj7:[0,4,7,11],
-m7:[0,3,7,10],
-7:[0,4,7,10],
-m:[0,3,7],
-maj:[0,4,7]
-};
+        let mode = "explorer";
+        let chordNotes = [];
+        let targetNote = null;
+        let score = 0;
+        let total = 0;
+        let isFullscreen = false;
 
-const keyChords={
-C:["Cmaj7","Dm7","Em7","Fmaj7","G7","Am7"],
-G:["Gmaj7","Am7","Bm7","Cmaj7","D7","Em7"],
-F:["Fmaj7","Gm7","Am7","Bbmaj7","C7","Dm7"]
-};
+        function toggleFullscreen() {
+            isFullscreen = !isFullscreen;
+            document.body.classList.toggle('fullscreen-mode', isFullscreen);
+            const icon = document.getElementById('fs-icon');
+            if(isFullscreen) {
+                icon.innerHTML = '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/>';
+                // 全屏时自动滚动到中间
+                const wrapper = document.querySelector('.fretboard-scroll-wrapper');
+                wrapper.scrollLeft = 200;
+            } else {
+                icon.innerHTML = '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>';
+            }
+        }
 
-let mode="explorer";
-let chordNotes=[];
-let targetNote=null;
-let score=0;
-let total=0;
+        function setMode(m, btn) {
+            mode = m;
+            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+            btn.classList.add("active");
+            document.getElementById("library").innerHTML = "";
+            document.getElementById("question").innerText = "";
+            document.getElementById("score").innerText = "";
+            document.getElementById("chordInfo").innerText = "";
+            clearNotes();
 
-function setMode(m,btn){
-mode=m;
-document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-btn.classList.add("active");
+            const ctrl = document.getElementById("controls");
+            if (mode === "explorer") {
+                ctrl.innerHTML = `
+                    <div class="flex gap-2">
+                        <input id="chordInput" class="bg-white border border-black border-opacity-10 px-4 py-2 text-sm focus:outline-none focus:border-opacity-100 w-32 md:w-48 uppercase mono" placeholder="Fmaj7">
+                        <button onclick="showChord()" class="bg-black text-white px-6 py-2 text-[10px] mono uppercase tracking-widest hover:invert transition-all">Show</button>
+                    </div>
+                    <button onclick="highlightGuide()" class="border border-black px-4 py-2 text-[10px] mono uppercase tracking-widest hover:bg-black hover:text-white transition-all hidden sm:block">Guide Tones</button>
+                `;
+            } else if (mode === "trainer") {
+                ctrl.innerHTML = `
+                    <button onclick="newQuestion()" class="bg-black text-white px-6 py-2 text-[10px] mono uppercase tracking-widest hover:invert transition-all">Note Quiz</button>
+                    <button onclick="newChordQuestion()" class="border border-black px-6 py-2 text-[10px] mono uppercase tracking-widest hover:bg-black hover:text-white transition-all">Chord Quiz</button>
+                `;
+                newQuestion();
+            } else if (mode === "library") {
+                ctrl.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="mono text-[10px] opacity-40 uppercase">Key:</span>
+                        <select id="keySelect" onchange="buildLibrary()" class="bg-transparent border-b border-black border-opacity-20 px-2 py-1 text-sm focus:outline-none uppercase mono">
+                            <option value="C">C</option><option value="G">G</option><option value="F">F</option>
+                        </select>
+                    </div>
+                `;
+                buildLibrary();
+            }
+        }
 
-document.getElementById("library").innerHTML="";
-document.getElementById("question").innerText="";
-document.getElementById("score").innerText="";
-document.getElementById("chordInfo").innerText="";
-clearNotes();
+        function buildLibrary() {
+            const key = document.getElementById("keySelect").value;
+            const container = document.getElementById("library");
+            container.innerHTML = "";
+            keyChords[key].forEach(chord => {
+                let div = document.createElement("div");
+                div.className = "px-4 py-2 border border-black border-opacity-5 hover:border-opacity-100 cursor-pointer text-[10px] mono uppercase transition-all";
+                div.innerText = chord;
+                div.onclick = () => loadLibraryChord(chord);
+                container.appendChild(div);
+            });
+        }
 
-if(mode==="explorer"){
-document.getElementById("controls").innerHTML=
-'<input id="chordInput" placeholder="Chord e.g. Fmaj7">'+
-'<button onclick="showChord()">Show</button>'+
-'<button onclick="highlightGuide()">Guide Tones</button>';
-}
+        function loadLibraryChord(chord) {
+            document.getElementById("chordInfo").innerText = chord;
+            let root = chord[0];
+            let type = chord.slice(1) || "maj7";
+            chordNotes = getChordNotes(root, type);
+            drawChord();
+        }
 
-if(mode==="trainer"){
-document.getElementById("controls").innerHTML=
-'<button onclick="newQuestion()">Note Quiz</button>'+
-'<button onclick="newChordQuestion()">Chord Tone Quiz</button>';
-newQuestion();
-}
+        function getNote(open, fret) {
+            let i = notes.indexOf(open);
+            return notes[(i + fret) % 12];
+        }
 
-if(mode==="library"){
-document.getElementById("controls").innerHTML=
-'<select id="keySelect" onchange="buildLibrary()">'+
-'<option value="C">Key C</option>'+
-'<option value="G">Key G</option>'+
-'<option value="F">Key F</option>'+
-'</select>';
-buildLibrary();
-}
-}
+        function getChordNotes(root, type) {
+            let rootIndex = notes.indexOf(root);
+            let formula = chordFormulas[type] || [0, 4, 7];
+            return formula.map(i => notes[(rootIndex + i) % 12]);
+        }
 
-function buildLibrary(){
-const key=document.getElementById("keySelect").value;
-const chords=keyChords[key];
-const container=document.getElementById("library");
-container.innerHTML="";
+        function showChord() {
+            let input = document.getElementById("chordInput").value || "Cmaj7";
+            let root = (input[1] === "#" || input[1] === "b") ? input.slice(0, 2) : input[0];
+            let type = (input[1] === "#" || input[1] === "b") ? input.slice(2) : input.slice(1);
+            chordNotes = getChordNotes(root.toUpperCase(), type || "maj");
+            document.getElementById("chordInfo").innerText = input.toUpperCase();
+            drawChord();
+        }
 
-chords.forEach(chord=>{
-let div=document.createElement("div");
-div.className="chordBtn";
-div.innerText=chord;
-div.onclick=()=>loadLibraryChord(chord);
-container.appendChild(div);
-});
-}
+        function drawChord() {
+            clearNotes();
+            document.querySelectorAll(".cell").forEach(cell => {
+                let note = getNote(tuning[cell.dataset.string], parseInt(cell.dataset.fret));
+                if (chordNotes.includes(note)) {
+                    let dot = document.createElement("div");
+                    dot.className = "note";
+                    dot.innerText = note;
+                    let idx = chordNotes.indexOf(note);
+                    if (idx === 0) dot.classList.add("root");
+                    else if (idx === 1) dot.classList.add("third");
+                    else if (idx === 2) dot.classList.add("fifth");
+                    else if (idx === 3) dot.classList.add("seventh");
+                    cell.appendChild(dot);
+                }
+            });
+        }
 
-function loadLibraryChord(chord){
-document.getElementById("chordInfo").innerText=chord;
-let root=chord[0];
-let type=chord.slice(1);
-if(type==="") type="maj7";
-chordNotes=getChordNotes(root,type);
-drawChord();
-}
+        function highlightGuide() {
+            if (chordNotes.length < 2) return;
+            clearNotes();
+            let third = chordNotes[1];
+            let seventh = chordNotes[3] || null;
+            document.querySelectorAll(".cell").forEach(cell => {
+                let note = getNote(tuning[cell.dataset.string], parseInt(cell.dataset.fret));
+                if (note === third || note === seventh) {
+                    let dot = document.createElement("div");
+                    dot.className = "note " + (note === third ? "third" : "seventh");
+                    dot.innerText = note;
+                    cell.appendChild(dot);
+                }
+            });
+        }
 
-function getNote(open,fret){
-let i=notes.indexOf(open);
-return notes[(i+fret)%12];
-}
+        function newQuestion() {
+            clearNotes();
+            targetNote = notes[Math.floor(Math.random() * 12)];
+            document.getElementById("question").innerText = "FIND: " + targetNote;
+        }
 
-function getChordNotes(root,type){
-let rootIndex=notes.indexOf(root);
-let formula=chordFormulas[type];
-return formula.map(i=>notes[(rootIndex+i)%12]);
-}
+        function newChordQuestion() {
+            clearNotes();
+            let roots = ["C", "D", "E", "F", "G", "A", "B"];
+            let root = roots[Math.floor(Math.random() * roots.length)];
+            chordNotes = getChordNotes(root, "7");
+            targetNote = chordNotes[1];
+            document.getElementById("question").innerText = root + "7 → 3rd?";
+        }
 
-function drawChord(){
-clearNotes();
-document.querySelectorAll(".cell").forEach(cell=>{
-let s=cell.dataset.string;
-let f=cell.dataset.fret;
-let note=getNote(tuning[s],f);
+        function handleClick(cell) {
+            let note = getNote(tuning[cell.dataset.string], parseInt(cell.dataset.fret));
+            if (mode === "trainer") {
+                let dot = document.createElement("div");
+                dot.className = "note";
+                dot.innerText = note;
+                total++;
+                if (note === targetNote) {
+                    dot.classList.add("correct");
+                    score++;
+                    setTimeout(() => document.getElementById("question").innerText.includes("FIND:") ? newQuestion() : newChordQuestion(), 1000);
+                } else {
+                    dot.classList.add("wrong");
+                }
+                cell.appendChild(dot);
+                document.getElementById("score").innerText = "SCORE: " + score + " / " + total;
+            }
+        }
 
-if(chordNotes.includes(note)){
-let dot=document.createElement("div");
-dot.className="note";
-let idx=chordNotes.indexOf(note);
+        function clearNotes() {
+            document.querySelectorAll(".note").forEach(n => n.remove());
+        }
 
-if(idx===0) dot.classList.add("root");
-if(idx===1) dot.classList.add("third");
-if(idx===2) dot.classList.add("fifth");
-if(idx===3) dot.classList.add("seventh");
+        function buildBoard() {
+            const board = document.getElementById("board");
+            board.innerHTML = "";
+            for (let string = 1; string <= 6; string++) {
+                let label = document.createElement("div");
+                label.className = "string-label"; label.innerText = string;
+                board.appendChild(label);
+                let nut = document.createElement("div");
+                nut.className = "nut"; board.appendChild(nut);
+                for (let fret = 1; fret <= 12; fret++) {
+                    let cell = document.createElement("div");
+                    cell.className = "cell";
+                    cell.dataset.string = string; cell.dataset.fret = fret;
+                    cell.onclick = () => handleClick(cell);
+                    if ([3, 5, 7, 9].includes(fret) && string === 3) {
+                        let m = document.createElement("div"); m.className = "marker"; cell.appendChild(m);
+                    }
+                    if (fret === 12 && string === 3) {
+                        let m = document.createElement("div"); m.className = "double-marker";
+                        m.innerHTML = "<div></div><div></div>"; cell.appendChild(m);
+                    }
+                    board.appendChild(cell);
+                }
+            }
+        }
 
-cell.appendChild(dot);
-}
-});
-}
-
-function highlightGuide(){
-clearNotes();
-let third=chordNotes[1];
-let seventh=chordNotes[3];
-
-document.querySelectorAll(".cell").forEach(cell=>{
-let s=cell.dataset.string;
-let f=cell.dataset.fret;
-let note=getNote(tuning[s],f);
-
-if(note===third){
-let dot=document.createElement("div");
-dot.className="note third";
-cell.appendChild(dot);
-}
-
-if(note===seventh){
-let dot=document.createElement("div");
-dot.className="note seventh";
-cell.appendChild(dot);
-}
-});
-}
-
-function newQuestion(){
-clearNotes();
-targetNote=notes[Math.floor(Math.random()*12)];
-document.getElementById("question").innerText="Find note: "+targetNote;
-}
-
-function newChordQuestion(){
-clearNotes();
-let roots=["C","D","E","F","G","A","B"];
-let root=roots[Math.floor(Math.random()*roots.length)];
-let notesArr=getChordNotes(root,"7");
-targetNote=notesArr[1];
-document.getElementById("question").innerText="Chord: "+root+"7  Find: 3rd";
-}
-
-function handleClick(cell){
-let s=parseInt(cell.dataset.string);
-let f=parseInt(cell.dataset.fret);
-let note=getNote(tuning[s],f);
-
-if(mode==="trainer"){
-let dot=document.createElement("div");
-dot.className="note";
-total++;
-
-if(note===targetNote){
-dot.classList.add("correct");
-score++;
-}else{
-dot.classList.add("wrong");
-}
-
-cell.appendChild(dot);
-document.getElementById("score").innerText="Score: "+score+" / "+total;
-}
-}
-
-function clearNotes(){
-document.querySelectorAll(".note").forEach(n=>n.remove());
-}
-
-function buildBoard(){
-const board=document.getElementById("board");
-
-for(let string=1;string<=6;string++){
-let label=document.createElement("div");
-label.className="string-label";
-label.innerText=string;
-board.appendChild(label);
-
-let nut=document.createElement("div");
-nut.className="nut";
-board.appendChild(nut);
-
-for(let fret=1;fret<=12;fret++){
-let cell=document.createElement("div");
-cell.className="cell";
-cell.dataset.string=string;
-cell.dataset.fret=fret;
-cell.onclick=()=>handleClick(cell);
-
-if([3,5,7,9].includes(fret) && string===3){
-let marker=document.createElement("div");
-marker.className="marker";
-cell.appendChild(marker);
-}
-
-if(fret===12 && string===3){
-let m=document.createElement("div");
-m.className="double-marker";
-m.innerHTML="<div></div><div></div>";
-cell.appendChild(m);
-}
-
-board.appendChild(cell);
-}
-}
-}
-
-buildBoard();
-setMode("explorer",document.querySelector(".tab"));
-
-</script>
+        buildBoard();
+        setMode("explorer", document.querySelector(".tab"));
+    </script>
 </body>
 </html>
