@@ -1,1 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sculpt Lab | ells79.me</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #78B1BF; 
+            --accent: #D4AF37; 
+            --clay: #5D4037; 
+            --text: #ffffff; 
+        }
+        body { margin: 0; background: var(--bg); overflow: hidden; font-family: 'Space Grotesk', sans-serif; color: var(--text); touch-action: none; }
+        canvas { display: block; }
 
+        /* UI Overlay 层 */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        
+        #tray {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; pointer-events: auto; padding: 12px;
+            background: rgba(255,255,255,0.2); border-radius: 30px; backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.3); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .tray-item {
+            width: 65px; height: 65px; border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s; color: rgba(255,255,255,0.8);
+        }
+        .tray-item span { font-size: 24px; transition: 0.3s; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1)); }
+        .tray-item label { font-size: 9px; font-family: 'JetBrains Mono'; margin-top: 6px; font-weight: 700; }
+        .tray-item:hover { background: rgba(255,255,255,0.2); transform: translateY(-5px); }
+        .tray-item.active { background: #fff; color: var(--clay); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        #countdown {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 140px; font-family: 'Space Grotesk'; font-weight: 900; color: white; display: none; z-index: 20;
+            text-shadow: 0 0 50px rgba(255,255,255,0.5);
+        }
+        #hud {
+            position: absolute; top: 45px; width: 100%; text-align: center;
+            font-family: 'JetBrains Mono'; font-size: 11px; color: white; letter-spacing: 2px;
+            font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #pressure-gauge {
+            position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
+            width: 4px; height: 160px; background: rgba(255,255,255,0.2); border-radius: 10px;
+            display: none; overflow: hidden;
+        }
+        #pressure-fill {
+            position: absolute; bottom: 0; width: 100%; background: #fff;
+            height: 0%; transition: height 0.1s;
+        }
+
+        #result-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(120, 177, 191, 0.95);
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; text-align: center;
+        }
+        #res-status { 
+            font-family: 'Space Grotesk'; font-weight: 900; font-size: 24px; color: #fff; 
+            margin-bottom: 20px; letter-spacing: -1px; text-transform: uppercase;
+        }
+        
+        #gallery-tag {
+            background: white; color: var(--clay); padding: 30px; text-align: left;
+            border-radius: 4px; border-bottom: 8px solid var(--accent); max-width: 280px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15); transform: rotate(-0.5deg);
+        }
+        #gallery-tag h3 { font-family: 'Space Grotesk'; font-weight: 900; font-size: 18px; margin: 0 0 10px 0; letter-spacing: -0.5px; }
+        #gallery-tag p { font-size: 11px; margin: 8px 0; color: #666; line-height: 1.6; font-weight: 500; }
+        
+        .actions { display: flex; gap: 15px; margin-top: 50px; }
+        .btn-action {
+            padding: 14px 28px; border: 2px solid white; border-radius: 50px;
+            cursor: pointer; font-size: 10px; text-transform: uppercase; pointer-events: auto;
+            color: white; transition: all 0.3s; font-family: 'JetBrains Mono'; font-weight: 700;
+        }
+        .btn-action:hover { background: white; color: var(--bg); transform: scale(1.05); }
+
+        #certificate-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center;
+            z-index: 200; pointer-events: auto;
+        }
+        #certificate-card {
+            width: 340px; height: 620px; background: #fff; color: #000;
+            padding: 40px; box-sizing: border-box; position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5); border-radius: 2px;
+        }
+        #cert-silhouette { width: 100%; height: 240px; margin: 25px 0; display: flex; align-items: center; justify-content: center; background: #fdfdfd; border-radius: 4px;}
+        #cert-silhouette canvas { width: 180px !important; height: 220px !important; background: transparent; }
+        .cert-header { font-family: 'JetBrains Mono'; font-size: 9px; text-transform: uppercase; border-bottom: 2px solid var(--accent); width: 100%; padding-bottom: 8px; margin-bottom: 15px; font-weight: 700; letter-spacing: 1px;}
+        .cert-footer { font-family: 'JetBrains Mono'; font-size: 9px; color: #888; text-align: left; width: 100%; margin-top: auto; line-height: 1.8; }
+        .cert-id { position: absolute; top: 50px; right: 25px; font-family: 'JetBrains Mono'; font-size: 8px; opacity: 0.3; transform: rotate(90deg); transform-origin: right top; }
+        
+        .close-cert-btn { 
+            width: 100%; margin-top: 20px; background: var(--accent); padding: 14px; 
+            text-align: center; font-family: 'JetBrains Mono'; font-size: 10px; 
+            cursor: pointer; transition: 0.3s; color: #fff; font-weight: 700;
+        }
+        .close-cert-btn:hover { background: #000; }
+        .sarcastic-stats { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; font-size: 8px; font-family: 'JetBrains Mono'; color: #000; border-top: 1px solid #eee; padding-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="hud">PROJECT_HOLY_CRAP // ORGANIC_SCULPTOR: ACTIVE</div>
+        
+        <div id="pressure-gauge">
+            <div id="pressure-fill"></div>
+        </div>
+
+        <div id="tray">
+            <div class="tray-item" onclick="selectType('constipation', this)"><span>🪨</span><label>STUBBORN</label></div>
+            <div class="tray-item" onclick="selectType('dog', this)"><span>💩</span><label>DAILY</label></div>
+            <div class="tray-item" onclick="selectType('sticky', this)"><span>🍮</span><label>VISCOUS</label></div>
+        </div>
+        <div id="countdown"></div>
+    </div>
+
+    <div id="result-screen">
+        <h2 id="res-status"></h2>
+        <div id="gallery-tag">
+            <h3 id="work-title">Untitled</h3>
+            <p><strong>Artist:</strong> ells (ARCHIVE_V2.5)</p>
+            <p><strong>Medium:</strong> Coiled Organic Matter</p>
+            <p id="work-desc"></p>
+        </div>
+        <div class="actions">
+            <div class="btn-action" onclick="showCertificate()">Mint Certificate</div>
+            <div class="btn-action" onclick="resetGame()">Start New Brief</div>
+        </div>
+    </div>
+
+    <!-- 证书弹窗 -->
+    <div id="certificate-modal">
+        <div id="certificate-card">
+            <div class="cert-header">ells79.me // Proof of Labor</div>
+            <h1 style="margin:0; font-size: 24px; width: 100%; text-align: left; letter-spacing: -1.5px; font-weight: 900; color: #5D4037;">HOLY CRAP!</h1>
+            
+            <div id="cert-silhouette">
+                <canvas id="sil-canvas"></canvas>
+            </div>
+
+            <div class="sarcastic-stats">
+                <div>LAYERS: 3.5</div>
+                <div>COIL_DENSITY: HIGH</div>
+                <div>PITTED_TEXTURE: TRUE</div>
+                <div>SURVIVAL_RT: 5.0s</div>
+                <div>AESTHETIC_ROI: B+</div>
+                <div>PEAK_SHARPNESS: 100%</div>
+            </div>
+
+            <div class="cert-footer">
+                <p><strong>SERIAL:</strong> <span id="cert-id-val">--</span></p>
+                <p><strong>DATE:</strong> <span id="cert-time">--</span></p>
+            </div>
+            
+            <div class="close-cert-btn" onclick="hideCertificate()">SAVE TO ARCHIVE</div>
+            <div class="cert-id" id="cert-id-tag">V2.5_COILED_EDITION</div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, clay, wheelBase, clock, galleryLight, glowSprite;
+        let keyLight, fillLight, rimLight;
+        let gameState = 'IDLE'; 
+        let touchPoints = []; 
+        let userPressure = 0; 
+        let currentRadii = []; 
+        let gameTime = 0;
+        let config = null;
+        let audioCtx;
+
+        const POINTS_COUNT = 100; // 极高分辨率以支持断层效果
+        const GAME_DURATION = 5.0; 
+
+        const TYPES = {
+            constipation: { color: 0x8c7b70, sensitivity: 0.04, drift: 0.005, noise: 0.03, name: 'STUBBORN_STONE', adjectives: ["Solid", "Heavy", "Legacy"], quotes: ["顽固得像历史遗留问题", "太硬了...", "预算还在燃烧"] },
+            dog: { color: 0x5D4037, sensitivity: 0.07, drift: 0.012, noise: 0.08, name: 'HOLY_CRAP', adjectives: ["Coiled", "Divine", "Organic"], quotes: ["噢！看看这层级", "离心力正在盘旋", "别让它塌了！", "稳住！"] },
+            sticky: { color: 0x4E342E, sensitivity: 0.13, drift: 0.024, noise: 0.15, name: 'VISCOUS_DREAM', adjectives: ["Liquid", "Viscous", "Melted"], quotes: ["抓不住的灵感", "它在流汗吗？", "创意正在液化...", "像极了你的周一"] }
+        };
+
+        const BLACK_WORDS = ["Synthesis", "Genesis", "Entropy", "Texture", "Void", "Artifact", "Form"];
+        const NOUNS = ["Matter", "Relic", "Vision", "Echo", "Substance", "Trace", "Vibe"];
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x78B1BF); 
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 10);
+            camera.lookAt(0, 1.2, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            const glowTex = createGlowTexture();
+            const glowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0xffffff, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending });
+            glowSprite = new THREE.Sprite(glowMat);
+            glowSprite.scale.set(12, 12, 1);
+            glowSprite.position.set(0, 1.5, -2.5);
+            scene.add(glowSprite);
+
+            keyLight = new THREE.SpotLight(0xfff5e0, 2.5);
+            keyLight.position.set(6, 12, 6);
+            keyLight.castShadow = true;
+            keyLight.angle = 0.45;
+            keyLight.penumbra = 0.4;
+            scene.add(keyLight);
+
+            fillLight = new THREE.PointLight(0xffffff, 0.8);
+            fillLight.position.set(-6, 2, 4);
+            scene.add(fillLight);
+
+            rimLight = new THREE.DirectionalLight(0xffffff, 3.0);
+            rimLight.position.set(-5, 5, -5);
+            scene.add(rimLight);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+            galleryLight = new THREE.SpotLight(0xffffff, 0);
+            galleryLight.position.set(0, 10, 2);
+            scene.add(galleryLight);
+
+            const plateGeo = new THREE.CylinderGeometry(3.0, 3.2, 0.4, 64);
+            const plateMat = new THREE.MeshPhysicalMaterial({ color: 0xcccccc, metalness: 0.1, roughness: 0.8 });
+            wheelBase = new THREE.Mesh(plateGeo, plateMat);
+            wheelBase.position.y = -2.5;
+            wheelBase.receiveShadow = true;
+            scene.add(wheelBase);
+
+            clock = new THREE.Clock();
+
+            config = TYPES.dog; 
+            setupInitialClay();
+
+            window.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('touchstart', onTouchStart, {passive: false});
+            window.addEventListener('touchmove', onTouchMove, {passive: false});
+            window.addEventListener('touchend', onTouchEnd);
+            window.addEventListener('resize', onResize);
+        }
+
+        function createGlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(128,128,0, 128,128,128);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.4, 'rgba(255,255,255,0.2)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,256,256);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // --- 核心更新：打造“盘蛇”形状的数学逻辑 ---
+        function setupInitialClay() {
+            currentRadii = [];
+            for (let i = 0; i < POINTS_COUNT; i++) {
+                const t = i / (POINTS_COUNT - 1);
+                
+                // 1. 极其宽矮的基座比例
+                const baseWidth = 2.4; 
+                const envelope = baseWidth * Math.pow(1 - t, 0.5);
+
+                // 2. 制造 3.5 层“盘绕”断层 (阶梯式膨胀)
+                // 使用 smoothstep 和 mod 制造出类似奶油挤出的重叠感
+                const numLayers = 3.5;
+                const layerPos = t * numLayers; 
+                const layerIndex = Math.floor(layerPos);
+                const layerFract = layerPos - layerIndex;
+                
+                // 每一层内部的圆润度
+                const bulge = Math.sin(layerFract * Math.PI) * 0.45 * (1 - t * 0.6);
+                
+                // 3. 顶部尖尖 (Final Sharpness)
+                let tipFactor = 1.0;
+                if (t > 0.85) {
+                    tipFactor = Math.pow(1 - (t - 0.85) / 0.15, 1.2);
+                }
+
+                const r = (envelope + bulge) * tipFactor + 0.05;
+                currentRadii.push(r);
+            }
+            updateClayMesh(true); 
+        }
+
+        function onMouseDown(e) { touchPoints = [{x: (e.clientX/window.innerWidth)*2-1, y: -(e.clientY/window.innerHeight)*2+1}]; resumeAudio(); }
+        function onMouseMove(e) { if(touchPoints.length > 0) touchPoints[0] = {x: (e.clientX/window.innerWidth)*2-1, y: -(e.clientY/window.innerHeight)*2+1}; }
+        function onMouseUp() { touchPoints = []; }
+        function onTouchStart(e) { resumeAudio(); updateTouches(e); e.preventDefault(); }
+        function onTouchMove(e) { updateTouches(e); e.preventDefault(); }
+        function onTouchEnd(e) { touchPoints = []; }
+        function updateTouches(e) {
+            touchPoints = Array.from(e.touches).map(t => ({ x: (t.clientX / window.innerWidth) * 2 - 1, y: -(t.clientY / window.innerHeight) * 2 + 1 }));
+        }
+
+        function resumeAudio() { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }
+
+        function selectType(type, el) {
+            if (gameState !== 'IDLE' && gameState !== 'MENU') return;
+            config = TYPES[type];
+            document.querySelectorAll('.tray-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            gameState = 'COUNTDOWN';
+            document.getElementById('tray').style.opacity = 0;
+            document.getElementById('tray').style.pointerEvents = 'none';
+            const cd = document.getElementById('countdown');
+            cd.style.display = 'block';
+            let c = 3; cd.innerText = c;
+            if (!audioCtx) initAudio();
+            const timer = setInterval(() => {
+                c--; if(c > 0) cd.innerText = c;
+                else { clearInterval(timer); cd.style.display = 'none'; startChallenge(); }
+            }, 800);
+        }
+
+        function startChallenge() {
+            gameState = 'PLAYING'; gameTime = 0; userPressure = 0;
+            document.getElementById('pressure-gauge').style.display = 'block';
+            currentRadii = [];
+            for (let i = 0; i < POINTS_COUNT; i++) {
+                const t = i / (POINTS_COUNT - 1);
+                currentRadii.push( (Math.sin(t * 8) * 0.05 + 1.1) * (1 - t * 0.7) );
+            }
+            updateClayMesh();
+        }
+
+        function updateClayMesh(isInitial = false) {
+            if(clay) scene.remove(clay);
+            const pts = [];
+            const heightStep = isInitial ? 0.06 : 0.12; // 初始态高度大幅压缩，产生压扁感
+
+            for(let i=0; i<POINTS_COUNT; i++) {
+                pts.push(new THREE.Vector2(currentRadii[i], (i - POINTS_COUNT/2) * heightStep));
+            }
+            const geo = new THREE.LatheGeometry(pts, 64);
+            const posAttr = geo.attributes.position;
+            const time = clock.getElapsedTime();
+            
+            for(let i=0; i<posAttr.count; i++) {
+                const x = posAttr.getX(i); const y = posAttr.getY(i); const z = posAttr.getZ(i);
+                const t = (y / (POINTS_COUNT * heightStep)) + 0.5;
+
+                // --- 螺旋盘绕偏移 (Snake Coil Offset) ---
+                let spiralX = 0;
+                let spiralZ = 0;
+                if(isInitial) {
+                    // 制造每一圈中心点的圆周运动位移
+                    const angle = t * Math.PI * 4.0; // 旋转角度
+                    const shift = 0.18 * (1 - t);    // 位移幅度随高度减弱
+                    spiralX = Math.cos(angle) * shift;
+                    spiralZ = Math.sin(angle) * shift;
+                }
+
+                // 有机坑洼
+                let noiseIntensity = isInitial ? 0.012 : 0.045; 
+                const noise = Math.sin(y * 22 + time * 0.2) * Math.cos(x * 8) * noiseIntensity;
+                
+                if (y > -2.8) {
+                    const angle = Math.atan2(z, x);
+                    posAttr.setX(i, x + Math.cos(angle) * noise + spiralX);
+                    posAttr.setZ(i, z + Math.sin(angle) * noise + spiralZ);
+                }
+            }
+            geo.computeVertexNormals();
+            const mat = new THREE.MeshPhysicalMaterial({ color: config.color, roughness: 0.9, metalness: 0.02, clearcoat: 0.0, flatShading: false });
+            clay = new THREE.Mesh(geo, mat);
+            clay.position.y = 0.8; 
+            clay.castShadow = true; clay.receiveShadow = true;
+            scene.add(clay);
+        }
+
+        function endGame(win, reason) {
+            gameState = 'END';
+            document.getElementById('pressure-gauge').style.display = 'none';
+            const statusEl = document.getElementById('res-status');
+            if (win) {
+                const adj = config.adjectives[Math.floor(Math.random()*3)];
+                const black = BLACK_WORDS[Math.floor(Math.random()*7)];
+                const noun = NOUNS[Math.floor(Math.random()*7)];
+                document.getElementById('work-title').innerText = `${adj} ${black} ${noun}`;
+                document.getElementById('work-desc').innerText = `已归档。在这 5.0 秒的有机博弈中，你通过这种不完美的层叠，守住了最后一点审美底线。`;
+                statusEl.innerText = "CAPTURED SUCCESSFUL"; statusEl.style.color = "#fff";
+                clay.material.color.set(0xfafafa); clay.material.roughness = 0.7;
+                galleryLight.intensity = 2.0; galleryLight.target = clay;
+                glowSprite.material.opacity = 0.6; 
+                document.getElementById('result-screen').style.display = 'flex';
+                document.getElementById('hud').innerText = "V2.5 // ARCHIVE_STABILIZED";
+            } else {
+                statusEl.innerText = "FLASH COLLAPSED"; statusEl.style.color = "#ff4444";
+                document.getElementById('work-title').innerText = "Broken Form";
+                document.getElementById('work-desc').innerText = reason;
+                document.getElementById('result-screen').style.display = 'flex';
+                document.getElementById('hud').innerText = "V2.5 // FORM_DESTRUCTED";
+                glowSprite.material.opacity = 0.1;
+            }
+        }
+
+        function showCertificate() {
+            const modal = document.getElementById('certificate-modal');
+            const canvas = document.getElementById('sil-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300; canvas.height = 360;
+            modal.style.display = 'flex';
+            ctx.clearRect(0,0,300,360); ctx.fillStyle = '#5D4037'; ctx.beginPath();
+            const centerX = 150, startY = 320, scaleX = 35, scaleY = 4.5;
+            for(let i=0; i<POINTS_COUNT; i++) {
+                const r = (currentRadii[i] + Math.sin(i*3.0)*0.03) * scaleX; const y = startY - (i * scaleY);
+                if(i===0) ctx.moveTo(centerX + r, y); else ctx.lineTo(centerX + r, y);
+            }
+            ctx.lineTo(centerX, startY - (POINTS_COUNT-1) * scaleY);
+            for(let i=POINTS_COUNT-1; i>=0; i--) {
+                const r = (currentRadii[i] + Math.sin(i*3.0)*0.03) * scaleX; const y = startY - (i * scaleY);
+                ctx.lineTo(centerX - r, y);
+            }
+            ctx.closePath(); ctx.fill();
+            document.getElementById('cert-id-val').innerText = "ORG-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            document.getElementById('cert-time').innerText = new Date().toLocaleString();
+        }
+
+        function hideCertificate() { document.getElementById('certificate-modal').style.display = 'none'; }
+        function resetGame() {
+            if(clay) scene.remove(clay); galleryLight.intensity = 0; glowSprite.material.opacity = 0.25;
+            gameState = 'IDLE'; setupInitialClay(); 
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('tray').style.opacity = 1; document.getElementById('tray').style.pointerEvents = 'auto';
+            document.getElementById('hud').innerText = "PROJECT_HOLY_CRAP // INITIAL_STATE: RAW_MATTER";
+            hideCertificate();
+        }
+        function onResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const melody = [392, 440, 494, 392, 440, 494, 349, 392, 440, 330, 349, 392];
+            let step = 0;
+            setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.type = 'square'; osc.frequency.setValueAtTime(melody[step % melody.length], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.015, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+                    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                    step++;
+                }
+            }, 400); 
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+            
+            if (gameState === 'PLAYING') {
+                if (wheelBase) wheelBase.rotation.y += 0.35;
+                if (clay) clay.rotation.y += 0.55;
+
+                gameTime += dt; 
+                const isTouching = touchPoints.length > 0;
+                if (isTouching) userPressure = Math.min(1.0, userPressure + dt * 3.0);
+                else userPressure = Math.max(0, userPressure - dt * 2.5);
+                document.getElementById('pressure-fill').style.height = (userPressure * 100) + '%';
+                
+                if(Math.floor(gameTime * 5) % 5 === 0) {
+                    document.getElementById('hud').innerText = config.quotes[Math.floor(gameTime) % config.quotes.length];
+                }
+
+                let hasCollapsed = false, reason = "";
+                const shapingTouch = touchPoints.length > 1 ? touchPoints[1] : (isTouching ? touchPoints[0] : null);
+
+                for(let i=0; i<POINTS_COUNT; i++) {
+                    const h = (i / (POINTS_COUNT - 1));
+                    const drift = config.drift * (1.2 + h * 2.0);
+                    currentRadii[i] += drift * (1.1 - userPressure * 1.1); 
+                    if(shapingTouch) {
+                        const touchH = (shapingTouch.y * 0.8 + 0.5); 
+                        const distToTouch = Math.abs(h - touchH);
+                        if(distToTouch < 0.3) {
+                            const influence = 1.0 - (distToTouch / 0.3);
+                            currentRadii[i] = currentRadii[i] * (1 - influence * 0.25) + (Math.abs(shapingTouch.x) * 4.5) * (influence * 0.25);
+                        }
+                    }
+                    if(currentRadii[i] < 0.1) { hasCollapsed = true; reason = "过度修饰。理想变得脆弱并最终破碎。"; }
+                    if(currentRadii[i] > 4.5) { hasCollapsed = true; reason = "失去核心。创意在惯性中化为平庸。"; }
+                }
+                updateClayMesh();
+                if (hasCollapsed) endGame(false, reason);
+                if (gameTime > GAME_DURATION) endGame(true); 
+            } else if (gameState === 'END') {
+                if (wheelBase) wheelBase.rotation.y += 0.05;
+                if (clay) clay.rotation.y += 0.01;
+            } else {
+                updateClayMesh(true);
+            }
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
