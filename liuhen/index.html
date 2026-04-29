@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>留痕写作</title>
+    <meta name="theme-color" content="#fbfaf5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="留痕" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Trace Writing</p>
+          <h1>留痕写作</h1>
+        </div>
+        <div class="today-card">
+          <span id="todayLabel"></span>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <section class="capture-panel" aria-label="输入">
+          <div class="panel-heading">
+            <h2>写下一个瞬间。</h2>
+            <button class="icon-button" id="clearInputBtn" type="button" title="清空">×</button>
+          </div>
+          <textarea id="fragmentInput" placeholder="写下一个瞬间。" spellcheck="false"></textarea>
+          <button id="saveFragmentBtn" class="primary-button" type="button">保存</button>
+
+          <details class="settings-box">
+            <summary>高级设置</summary>
+            <div class="api-box">
+              <div class="panel-heading compact">
+                <h3>DeepSeek API</h3>
+                <span id="apiStatus">未启用</span>
+              </div>
+              <label>
+                API Key
+                <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
+              </label>
+              <label>
+                模型版本
+                <input id="modelInput" type="text" value="deepseek-chat" list="modelSuggestions" />
+                <datalist id="modelSuggestions">
+                  <option value="deepseek-chat"></option>
+                  <option value="deepseek-reasoner"></option>
+                </datalist>
+              </label>
+              <label>
+                接口地址
+                <input id="baseUrlInput" type="text" value="/api/deepseek" />
+              </label>
+              <div class="api-actions">
+                <button id="saveApiBtn" type="button">保存设置</button>
+                <button id="clearApiBtn" type="button">清除</button>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="fragments-panel" aria-label="今日记录">
+          <div class="panel-heading">
+            <h2>今日记录</h2>
+          </div>
+          <div id="fragmentList" class="fragment-list"></div>
+        </section>
+
+        <section class="tighten-panel" aria-label="收紧">
+          <div class="panel-heading">
+            <h2>收紧</h2>
+          </div>
+          <button id="tightenBtn" class="tighten-button" type="button">收紧</button>
+          <article id="outputView" class="output-view"></article>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="choiceDialog" class="choice-dialog">
+      <form method="dialog">
+        <h3>这条没有明显选择，</h3>
+        <p>要不要补一句？</p>
+        <textarea id="choiceInput" placeholder="比如：我还是开车 / 我没说话 / 我走开了"></textarea>
+        <div class="dialog-actions">
+          <button id="addChoiceBtn" value="add" type="button">补一句</button>
+          <button id="keepAsIsBtn" value="keep" type="button">就这样</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="fragmentTemplate">
+      <label class="fragment-item">
+        <input type="checkbox" />
+          <span class="fragment-content">
+          <span class="fragment-date"></span>
+          <span class="fragment-line"></span>
+          <span class="choice-line"></span>
+        </span>
+      </label>
+    </template>
+
+    <script src="./app.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

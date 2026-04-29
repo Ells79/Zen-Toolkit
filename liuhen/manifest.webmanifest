@@ -1,0 +1,19 @@
+{
+  "name": "留痕写作",
+  "short_name": "留痕",
+  "description": "写下一个瞬间，写完之后，才看见自己。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbfaf5",
+  "theme_color": "#fbfaf5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
