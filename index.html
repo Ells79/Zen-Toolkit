@@ -1,300 +1,117 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ells79.me | Digital Archive</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=JetBrains+Mono:wght@200;400&display=swap');
-
-        :root {
-            --bg: #f2f2f0;
-            --fg: #000000;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--fg);
-            font-family: 'Space Grotesk', sans-serif;
-            overflow-x: hidden;
-        }
-
-        .mono { font-family: 'JetBrains Mono', monospace; }
-
-        /* 噪点背景效果 */
-        .grain-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 999;
-            opacity: 0.04;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3BaseFilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/baseFilter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-
-        /* 抽屉样式 */
-        #info-drawer {
-            transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1);
-            background-color: #fff;
-            box-shadow: -20px 0 60px rgba(0,0,0,0.05);
-        }
-        #info-drawer.closed {
-            transform: translateX(100%);
-        }
-        .drawer-overlay {
-            transition: opacity 0.6s ease;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
-        }
-
-        /* 项目列表悬停：聚焦模式 */
-        .project-list:hover .project-item:not(:hover) {
-            opacity: 0.15;
-            filter: blur(4px);
-        }
-
-        .project-item {
-            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-            border-top: 1px solid rgba(0,0,0,0.1);
-        }
-
-        /* 图片预览容器 - 仅在电脑端 */
-        #image-preview-container {
-            position: fixed;
-            width: 400px;
-            height: 250px;
-            pointer-events: none;
-            z-index: 10;
-            overflow: hidden;
-            display: none;
-            transition: transform 0.15s ease-out, opacity 0.3s ease;
-            transform: translate(-50%, -50%) scale(0.8);
-            opacity: 0;
-            background: #ddd;
-        }
-
-        @media (min-width: 1024px) {
-            #image-preview-container.active {
-                display: block;
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-
-        #preview-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%);
-            transition: filter 0.5s;
-        }
-
-        .project-item:hover #preview-image {
-            filter: grayscale(0%);
-        }
-    </style>
-</head>
-<body class="selection:bg-orange-500 selection:text-white">
-    <div class="grain-overlay"></div>
-    
-    <!-- 1. 抽屉背景遮罩 -->
-    <div id="drawer-overlay" class="fixed inset-0 z-[100] opacity-0 pointer-events-none drawer-overlay" onclick="toggleDrawer()"></div>
-
-    <!-- 2. 信息抽屉 (名片背面) -->
-    <div id="info-drawer" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[101] closed p-10 flex flex-col justify-between">
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>留痕写作</title>
+    <meta name="theme-color" content="#fbfaf5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="留痕" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
         <div>
-            <div class="flex justify-between items-center mb-20">
-                <span class="mono text-[10px] uppercase tracking-widest opacity-40">Profile / Identification</span>
-                <button onclick="toggleDrawer()" class="hover:rotate-90 transition-transform duration-300">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
-            
-            <div class="space-y-12">
-                <section>
-                    <h3 class="mono text-[10px] uppercase opacity-40 mb-4">The Creator</h3>
-                    <p class="text-2xl font-medium tracking-tight italic">ELLS (79)</p>
-                    <p class="mt-4 text-sm leading-relaxed text-gray-500 italic">
-                        "一位拥有20年广告实战经验的创意人。曾服务于顶尖品牌，现在正试图用 Vibe Coding 重新定义创意与技术的边界。"
-                    </p>
-                </section>
-
-                <section>
-                    <h3 class="mono text-[10px] uppercase opacity-40 mb-4">Skills & Tools</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <span class="px-2 py-1 border border-black text-[10px] mono uppercase tracking-tighter">Creative Direction</span>
-                        <span class="px-2 py-1 border border-black text-[10px] mono uppercase tracking-tighter">AI Prompting</span>
-                        <span class="px-2 py-1 border border-black text-[10px] mono uppercase tracking-tighter">Frontend / Vibe</span>
-                        <span class="px-2 py-1 border border-black text-[10px] mono uppercase tracking-tighter">Guitar / Jazz</span>
-                    </div>
-                </section>
-
-                <section>
-                    <h3 class="mono text-[10px] uppercase opacity-40 mb-4">Connect</h3>
-                    <ul class="space-y-3 mono text-xs">
-                        <li><a href="mailto:ells79@me.com" class="hover:underline">Email: ells79@me.com</a></li>
-                        <li><a href="https://github.com/Ells79" target="_blank" class="hover:underline">GitHub: @Ells79</a></li>
-                        <li><span class="opacity-40 tracking-tighter italic font-light">WeChat: (Scan code upon request)</span></li>
-                    </ul>
-                </section>
-            </div>
+          <p class="eyebrow">Trace Writing</p>
+          <h1>留痕写作</h1>
         </div>
-
-        <div class="pt-8 border-t border-black border-opacity-10 mono text-[8px] opacity-30 leading-loose">
-            ELLS_DIGITAL_ARCHIVE / VER. 2.5<br>
-            LOCATED: SHANGHAI, CHINA
+        <div class="today-card">
+          <span id="todayLabel"></span>
         </div>
-    </div>
+      </header>
 
-    <!-- 3. 图片预览 -->
-    <div id="image-preview-container">
-        <img id="preview-image" src="" alt="">
-    </div>
+      <section class="workspace">
+        <section class="capture-panel" aria-label="输入">
+          <div class="panel-heading">
+            <h2>写下一个瞬间。</h2>
+            <button class="icon-button" id="clearInputBtn" type="button" title="清空">×</button>
+          </div>
+          <textarea id="fragmentInput" placeholder="写下一个瞬间。" spellcheck="false"></textarea>
+          <button id="saveFragmentBtn" class="primary-button" type="button">保存</button>
 
-    <!-- 主容器 -->
-    <div class="max-w-7xl mx-auto px-6 py-8 md:py-20 relative">
-        
-        <!-- TOP NAV -->
-        <div class="flex justify-between items-start mb-16 md:mb-32">
-            <div class="mono text-[10px] tracking-widest uppercase opacity-40">
-                [ ARCHIVE_LAB.V2 ]<br>
-                ELLS79.ME
+          <details class="settings-box">
+            <summary>高级设置</summary>
+            <div class="api-box">
+              <div class="panel-heading compact">
+                <h3>DeepSeek API</h3>
+                <span id="apiStatus">未启用</span>
+              </div>
+              <label>
+                API Key
+                <input id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
+              </label>
+              <label>
+                模型版本
+                <input id="modelInput" type="text" value="deepseek-chat" list="modelSuggestions" />
+                <datalist id="modelSuggestions">
+                  <option value="deepseek-chat"></option>
+                  <option value="deepseek-reasoner"></option>
+                </datalist>
+              </label>
+              <label>
+                接口地址
+                <input id="baseUrlInput" type="text" value="/api/deepseek" />
+              </label>
+              <div class="api-actions">
+                <button id="saveApiBtn" type="button">保存设置</button>
+                <button id="clearApiBtn" type="button">清除</button>
+              </div>
             </div>
-            <!-- 触发抽屉的按钮 -->
-            <button onclick="toggleDrawer()" class="mono text-[10px] uppercase tracking-widest px-4 py-2 border border-black hover:bg-black hover:text-white transition-all">
-                [ INFO_DRAWER ]
-            </button>
+          </details>
+        </section>
+
+        <section class="fragments-panel" aria-label="今日记录">
+          <div class="panel-heading">
+            <h2>今日记录</h2>
+          </div>
+          <div id="fragmentList" class="fragment-list"></div>
+        </section>
+
+        <section class="tighten-panel" aria-label="收紧">
+          <div class="panel-heading">
+            <h2>收紧</h2>
+          </div>
+          <button id="tightenBtn" class="tighten-button" type="button">收紧</button>
+          <article id="outputView" class="output-view"></article>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="choiceDialog" class="choice-dialog">
+      <form method="dialog">
+        <h3>这条没有明显选择，</h3>
+        <p>要不要补一句？</p>
+        <textarea id="choiceInput" placeholder="比如：我还是开车 / 我没说话 / 我走开了"></textarea>
+        <div class="dialog-actions">
+          <button id="addChoiceBtn" value="add" type="button">补一句</button>
+          <button id="keepAsIsBtn" value="keep" type="button">就这样</button>
         </div>
+      </form>
+    </dialog>
 
-        <!-- HERO -->
-        <header class="relative mb-24 md:mb-40">
-            <div class="flex flex-col md:flex-row md:items-baseline gap-4 mb-8">
-                <h1 class="text-5xl sm:text-7xl md:text-[12rem] font-bold tracking-tighter leading-[0.8] cursor-default">
-                    ELLS<span class="font-thin text-gray-400">79</span>
-                </h1>
-                <div class="h-3 w-3 md:h-4 md:w-4 bg-orange-600 rounded-full animate-pulse"></div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-end">
-                <div class="md:col-span-4">
-                    <p class="text-base md:text-lg leading-tight font-light italic opacity-60">
-                        "Digital business card of a creative director."
-                    </p>
-                </div>
-                <div class="md:col-start-9 md:col-span-4">
-                    <p class="text-xs md:text-sm mono leading-relaxed uppercase tracking-tighter border-l border-black pl-4">
-                        这是我的数字名片。这里存放着我对音乐、叙事与审美的最新编程实验。
-                    </p>
-                </div>
-            </div>
-        </header>
+    <template id="fragmentTemplate">
+      <label class="fragment-item">
+        <input type="checkbox" />
+          <span class="fragment-content">
+          <span class="fragment-date"></span>
+          <span class="fragment-line"></span>
+          <span class="choice-line"></span>
+        </span>
+      </label>
+    </template>
 
-        <!-- PROJECT LIST -->
-        <!-- 提示：data-image 暂时填写本地路径，完工后再替换为阿里云 URL -->
-        <div class="project-list border-b border-black border-opacity-10 mb-24 md:mb-32">
-            
-            <a href="tools/fretboard/index.html" 
-               class="project-item group block py-10 md:py-16" 
-               data-image="tools/fretboard/cover.jpg">
-                <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
-                    <div class="hidden md:block md:col-span-1 mono text-xs opacity-30">001</div>
-                    <div class="md:col-span-7">
-                        <h2 class="text-3xl sm:text-4xl md:text-8xl font-bold tracking-tight group-hover:pl-4 md:group-hover:pl-8 transition-all duration-500 uppercase leading-none">Fretboard Lab</h2>
-                    </div>
-                    <div class="md:col-span-4 md:text-right">
-                        <p class="mono text-[8px] md:text-[10px] uppercase tracking-widest mb-1 opacity-40">Tool / Music</p>
-                        <p class="text-xs md:text-sm font-light opacity-70 italic">为吉他手设计的极简视觉训练场。</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="tools/story-lab/index.html" 
-               class="project-item group block py-10 md:py-16" 
-               data-image="tools/story-lab/cover.jpg">
-                <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
-                    <div class="hidden md:block md:col-span-1 mono text-xs opacity-30">002</div>
-                    <div class="md:col-span-7">
-                        <h2 class="text-3xl sm:text-4xl md:text-8xl font-bold tracking-tight group-hover:pl-4 md:group-hover:pl-8 transition-all duration-500 uppercase leading-none">Story Lab</h2>
-                    </div>
-                    <div class="md:col-span-4 md:text-right">
-                        <p class="mono text-[8px] md:text-[10px] uppercase tracking-widest mb-1 opacity-40">Workflow / AI</p>
-                        <p class="text-xs md:text-sm font-light opacity-70 italic">从叙事逻辑到视觉 DNA 的自动化实验。</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="tools/mytape/index.html" 
-               class="project-item group block py-10 md:py-16" 
-               data-image="tools/mytape/cover.jpg">
-                <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
-                    <div class="hidden md:block md:col-span-1 mono text-xs opacity-30">003</div>
-                    <div class="md:col-span-7">
-                        <h2 class="text-3xl sm:text-4xl md:text-8xl font-bold tracking-tight group-hover:pl-4 md:group-hover:pl-8 transition-all duration-500 uppercase leading-none">Tape-Box</h2>
-                    </div>
-                    <div class="md:col-span-4 md:text-right">
-                        <p class="mono text-[8px] md:text-[10px] uppercase tracking-widest mb-1 opacity-40">Memory / Suno</p>
-                        <p class="text-xs md:text-sm font-light opacity-70 italic">磁带保鲜盒：一段跨越 19 年的情感复刻。</p>
-                    </div>
-                </div>
-            </a>
-
-        </div>
-
-        <!-- FOOTER -->
-        <footer class="flex justify-between items-end opacity-30 mono text-[9px] uppercase tracking-[0.2em] mb-12">
-            <div>
-                Built with AI / 2026<br>
-                Running on GitHub Pages
-            </div>
-            <div class="text-right" id="clock">00:00:00</div>
-        </footer>
-    </div>
-
+    <script src="./app.js"></script>
     <script>
-        const drawer = document.getElementById('info-drawer');
-        const overlay = document.getElementById('drawer-overlay');
-        const container = document.getElementById('image-preview-container');
-        const previewImg = document.getElementById('preview-image');
-        const items = document.querySelectorAll('.project-item');
-
-        // 资产根路径配置：调试阶段留空，上线 OSS 后填入 OSS 域名
-        const ASSET_BASE_URL = ""; 
-
-        // 抽屉开关逻辑
-        function toggleDrawer() {
-            drawer.classList.toggle('closed');
-            overlay.classList.toggle('opacity-0');
-            overlay.classList.toggle('pointer-events-none');
-            document.body.style.overflow = drawer.classList.contains('closed') ? 'auto' : 'hidden';
-        }
-
-        // 跟随预览逻辑 (PC端)
-        if (window.matchMedia("(min-width: 1024px)").matches) {
-            document.addEventListener('mousemove', (e) => {
-                requestAnimationFrame(() => {
-                    container.style.left = e.clientX + 'px';
-                    container.style.top = e.clientY + 'px';
-                });
-            });
-
-            items.forEach(item => {
-                item.addEventListener('mouseenter', () => {
-                    const relativePath = item.getAttribute('data-image');
-                    // 拼接路径：如果 ASSET_BASE_URL 为空则使用相对路径
-                    previewImg.src = ASSET_BASE_URL + relativePath;
-                    container.classList.add('active');
-                });
-                item.addEventListener('mouseleave', () => {
-                    container.classList.remove('active');
-                });
-            });
-        }
-
-        // 时钟
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').textContent = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0');
-        }, 1000);
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {});
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
