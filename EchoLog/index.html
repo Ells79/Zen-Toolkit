@@ -1,327 +1,373 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EchoLog | ells 的观察实验室</title>
-    
-    <!-- 1. 加载运行环境 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- 2. Firebase 兼容版 SDK：确保在 Babel 环境下能够正常运行 -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>EchoLog | ells 的观察实验室</title>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .ios-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .safe-bottom-padding { padding-bottom: calc(env(safe-area-inset-bottom, 1rem) + 0.5rem); }
-        .v1-prose .original-quote { font-size: 1.1rem; font-weight: 700; color: #1e293b; border-left: 4px solid #f1f5f9; padding-left: 1rem; margin-bottom: 1.25rem; line-height: 1.5; }
-        .v1-prose .abc-block { font-size: 0.75rem; color: #94a3b8; border-left: 2px solid #e2e8f0; padding-left: 0.75rem; margin-bottom: 1.25rem; line-height: 1.6; }
-        .v1-prose .path-card { font-size: 0.8rem; background: #f1f5f9; padding: 0.875rem; border-radius: 0.875rem; margin-bottom: 0.5rem; color: #64748b; }
-        .v1-prose .judgment-star { background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 1rem; border-radius: 1.25rem; font-size: 0.9rem; font-weight: 600; margin: 1.25rem 0; line-height: 1.5; }
-        .animate-feed { animation: fadeInUp 0.4s ease-out forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-    </style>
+<!-- 1. 加载运行环境 -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- 2. Firebase 兼容版 SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+body { font-family: 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; background: #f8fafc; color: #1e293b; }
+.card { background: white; padding: 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.animate-feed { animation: fadeInUp 0.4s ease-out forwards; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.safe-bottom-padding { padding-bottom: calc(env(safe-area-inset-bottom, 1rem) + 0.5rem); }
+</style>
 </head>
-<body class="bg-slate-50">
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+<body>
+<div id="root"></div>
 
-        // --- 1. ells 的私有云端配置 (已替换) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6ajvVXmi-eptTrhwz5WLuf8tAsYp2qzA",
-            authDomain: "echolog-db.firebaseapp.com",
-            projectId: "echolog-db",
-            storageBucket: "echolog-db.firebasestorage.app",
-            messagingSenderId: "997697883214",
-            appId: "1:997697883214:web:87869e4cd9b73292c0071f"
-        };
+<script type="text/babel">
 
-        // 初始化 Firebase (全局 Compat 风格)
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const appId = 'ells-lab-v1';
+// ===== 1. Firebase 配置 (ells 专用) =====
+firebase.initializeApp({
+  apiKey: "AIzaSyD6ajvVXmi-eptTrhwz5WLuf8tAsYp2qzA",
+  authDomain: "echolog-db.firebaseapp.com",
+  projectId: "echolog-db",
+  storageBucket: "echolog-db.firebasestorage.app",
+  messagingSenderId: "997697883214",
+  appId: "1:997697883214:web:87869e4cd9b73292c0071f"
+});
 
-        // --- 2. 工具组件：Icon (处理 Lucide 对象) ---
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const iconKey = name.toLowerCase().replace(/-/g, '');
-            const iconData = lucide.icons[name] || lucide.icons[iconKey];
-            if (!iconData) return null;
-            
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}
-                    dangerouslySetInnerHTML={{ __html: iconData[2].map(tag => {
-                        const [tagName, attrs] = tag;
-                        const attrStr = Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(' ');
-                        return `<${tagName} ${attrStr} />`;
-                    }).join('') }}
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ===== 2. AI 解析逻辑 (前缀严格匹配版) =====
+function parseAI(raw){
+  if(!raw) return { a: "未提供", b: "未提供", c: "未提供", p1: "", p2: "", obs: "" };
+  const content = typeof raw === 'string' ? raw : (raw.raw || "");
+  const lines = content.split("\n").map(l=>l.trim());
+
+  return {
+    a: lines.find(l=>l.startsWith("A:"))?.replace("A:","").trim() || "未提供",
+    b: lines.find(l=>l.startsWith("B:"))?.replace("B:","").trim() || "未提供",
+    c: lines.find(l=>l.startsWith("C:"))?.replace("C:","").trim() || "未提供",
+    p1: lines.find(l=>l.startsWith("1:"))?.replace("1:","").trim(),
+    p2: lines.find(l=>l.startsWith("2:"))?.replace("2:","").trim(),
+    obs: lines.find(l=>l.startsWith("⭐:"))?.replace("⭐:","").trim()
+  };
+}
+
+// 图标组件
+const Icon = ({ name, size = 20, className = "" }) => {
+  const iconData = lucide.icons[name] || lucide.icons[name.toLowerCase().replace(/-/g, '')];
+  if (!iconData) return null;
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}
+      dangerouslySetInnerHTML={{ __html: iconData[2].map(tag => {
+          const [tagName, attrs] = tag;
+          const attrStr = Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(' ');
+          return `<${tagName} ${attrStr} />`;
+      }).join('') }}
+    />
+  );
+};
+
+// ===== 3. App 主组件 =====
+function App(){
+  const [user, setUser] = React.useState(null);
+  const [notes, setNotes] = React.useState([]);
+  const [input, setInput] = React.useState("");
+  const [child, setChild] = React.useState("A");
+  const [view, setView] = React.useState("capture"); // ✅ 新增：视图状态
+  const [modal, setModal] = React.useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [apiKey, setApiKey] = React.useState(localStorage.getItem("KEY") || "");
+  const [isAnalyzing, setIsAnalyzing] = React.useState(null);
+
+  React.useEffect(() => {
+    auth.signInAnonymously().catch(e => console.error("登录失败", e));
+    auth.onAuthStateChanged(u => setUser(u));
+  }, []);
+
+  React.useEffect(() => {
+    if(!user) return;
+    return db.collection("notes")
+      .orderBy("timestamp", "desc")
+      .onSnapshot(s => {
+        setNotes(s.docs.map(d => ({ id: d.id, ...d.data() })));
+      });
+  }, [user]);
+
+  const send = async () => {
+    if(!input.trim()) return;
+    try {
+      await db.collection("notes").add({
+        content: input,
+        child,
+        timestamp: Date.now(),
+        analysis: null
+      });
+      setInput("");
+    } catch (e) {
+      alert("发送失败，请检查网络");
+    }
+  };
+
+  const analyze = async (note) => {
+    if(note.analysis){
+      setModal(parseAI(note.analysis));
+      return;
+    }
+
+    let currentKey = apiKey;
+    if(!currentKey){
+      setIsSettingsOpen(true);
+      return;
+    }
+
+    setIsAnalyzing(note.id);
+
+    const systemPrompt = `你是一个儿童行为观察助手。
+你必须严格按照固定格式输出，不允许任何解释性文字，不允许改变格式。
+
+【输出格式】
+A: ...
+B: ...
+C: ...
+1: ...
+2: ...
+⭐: ...
+
+【规则】
+1. 每一行必须以 A: / B: / C: / 1: / 2: / ⭐: 开头
+2. 最多只允许2条路径（1: 和 2:）
+3. 每条路径不超过30字
+4. 如果信息不足：A/B/C 写“未提供”；只写1条路径（1:）；不允许猜测。
+5. 禁止输出任何多余说明或段落。`;
+
+    try {
+      const res = await fetch("https://api.deepseek.com/chat/completions",{
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: note.content }
+          ],
+          temperature: 0.1
+        })
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message || "API 请求错误");
+
+      const text = data.choices[0].message.content;
+      const parsed = parseAI(text);
+
+      await db.collection("notes").doc(note.id).update({
+        analysis: text // 存储原始文本，解析由 parseAI 统一处理
+      });
+
+      setModal(parsed);
+    } catch (e) {
+      alert("分析失败：" + e.message);
+    } finally {
+      setIsAnalyzing(null);
+    }
+  };
+
+  const handleSaveApiKey = (e) => {
+    e.preventDefault();
+    const newKey = e.target.elements.apiKeyInput.value.trim();
+    if (newKey) {
+      localStorage.setItem("KEY", newKey);
+      setApiKey(newKey);
+      setIsSettingsOpen(false);
+    }
+  };
+
+  return(
+    <div className="max-w-md mx-auto p-4 pb-12">
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 mt-2">
+        <h1 className="text-2xl font-black tracking-tight text-slate-800">EchoLog</h1>
+        <div className="flex items-center gap-3">
+          <div className={`w-2.5 h-2.5 rounded-full ${user ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300'}`}></div>
+          <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
+            <Icon name="settings-2" size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* ✅ 新增：捕获 / 回顾 切换 */}
+      <div className="flex gap-4 mb-3 text-sm">
+        <button 
+          onClick={() => setView("capture")}
+          className={view==="capture" ? "font-bold border-b-2 border-slate-900 pb-1" : "text-gray-400 pb-1"}>
+          捕获
+        </button>
+        <button 
+          onClick={() => setView("review")}
+          className={view==="review" ? "font-bold border-b-2 border-slate-900 pb-1" : "text-gray-400 pb-1"}>
+          回顾
+        </button>
+      </div>
+
+      {/* Capture View UI */}
+      {view === "capture" && (
+        <>
+          {/* Child Switch */}
+          <div className="flex gap-2 mb-4">
+            <button onClick={() => setChild("A")}
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${child === "A" ? "bg-blue-500 text-white shadow-lg shadow-blue-200" : "bg-slate-200 text-slate-500 opacity-60"}`}>
+              henhen
+            </button>
+            <button onClick={() => setChild("B")}
+              className={`flex-1 py-2.5 rounded-xl font-bold transition-all ${child === "B" ? "bg-purple-500 text-white shadow-lg shadow-purple-200" : "bg-slate-200 text-slate-500 opacity-60"}`}>
+              yoyo
+            </button>
+          </div>
+
+          {/* Input Area */}
+          <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 mb-4">
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              className="w-full p-3 rounded-xl focus:outline-none text-[16px] leading-relaxed"
+              rows="3"
+              placeholder="记录这一刻发生了什么…"
+            />
+            <button onClick={send}
+              className="bg-slate-900 text-white w-full py-3 rounded-xl font-bold active:scale-[0.98] transition-all">
+              记录瞬间
+            </button>
+          </div>
+
+          {/* Capture List: 核心渲染逻辑替换 */}
+          <div className="mt-8 space-y-4">
+            {notes.filter(n => n.child === child).map(n => (
+              <div key={n.id} className="card animate-feed border border-slate-50">
+                <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">{n.content}</div>
+                <div className="flex justify-end mt-4 pt-3 border-t border-gray-50">
+                  <button 
+                    onClick={() => analyze(n)}
+                    disabled={isAnalyzing === n.id}
+                    className={`text-sm font-bold px-4 py-1.5 rounded-full transition-all ${
+                      n.analysis 
+                        ? "text-blue-500 bg-blue-50" 
+                        : isAnalyzing === n.id 
+                          ? "text-blue-400 bg-blue-50 animate-pulse" 
+                          : "text-blue-600 bg-blue-50"
+                    }`}
+                  >
+                    {isAnalyzing === n.id ? "分析中..." : "查看视角"}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {notes.filter(n => n.child === child).length === 0 && (
+              <div className="text-center py-20 text-slate-300 text-sm italic">暂无记录</div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ✅ Review View UI: 新增渲染逻辑 */}
+      {view === "review" && (
+        <div className="mt-4 space-y-4">
+          {notes.length === 0 ? (
+             <div className="text-center py-20 text-slate-300 text-sm italic">尚无任何数据可供回顾</div>
+          ) : notes.map(n => (
+            <div key={n.id} className="card animate-feed border border-slate-50">
+              <div className="flex items-center gap-2 mb-2">
+                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${n.child === 'A' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+                    {n.child === 'A' ? 'henhen' : 'yoyo'}
+                 </span>
+              </div>
+              <div className="text-slate-700 leading-relaxed whitespace-pre-wrap">{n.content}</div>
+              <div className="text-[10px] text-gray-400 mt-2">
+                {new Date(n.timestamp).toLocaleString()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 z-[60]" onClick={() => setIsSettingsOpen(false)}>
+          <div className="bg-white p-8 rounded-[32px] max-w-sm w-full shadow-2xl animate-feed" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+               <h3 className="font-bold text-xl text-slate-800">API 设置</h3>
+               <button onClick={() => setIsSettingsOpen(false)} className="text-slate-300"><Icon name="x" size={20} /></button>
+            </div>
+            <form onSubmit={handleSaveApiKey}>
+              <div className="mb-6">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">DeepSeek API Key</label>
+                <input 
+                  name="apiKeyInput"
+                  type="password" 
+                  defaultValue={apiKey}
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-slate-200" 
+                  placeholder="sk-..." 
                 />
-            );
-        };
+              </div>
+              <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all">
+                保存并应用
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
-        // --- 3. 核心逻辑配置 ---
-        const BEHAVIOR_PATTERNS = [
-            { key: 'sleep', title: '睡眠模式', words: ['睡觉', '睡前', '起床'] },
-            { key: 'food', title: '饮食行为', words: ['吃', '零食', '挑食'] },
-            { key: 'emotion', title: '情绪反应', words: ['哭', '闹', '生气'] },
-            { key: 'curiosity', title: '好奇探索', words: ['问', '为什么', '影子'] }
-        ];
-
-        function parseAI(rawText) {
-            const cleanText = rawText.replace(/```[a-z]*\n?|```/g, '');
-            const lines = cleanText.split('\n').map(l => l.trim()).filter(l => l);
-            const data = { quote: '', abc: { a: '未提供', b: '未提供', c: '未提供' }, paths: [], judgment: '', missing: '信息充足' };
-            lines.forEach(line => {
-                if (line.includes('📝')) data.quote = line.replace(/📝\s*["“]|["”]/g, '').trim();
-                else if (line.match(/^A[：:]/)) data.abc.a = line.replace(/^A[：:]\s*/, '').trim();
-                else if (line.match(/^B[：:]/)) data.abc.b = line.replace(/^B[：:]\s*/, '').trim();
-                else if (line.match(/^C[：:]/)) data.abc.c = line.replace(/^C[：:]\s*/, '').trim();
-                else if (line.match(/^[①②12]/)) data.paths.push(line);
-                else if (line.includes('⭐')) data.judgment = line.replace(/⭐\s*/, '').trim();
-                else if (line.includes('📌')) data.missing = line.replace(/📌\s*/, '').trim();
-            });
-            return data;
-        }
-
-        function matchPattern(noteContent) {
-            const found = BEHAVIOR_PATTERNS.find(p => p.words.some(word => noteContent.includes(word)));
-            return found ? found.key : null;
-        }
-
-        // --- 4. UI 子组件 ---
-        function NoteCard({ note, onAnalyze, isAnalyzing, isReflection }) {
-            const childAccent = note.child === 'A' ? '#3b82f6' : '#a855f7';
-            const childBg = note.child === 'A' ? '#f0f7ff' : '#faf5ff';
-            const hasAnalysis = !!note.analysis;
-            
-            return (
-                <div className="p-6 rounded-[35px] shadow-sm flex flex-col gap-4 text-left mb-4 animate-feed relative transition-transform active:scale-[0.98]" style={{ backgroundColor: childBg }}>
-                    <div className="flex justify-between items-start">
-                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{new Date(note.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                        {hasAnalysis && <Icon name="check-circle-2" size={14} className="text-emerald-500" />}
+      {/* Analysis Modal */}
+      {modal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 z-50" onClick={() => setModal(null)}>
+          <div className="bg-white p-8 rounded-[32px] max-w-sm w-full shadow-2xl animate-feed" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+               <h3 className="font-bold text-xl text-slate-800">观察摘要</h3>
+               <button onClick={() => setModal(null)} className="text-slate-300"><Icon name="x" size={24}/></button>
+            </div>
+            <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-2xl text-sm text-slate-600">
+                    <div><span className="opacity-50 font-bold">A：</span>{modal.a}</div>
+                    <div><span className="opacity-50 font-bold">B：</span>{modal.b}</div>
+                    <div><span className="opacity-50 font-bold">C：</span>{modal.c}</div>
+                </div>
+                <div className="space-y-2">
+                    <div className="bg-white border border-slate-100 p-3 rounded-xl text-sm">① {modal.p1}</div>
+                    {modal.p2 && <div className="bg-white border border-slate-100 p-3 rounded-xl text-sm">② {modal.p2}</div>}
+                </div>
+                {modal.obs && (
+                    <div className="bg-amber-50 p-4 rounded-2xl text-amber-900 text-sm font-semibold border border-amber-100">
+                      ⭐ {modal.obs}
                     </div>
-                    <p className="text-[16px] text-slate-800 leading-snug whitespace-pre-wrap">{note.content}</p>
-                    {!isReflection && (
-                        <div className="mt-1 flex justify-end">
-                            <button onClick={onAnalyze} disabled={isAnalyzing}
-                                className={`text-[10px] font-bold py-2 px-6 rounded-full flex items-center gap-1.5 transition-all shadow-sm ${hasAnalysis ? 'bg-white/40 text-slate-400' : 'bg-white text-slate-900 active:bg-slate-50'}`} 
-                                style={{ color: hasAnalysis ? '' : childAccent }}>
-                                {isAnalyzing ? <Icon name="loader-2" size={12} className="animate-spin" /> : <Icon name="sparkles" size={12} />} 
-                                {hasAnalysis ? '查看报告' : 'ABC 分析'}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            );
-        }
+                )}
+            </div>
+            <button onClick={() => setModal(null)}
+              className="mt-8 bg-gray-900 text-white w-full py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-transform">
+              确定
+            </button>
+          </div>
+        </div>
+      )}
 
-        // --- 5. 主应用组件 ---
-        function App() {
-            const [user, setUser] = useState(null);
-            const [view, setView] = useState('capture');
-            const [child, setChild] = useState('A');
-            const [notes, setNotes] = useState([]);
-            const [input, setInput] = useState('');
-            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-            const [apiKey, setApiKey] = useState(localStorage.getItem('ECHOLOG_API_KEY') || '');
-            const [analysisModal, setAnalysisModal] = useState({ open: false, data: null });
-            const [isAnalyzing, setIsAnalyzing] = useState(null);
-            const [selectedPatternKey, setSelectedPatternKey] = useState(null);
-            const textareaRef = useRef(null);
+    </div>
+  );
+}
 
-            // 登录与数据同步
-            useEffect(() => {
-                auth.signInAnonymously().catch(e => console.error("Auth Error", e));
-                const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
-                return () => unsubscribeAuth();
-            }, []);
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App/>);
 
-            useEffect(() => {
-                if (!user) return;
-                const notesRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes');
-                const unsubscribe = notesRef.orderBy('timestamp', 'desc').onSnapshot((snap) => {
-                    const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    setNotes(data);
-                });
-                return () => unsubscribe();
-            }, [user]);
-
-            const handleSend = async () => {
-                if (!input.trim() || !user) return;
-                try {
-                    const notesRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes');
-                    await notesRef.add({
-                        child, content: input.trim(), timestamp: Date.now(), analysis: null
-                    });
-                    setInput('');
-                    if (textareaRef.current) textareaRef.current.style.height = 'auto';
-                } catch (e) { alert("保存失败"); }
-            };
-
-            const requestAnalysis = async (note) => {
-                let parsedData = null;
-                if (note.analysis) {
-                    parsedData = typeof note.analysis === 'string' ? parseAI(note.analysis) : note.analysis.parsed;
-                    setAnalysisModal({ open: true, data: parsedData });
-                    return;
-                }
-                
-                if (!apiKey) { setIsSettingsOpen(true); return; }
-                setIsAnalyzing(note.id);
-                
-                const systemPrompt = `资深行为观察员。按“EchoLog 分析卡片模板（V1.5）”输出。要求：字数≤220；禁术语。1.提取ABC(行为引用原文); 2.B不清晰只重述; 3.AC缺失不输出⭐模块; 4.只有ABC完整才输出⭐。`;
-
-                try {
-                    const response = await fetch("https://api.deepseek.com/chat/completions", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-                        body: JSON.stringify({
-                            model: "deepseek-chat",
-                            messages: [{ role: "system", content: systemPrompt }, { role: "user", content: note.content }],
-                            temperature: 0.1
-                        })
-                    });
-                    const result = await response.json();
-                    const rawText = result.choices[0].message.content;
-                    const parsed = parseAI(rawText);
-                    
-                    const noteRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes').doc(note.id);
-                    await noteRef.update({ analysis: { raw: rawText, parsed: parsed } });
-                    setAnalysisModal({ open: true, data: parsed });
-                } catch (e) { alert("分析失败，请检查设置中的 Key 是否正确"); } finally { setIsAnalyzing(null); }
-            };
-
-            return (
-                <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden text-left">
-                    <nav className="sticky top-0 z-30 bg-white/70 backdrop-blur-3xl border-b border-slate-100 px-6 pt-10 pb-4 shrink-0">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="flex gap-6 items-baseline">
-                                <button onClick={() => setView('capture')} className={`text-xl transition-all ${view === 'capture' ? 'font-bold text-slate-900' : 'text-slate-400'}`}>捕获</button>
-                                <button onClick={() => setView('reflection')} className={`text-xl transition-all ${view === 'reflection' ? 'font-bold text-slate-900' : 'text-slate-400'}`}>回顾</button>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-2 h-2 rounded-full transition-all duration-700 ${user ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
-                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-100 rounded-full text-slate-400"><Icon name="settings-2" size={18} /></button>
-                            </div>
-                        </div>
-                        {view === 'capture' && (
-                            <div className="flex gap-4">
-                                <button onClick={() => setChild('A')} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${child === 'A' ? 'bg-white border-blue-500 text-blue-500 shadow-lg scale-[1.02]' : 'bg-slate-50 border-transparent text-slate-400'}`}>
-                                    <span className="text-lg">👦</span><span className="text-[10px] font-black uppercase">孩子 A</span>
-                                </button>
-                                <button onClick={() => setChild('B')} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${child === 'B' ? 'bg-white border-purple-500 text-purple-500 shadow-lg scale-[1.02]' : 'bg-slate-50 border-transparent text-slate-400'}`}>
-                                    <span className="text-lg text-center">👧</span><span className="text-[10px] font-black uppercase">孩子 B</span>
-                                </button>
-                            </div>
-                        )}
-                    </nav>
-
-                    <main className="flex-grow overflow-y-auto px-6 py-6 no-scrollbar pb-40">
-                        {view === 'capture' ? (
-                            notes.filter(n => n.child === child).length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-32 text-slate-300">
-                                    <Icon name="scan-eye" size={48} className="mb-4 opacity-20" />
-                                    <p className="text-sm">观察实验室已就绪</p>
-                                </div>
-                            ) : (
-                                notes.filter(n => n.child === child).map(note => (
-                                    <NoteCard key={note.id} note={note} onAnalyze={() => requestAnalysis(note)} isAnalyzing={isAnalyzing === note.id} />
-                                ))
-                            )
-                        ) : (
-                            <div className="space-y-8">
-                                <div className="flex gap-3 overflow-x-auto no-scrollbar">
-                                    {BEHAVIOR_PATTERNS.map(p => {
-                                        const count = notes.filter(n => matchPattern(n.content) === p.key).length;
-                                        if (count < 2) return null;
-                                        return (
-                                            <button key={p.key} onClick={() => setSelectedPatternKey(selectedPatternKey === p.key ? null : p.key)} className={`flex-shrink-0 p-4 rounded-3xl text-left border transition-all ${selectedPatternKey === p.key ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white border-slate-100'}`}>
-                                                <p className="font-bold text-sm">“{p.title}”</p>
-                                                <p className={`text-[9px] font-bold mt-1 ${selectedPatternKey === p.key ? 'opacity-50' : 'text-slate-300'}`}>{count} 次发生</p>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-widest px-1">行为脉络回顾</h4>
-                                    {notes.filter(n => !selectedPatternKey || matchPattern(n.content) === selectedPatternKey).map(note => (
-                                        <NoteCard key={note.id} note={note} isReflection />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </main>
-
-                    {view === 'capture' && (
-                        <footer className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 to-transparent z-40 safe-bottom-padding">
-                            <div className="max-w-2xl mx-auto">
-                                <div className="bg-white rounded-[28px] shadow-2xl border border-slate-100 p-2 flex items-end gap-2">
-                                    <textarea ref={textareaRef} value={input} 
-                                        onChange={(e) => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} 
-                                        rows={3} className="flex-grow py-3 px-4 text-slate-700 bg-transparent focus:outline-none resize-none text-[15px] leading-relaxed" 
-                                        placeholder="发生前（A）：&#10;做了什么（B）：&#10;后来怎样（C）："
-                                    />
-                                    <button onClick={handleSend} disabled={!input.trim()} className="bg-slate-900 text-white w-12 h-12 rounded-full flex items-center justify-center shrink-0 mb-1 mr-1 active:scale-90 transition-all disabled:opacity-20 shadow-lg">
-                                        <Icon name="arrow-up" size={24} />
-                                    </button>
-                                </div>
-                            </div>
-                        </footer>
-                    )}
-
-                    {analysisModal.open && analysisModal.data && (
-                        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
-                            <div className="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] shadow-2xl flex flex-col overflow-hidden">
-                                <div className="p-10 pb-6 text-left v1-prose overflow-y-auto max-h-[75vh]">
-                                    <div className="original-quote">📝 “{analysisModal.data.quote}”</div>
-                                    <div className="abc-block">
-                                        <div className="font-bold mb-2 flex items-center gap-1.5 opacity-40 uppercase tracking-tighter text-[10px]"><Icon name="puzzle" size={12}/> 行为拆解</div>
-                                        <div>A 前因：{analysisModal.data.abc.a}</div>
-                                        <div>B 行为：{analysisModal.data.abc.b}</div>
-                                        <div>C 结果：{analysisModal.data.abc.c}</div>
-                                    </div>
-                                    <div className="space-y-2 mb-4">
-                                        {analysisModal.data.paths.map((p, i) => {
-                                            const parts = p.split('->');
-                                            return <div key={i} className="path-card">{parts.length > 1 ? (<><strong>{parts[0]}</strong>{parts.slice(1).join('->')}</>) : p}</div>;
-                                        })}
-                                    </div>
-                                    {analysisModal.data.judgment && <div className="judgment-star">⭐ {analysisModal.data.judgment}</div>}
-                                    <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-4 italic"><Icon name="help-circle" size={12}/> {analysisModal.data.missing}</div>
-                                </div>
-                                <div className="p-10 pt-4"><button onClick={() => setAnalysisModal({ open: false, data: null })} className="w-full py-5 bg-slate-900 text-white rounded-[28px] font-bold active:scale-95 shadow-xl">确定</button></div>
-                            </div>
-                        </div>
-                    )}
-
-                    {isSettingsOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md">
-                            <div className="bg-white w-full max-w-sm rounded-[40px] shadow-2xl p-8 animate-in zoom-in duration-300">
-                                <div className="flex justify-between items-center mb-6"><h3 className="font-bold text-xl">系统配置</h3><button onClick={() => setIsSettingsOpen(false)} className="text-slate-400"><Icon name="x" size={20} /></button></div>
-                                <div className="space-y-6">
-                                    <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">DeepSeek API Key</label><input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-slate-200" placeholder="sk-..." /></div>
-                                    <button onClick={() => { localStorage.setItem('ECHOLOG_API_KEY', apiKey); setIsSettingsOpen(false); }} className="w-full py-5 bg-slate-900 text-white rounded-[25px] font-bold shadow-xl active:scale-95 transition-all">保存并应用</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+</script>
 </body>
 </html>
