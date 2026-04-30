@@ -1,23 +1,32 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EchoLog</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EchoLog | ells 的观察实验室</title>
 
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase compat（关键兼容版） -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<style>
-body {background:#f8fafc;font-family:-apple-system;}
-.card {background:#fff;padding:16px;border-radius:16px;margin-bottom:12px;}
-.delete-btn {position:absolute;right:0;top:0;bottom:0;width:80px;background:red;color:#fff;display:flex;align-items:center;justify-content:center;}
-</style>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
+    textarea { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 16px; resize: none; outline: none; transition: border 0.2s; }
+    textarea:focus { border-color: #94a3b8; }
+    button.primary { margin-top: 12px; padding: 12px 24px; border: none; border-radius: 14px; background: #0f172a; color: white; font-weight: 600; width: 100%; active:scale-95; transition: all 0.2s; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; z-index: 50; }
+    .modal-content { background: white; width: 100%; padding: 32px; border-radius: 32px 32px 0 0; max-height: 90vh; overflow-y: auto; }
+    .fact-tag { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  </style>
 </head>
 
 <body>
@@ -25,190 +34,205 @@ body {background:#f8fafc;font-family:-apple-system;}
 
 <script type="text/babel">
 
-// ===== 1. Firebase 配置 (已填入 ells 的专属参数) =====
-firebase.initializeApp({
+// ===== 1. Firebase 配置 (已补全) =====
+const firebaseConfig = {
   apiKey: "AIzaSyD6ajvVXmi-eptTrhwz5WLuf8tAsYp2qzA",
   authDomain: "echolog-db.firebaseapp.com",
   projectId: "echolog-db",
   storageBucket: "echolog-db.firebasestorage.app",
   messagingSenderId: "997697883214",
   appId: "1:997697883214:web:87869e4cd9b73292c0071f"
-});
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ===== 家庭ID =====
-const FAMILY_ID = "ells_family";
-
-// ===== Pattern =====
-const PATTERNS = [
-  {key:"sleep_snack",title:"睡前要零食",words:["睡前","零食","吃"]},
-  {key:"attention",title:"注意力涣散",words:["神游","走神","不专心"]}
-];
-
-function matchPattern(text){
-  return PATTERNS.find(p=>p.words.some(w=>text.includes(w)));
+// ===== 2. 核心：ABC提取（由本地负责事实层）=====
+function extractABC(text){
+  const lines = text.split('\n').map(s=>s.trim()).filter(Boolean);
+  return {
+    a: lines.find(l => l.includes('A') || l.includes('发生前'))?.replace(/.*[A：:]\s*/,'') || "未提供",
+    b: lines.find(l => l.includes('B') || l.includes('做了什么'))?.replace(/.*[B：:]\s*/,'') || text.substring(0,30),
+    c: lines.find(l => l.includes('C') || l.includes('后来怎样'))?.replace(/.*[C：:]\s*/,'') || "未提供"
+  };
 }
 
-// ===== ABC =====
-function extractABC(t){
+// ===== 3. AI 解析（只处理解释层）=====
+function parseAI(text){
+  const clean = text.replace(/```[a-z]*\n?|```/g, '');
+  const lines = clean.split('\n').map(l=>l.trim()).filter(Boolean);
   return {
-    a:t.split("，")[0]||"未提供",
-    b:t,
-    c:t.includes("哭")?"情绪变化":"未提供"
-  }
+    paths: lines.filter(l=>l.startsWith('①')||l.startsWith('②')),
+    judgment: lines.find(l=>l.includes('⭐'))||'',
+    missing: lines.find(l=>l.includes('📌'))||''
+  };
 }
 
 // ===== App =====
-function App(){
+function App() {
+  const [user, setUser] = React.useState(null);
+  const [notes, setNotes] = React.useState([]);
+  const [input, setInput] = React.useState("");
+  const [modal, setModal] = React.useState(null);
+  const [loading, setLoading] = React.useState(null);
 
-  const [notes,setNotes]=React.useState([]);
-  const [input,setInput]=React.useState("");
-  const [tab,setTab]=React.useState("capture");
-  const [offsetId,setOffsetId]=React.useState(null);
-  const startX=React.useRef(0);
+  // 匿名登录
+  React.useEffect(() => {
+    auth.signInAnonymously().catch(e => console.error("Auth Error", e));
+    return auth.onAuthStateChanged(u => setUser(u));
+  }, []);
 
-  // 数据监听
-  React.useEffect(()=>{
-    return db.collection("families")
-      .doc(FAMILY_ID)
-      .collection("notes")
-      .orderBy("timestamp","desc")
-      .onSnapshot(snap=>{
-        setNotes(snap.docs.map(d=>({id:d.id,...d.data()})));
+  // 监听数据
+  React.useEffect(() => {
+    if (!user) return;
+    return db.collection("notes")
+      .orderBy("timestamp", "desc")
+      .onSnapshot(snap => {
+        setNotes(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       });
-  },[]);
+  }, [user]);
 
-  // 发送
-  const send=async()=>{
-    if(!input.trim())return;
-
-    const p=matchPattern(input);
-
-    await db.collection("families")
-      .doc(FAMILY_ID)
-      .collection("notes")
-      .add({
-        content:input,
-        timestamp:Date.now(),
-        pattern:p?.key||null,
-        patternTitle:p?.title||null
-      });
-
+  // 发送记录
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    await db.collection("notes").add({
+      content: input,
+      timestamp: Date.now(),
+      analysis: null
+    });
     setInput("");
   };
 
-  // 删除
-  const del=async(id)=>{
-    if(confirm("确定删除吗？")) {
-        await db.collection("families")
-          .doc(FAMILY_ID)
-          .collection("notes")
-          .doc(id).delete();
+  // 真实 AI 分析 (DeepSeek)
+  const handleAnalyze = async (note) => {
+    if (note.analysis) {
+      setModal({ note, data: note.analysis.parsed || parseAI(note.analysis.raw) });
+      return;
+    }
+
+    const key = localStorage.getItem('ECHOLOG_API_KEY');
+    if (!key) {
+      const val = prompt("请输入你的 DeepSeek API Key:");
+      if (val) localStorage.setItem('ECHOLOG_API_KEY', val);
+      else return;
+    }
+
+    setLoading(note.id);
+    const systemPrompt = `你是一个“行为观察辅助工具”。任务是基于记录提供理解路径。禁止重写记录、禁止生成ABC、禁止定义事实。
+只能做：1）最多2条“可能解释”（各1句）；2）一个“下次观察点”；3）一个“最关键缺失信息”。
+格式：①解释1 \n ②解释2 \n ⭐下次只看：... \n 📌还缺：...`;
+
+    try {
+      const res = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem('ECHOLOG_API_KEY')}` },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: note.content }],
+          temperature: 0.1
+        })
+      });
+      const json = await res.json();
+      const rawText = json.choices[0].message.content;
+      const parsed = parseAI(rawText);
+
+      await db.collection("notes").doc(note.id).update({
+        analysis: { raw: rawText, parsed: parsed }
+      });
+      setModal({ note, data: parsed });
+    } catch (e) {
+      alert("分析失败，请检查 API Key 是否正确");
+    } finally {
+      setLoading(null);
     }
   };
 
-  // 滑动
-  const ts=(e,id)=>startX.current=e.touches[0].clientX;
-  const tm=(e,id)=>{
-    if(e.touches[0].clientX-startX.current<-50) setOffsetId(id);
-  };
-  const te=()=>setTimeout(()=>setOffsetId(null),2000);
-
-  // ===== 回顾聚合 =====
-  const grouped = notes.reduce((acc,n)=>{
-    if(!n.pattern) return acc;
-    if(!acc[n.pattern]) acc[n.pattern]={title:n.patternTitle,list:[]};
-    acc[n.pattern].list.push(n);
-    return acc;
-  },{});
-
-  return(
-    <div className="max-w-md mx-auto p-4">
-
-      <div className="flex justify-between mb-4 px-4 pt-4">
-        <button onClick={()=>setTab("capture")} className={tab==="capture"?"font-bold text-lg":"text-gray-400"}>捕获</button>
-        <button onClick={()=>setTab("review")} className={tab==="review"?"font-bold text-lg":"text-gray-400"}>回顾</button>
+  return (
+    <div className="container">
+      <div className="flex justify-between items-center mb-8 mt-4">
+        <h2 className="text-2xl font-black tracking-tight">EchoLog</h2>
+        <div className={`w-2 h-2 rounded-full ${user ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300'}`}></div>
       </div>
 
-      {tab==="capture" && (
-        <>
-          <textarea
-            className="w-full p-4 border rounded-2xl shadow-sm focus:ring-1 focus:ring-gray-300 outline-none transition-all"
-            rows="3"
-            placeholder={"发生前（A）：\n做了什么（B）：\n后来怎样（C）："}
-            value={input}
-            onChange={e=>setInput(e.target.value)}
-          />
+      <textarea
+        rows="4"
+        placeholder={"发生前（A）：\n做了什么（B）：\n后来怎样（C）："}
+        value={input}
+        onChange={e => setInput(e.target.value)}
+      />
 
-          <button onClick={send} className="bg-black text-white w-full mt-3 py-3 rounded-2xl font-bold active:scale-95 transition-all">记录瞬间</button>
+      <button className="primary" onClick={handleSend}>记录瞬间</button>
 
-          <div className="mt-6">
-            {notes.map(n=>{
-              const abc=extractABC(n.content);
-              return(
-                <div key={n.id} className="relative overflow-hidden mb-3 rounded-2xl">
+      <div className="mt-10 space-y-4">
+        {notes.map(note => (
+          <div className="card" key={note.id}>
+            <div className="text-[10px] text-slate-300 font-bold mb-2">
+              {new Date(note.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+            </div>
+            <div className="text-[16px] leading-relaxed mb-4 whitespace-pre-wrap">{note.content}</div>
 
-                  {offsetId===n.id && (
-                    <div className="delete-btn" onClick={()=>del(n.id)}>删除</div>
-                  )}
-
-                  <div
-                    className="card"
-                    style={{ 
-                        margin: 0,
-                        transform: offsetId === n.id ? 'translateX(-80px)' : 'translateX(0)',
-                        transition: 'transform 0.2s'
-                    }}
-                    onTouchStart={(e)=>ts(e,n.id)}
-                    onTouchMove={(e)=>tm(e,n.id)}
-                    onTouchEnd={te}
-                  >
-
-                    {n.patternTitle && <div className="text-[10px] font-bold text-purple-500 bg-purple-50 w-fit px-2 py-0.5 rounded-full mb-2">🔁 {n.patternTitle}</div>}
-
-                    <div className="text-slate-800 leading-relaxed">{n.content}</div>
-
-                    <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-50 flex gap-2">
-                      <span>A:{abc.a}</span>|<span>C:{abc.c}</span>
-                    </div>
-
-                  </div>
-                </div>
-              )
-            })}
+            <button 
+              onClick={() => handleAnalyze(note)}
+              className={`text-xs font-bold px-4 py-2 rounded-full transition-all ${note.analysis ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600'}`}
+            >
+              {loading === note.id ? "正在解码..." : (note.analysis ? "查看分析报告" : "✨ ABC 分析")}
+            </button>
           </div>
-        </>
-      )}
+        ))}
+      </div>
 
-      {tab==="review" && (
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-gray-400 px-1 uppercase tracking-widest">模式聚合</div>
-          {Object.values(grouped).length === 0 ? (
-            <div className="text-center py-20 text-gray-300">暂未发现重复模式</div>
-          ) : (
-            Object.values(grouped).map(g=>(
-              <div key={g.title} className="card">
-                <div className="font-bold flex justify-between items-center">
-                  <span>🔁 {g.title}</span>
-                  <span className="text-xs bg-slate-100 px-2 py-1 rounded-full">{g.list.length}次</span>
-                </div>
+      {modal && (
+        <div className="modal-overlay" onClick={() => setModal(null)}>
+          <div className="modal-content animate-feed" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+               <h3 className="font-bold text-xl">行为观察摘要</h3>
+               <button onClick={() => setModal(null)} className="text-slate-300">关闭</button>
+            </div>
 
-                <div className="mt-3 space-y-2 border-t border-gray-50 pt-3">
-                  {g.list.slice(0,3).map(n=>(
-                    <div key={n.id} className="text-sm text-gray-500 flex items-start gap-2">
-                      <span className="text-gray-300 mt-1">●</span>
-                      {n.content}
-                    </div>
-                  ))}
-                </div>
+            {/* ✅ 事实层：永远来自本地提取 */}
+            <div className="bg-slate-50 p-5 rounded-2xl mb-6 border border-slate-100">
+              <div className="fact-tag">事实层 / Fact Layer</div>
+              {(() => {
+                const abc = extractABC(modal.note.content);
+                return (
+                  <div className="space-y-1 text-sm text-slate-600">
+                    <div><span className="font-bold">A 前因：</span>{abc.a}</div>
+                    <div><span className="font-bold">B 行为：</span>{abc.b}</div>
+                    <div><span className="font-bold">C 结果：</span>{abc.c}</div>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* ✅ 解释层：来自 AI */}
+            <div className="space-y-4">
+              <div className="fact-tag">AI 视角 / Interpretation</div>
+              <div className="space-y-2">
+                {modal.data.paths.map((p,i)=>
+                  <div key={i} className="p-4 bg-white border border-slate-100 rounded-xl text-sm shadow-sm">{p}</div>
+                )}
               </div>
-            ))
-          )}
+
+              {modal.data.judgment && (
+                <div className="bg-amber-50 p-4 rounded-xl text-amber-900 text-sm font-semibold border border-amber-100">
+                  {modal.data.judgment}
+                </div>
+              )}
+              
+              <div className="text-[11px] text-slate-400 italic px-1">
+                {modal.data.missing}
+              </div>
+            </div>
+
+            <button onClick={() => setModal(null)} className="mt-8 w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg">
+              确定
+            </button>
+          </div>
         </div>
       )}
-
     </div>
-  )
+  );
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
