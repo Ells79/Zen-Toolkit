@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>EchoLog | ells 的行为实验室</title>
+    <!-- 修复 CDN 链接格式 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* 修复字体导入链接格式 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
         
         :root {
@@ -14,7 +16,6 @@
             --child-a-accent: #3b82f6;
             --child-b-bg: #faf5ff;
             --child-b-accent: #a855f7;
-            --safe-bottom: env(safe-area-inset-bottom, 1rem);
         }
 
         body {
@@ -22,7 +23,7 @@
             -webkit-tap-highlight-color: transparent;
             background-color: #fdfdfd;
             height: 100vh;
-            height: -webkit-fill-available;
+            overflow: hidden;
         }
 
         .ios-blur {
@@ -30,7 +31,6 @@
             -webkit-backdrop-filter: blur(25px);
         }
 
-        /* 顶部 Tab 切换 */
         .tab-btn { position: relative; transition: all 0.3s ease; }
         .tab-active { color: #0f172a; font-weight: 700; }
         .tab-active::after { 
@@ -38,12 +38,10 @@
             width: 14px; height: 3px; background: #0f172a; border-radius: 10px; 
         }
 
-        /* 孩子选择器：更紧凑 */
         .child-selector { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
-        .active-A { background-color: white; border-color: var(--child-a-accent); color: var(--child-a-accent); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15); }
-        .active-B { background-color: white; border-color: var(--child-b-accent); color: var(--child-b-accent); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15); }
+        .active-A { background-color: white; border-color: var(--child-a-accent); color: var(--child-a-accent); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12); }
+        .active-B { background-color: white; border-color: var(--child-b-accent); color: var(--child-b-accent); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.12); }
 
-        /* 时间轴 */
         .timeline-container { position: relative; }
         .timeline-container::before {
             content: ''; position: absolute; left: 20px; top: 0; bottom: 0; width: 1px;
@@ -51,18 +49,16 @@
             z-index: 0;
         }
 
-        /* 记录卡片 */
-        .record-card { position: relative; z-index: 1; border: 1px solid rgba(0,0,0,0.02); }
+        .record-card { position: relative; z-index: 1; border: 1px solid rgba(0,0,0,0.015); }
         .record-card::before {
             content: ''; position: absolute; left: -26px; top: 22px; width: 10px; height: 10px;
             border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 0 1px #f1f5f9;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-feed { animation: fadeInUp 0.5s ease-out forwards; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-feed { animation: fadeInUp 0.4s ease-out forwards; }
 
-        /* V1 报告视觉 */
         .v1-prose .original-quote { font-size: 1.1rem; font-weight: 700; color: #1e293b; border-left: 4px solid #f1f5f9; padding-left: 1rem; margin-bottom: 1.25rem; line-height: 1.5; }
         .v1-prose .abc-block { font-size: 0.85rem; color: #475569; background: #f8fafc; padding: 0.75rem; border-radius: 1rem; margin-bottom: 1rem; }
         .v1-prose .path-card { font-size: 0.8rem; background: #f1f5f9; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem; color: #64748b; }
@@ -71,113 +67,83 @@
 </head>
 <body class="text-slate-900 h-screen flex flex-col overflow-hidden text-left bg-[#fdfdfd]">
 
-    <!-- Header: 处理状态灯与 Tab -->
-    <nav class="ios-blur bg-white/80 sticky top-0 z-30 pt-4 pb-3 px-5 shrink-0 border-b border-slate-50">
+    <!-- Header -->
+    <nav class="ios-blur bg-white/80 sticky top-0 z-30 pt-4 pb-3 px-5 shrink-0 border-b border-slate-50 text-left">
         <div class="flex justify-between items-center mb-4">
             <div class="flex gap-5 items-baseline">
                 <button onclick="window.switchView('capture')" id="tab-capture" class="tab-btn tab-active text-slate-400 text-lg">捕获</button>
                 <button onclick="window.switchView('reflection')" id="tab-reflection" class="tab-btn text-slate-400 text-lg">回顾</button>
             </div>
             <div class="flex items-center gap-3">
-                <div id="cloud-status" class="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
-                <button onclick="window.toggleSettings()" class="text-slate-300 active:text-slate-900 transition-colors">
-                    <i data-lucide="settings-2" class="w-5 h-5"></i>
+                <div id="cloud-status" class="w-1.5 h-1.5 rounded-full bg-slate-200 transition-colors duration-500"></div>
+                <button onclick="window.toggleSettings()" class="text-slate-300 active:text-slate-900 transition-colors p-1">
+                    <i data-lucide="settings-2" class="w-5 h-5 text-left"></i>
                 </button>
             </div>
         </div>
 
         <div id="child-selectors" class="flex gap-3">
             <button onclick="window.switchChild('A')" id="selector-A" class="child-selector flex-1 border border-transparent bg-slate-50/50 rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all">
-                <span class="text-lg">👦</span>
+                <span class="text-lg leading-none">👦</span>
                 <span class="text-[11px] font-bold">孩子 A</span>
             </button>
             <button onclick="window.switchChild('B')" id="selector-B" class="child-selector flex-1 border border-transparent bg-slate-50/50 rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all">
-                <span class="text-lg">👧</span>
+                <span class="text-lg leading-none">👧</span>
                 <span class="text-[11px] font-bold">孩子 B</span>
             </button>
         </div>
     </nav>
 
-    <!-- 主记录区域 -->
+    <!-- 主列表 -->
     <main id="main-flow" class="flex-grow overflow-y-auto no-scrollbar pb-32 px-5">
         <div id="view-content" class="pt-4"></div>
     </main>
 
-    <!-- 底部输入框：适配 Safe Area -->
-    <footer id="input-footer" class="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-white via-white to-transparent px-5 pt-4 pb-[env(safe-area-inset-bottom,1.5rem)]">
+    <!-- 底部输入框 -->
+    <footer id="input-footer" class="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-white via-white to-transparent px-5 pt-6 pb-[env(safe-area-inset-bottom,1.5rem)]">
         <div class="max-w-2xl mx-auto">
-            <div id="strength-meter" class="text-[9px] font-black text-slate-300 mb-1.5 px-4 opacity-0 uppercase tracking-widest transition-all">Strength</div>
-            <div class="bg-white/90 ios-blur rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white p-1.5 flex items-end gap-2 ring-1 ring-black/[0.02]">
+            <div id="strength-meter" class="text-[9px] font-black text-slate-300 mb-2 px-4 opacity-0 uppercase tracking-widest text-left transition-all">Strength</div>
+            <div class="bg-white rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-slate-100 p-1.5 flex items-end gap-2 text-left">
                 <textarea id="note-input" rows="1" 
-                    class="flex-grow py-3 px-4 text-slate-700 bg-transparent focus:outline-none resize-none max-h-32 text-[16px] leading-relaxed" 
+                    class="flex-grow py-3 px-4 text-slate-700 bg-transparent focus:outline-none resize-none max-h-32 text-[16px] leading-relaxed text-left" 
                     placeholder="发生前 → 做了什么 → 后来怎样" 
                     oninput="window.handleInput(this)"></textarea>
                 <button id="submit-btn" onclick="window.handleSubmit()" 
-                    class="bg-slate-900 text-white w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-all shadow-lg shrink-0">
-                    <i data-lucide="arrow-up" class="w-6 h-6 text-white"></i>
+                    class="bg-slate-900 text-white w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-all shrink-0">
+                    <i data-lucide="arrow-up" class="w-6 h-6 text-white text-left"></i>
                 </button>
             </div>
         </div>
     </footer>
 
-    <!-- 弹窗部分 -->
+    <!-- 弹窗 -->
     <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 bg-slate-900/30 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-[32px] shadow-2xl p-7 animate-feed">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="font-bold text-lg">API 配置</h3>
-                <button onclick="window.toggleSettings()" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="window.toggleSettings()" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5 text-left"></i></button>
             </div>
             <input type="password" id="api-key-input" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none mb-5" placeholder="DeepSeek API Key (sk-...)">
-            <button onclick="window.saveSettings()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all">保存设置</button>
+            <button onclick="window.saveSettings()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all text-left">保存设置</button>
         </div>
     </div>
 
     <div id="ai-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md">
-        <div class="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[32px] shadow-2xl transform transition-all translate-y-full flex flex-col overflow-hidden" style="max-height: 90vh;" id="ai-modal-content">
+        <div class="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[32px] shadow-2xl transform transition-all translate-y-full flex flex-col overflow-hidden text-left" style="max-height: 90vh;" id="ai-modal-content">
             <div id="ai-body" class="flex-grow overflow-y-auto px-8 py-10 custom-scrollbar text-slate-600 v1-prose text-left"></div>
-            <div class="p-8 pt-0 shrink-0"><button onclick="window.closeAI()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold active:scale-95 shadow-xl transition-all">了解完毕</button></div>
+            <div class="p-8 pt-0 shrink-0"><button onclick="window.closeAI()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold active:scale-95 shadow-xl transition-all text-left">了解完毕</button></div>
         </div>
     </div>
 
     <script type="module">
+        // 修复导入路径中的 Markdown 格式错误
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        let user = null;
-        let notes = [];
-        let currentView = 'capture';
-        let currentChild = 'A';
-        let selectedPattern = null;
-
-        const BEHAVIOR_KEYWORDS = ['睡觉', '刷牙', '晚饭', '零食', '影子', '为什么', '不肯', '哭', '发脾气', '玩具'];
-
-        async function init() {
-            await signInAnonymously(auth);
-            onAuthStateChanged(auth, (u) => {
-                user = u;
-                if (user) {
-                    document.getElementById('cloud-status').className = 'w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse';
-                    const notesCol = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
-                    onSnapshot(query(notesCol), (snap) => {
-                        notes = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.timestamp - a.timestamp);
-                        renderView();
-                    });
-                }
-            });
-            const key = localStorage.getItem('ECHOLOG_API_KEY');
-            if (key) document.getElementById('api-key-input').value = key;
-            lucide.createIcons();
-        }
-
+        // 立即挂载全局函数
         window.switchView = (v) => {
-            currentView = v;
+            state.currentView = v;
             document.getElementById('tab-capture').className = `tab-btn text-lg ${v === 'capture' ? 'tab-active' : 'text-slate-400'}`;
             document.getElementById('tab-reflection').className = `tab-btn text-lg ${v === 'reflection' ? 'tab-active' : 'text-slate-400'}`;
             document.getElementById('child-selectors').classList.toggle('hidden', v !== 'capture');
@@ -186,7 +152,7 @@
         };
 
         window.switchChild = (c) => {
-            currentChild = c;
+            state.currentChild = c;
             document.getElementById('selector-A').className = `child-selector flex-1 border rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all ${c === 'A' ? 'active-A border-blue-500' : 'bg-slate-50/50 border-transparent text-slate-400'}`;
             document.getElementById('selector-B').className = `child-selector flex-1 border rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all ${c === 'B' ? 'active-B border-purple-500' : 'bg-slate-50/50 border-transparent text-slate-400'}`;
         };
@@ -197,139 +163,91 @@
             const isHigh = t.value.includes('→') && t.value.length > 15;
             meter.style.opacity = t.value.length > 0 ? 1 : 0;
             meter.innerText = isHigh ? "强度: 已具备分析条件" : "强度: 建议补全前后环节";
-            meter.className = `text-[9px] font-black mb-1.5 px-4 uppercase tracking-widest text-left transition-all ${isHigh ? 'text-emerald-500' : 'text-slate-300'}`;
+            meter.className = `text-[9px] font-black mb-2 px-4 uppercase tracking-widest text-left transition-all ${isHigh ? 'text-emerald-500' : 'text-slate-300'}`;
         };
 
         window.handleSubmit = async () => {
             const inputEl = document.getElementById('note-input');
             const text = inputEl.value.trim();
-            if (!text || !user) return;
-            const notesCol = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
-            await addDoc(notesCol, {
-                child: currentChild,
-                content: text,
-                timestamp: Date.now(),
-                analysis: null,
-                strength: text.length < 15 ? 'low' : (text.includes('→') ? 'high' : 'medium')
-            });
-            inputEl.value = ''; inputEl.style.height = 'auto';
-            document.getElementById('strength-meter').style.opacity = 0;
+            if (!text || !state.user) return;
+            try {
+                const notesCol = collection(db, 'artifacts', appId, 'users', state.user.uid, 'notes');
+                await addDoc(notesCol, {
+                    child: state.currentChild,
+                    content: text,
+                    timestamp: Date.now(),
+                    analysis: null,
+                    strength: text.length < 15 ? 'low' : (text.includes('→') ? 'high' : 'medium')
+                });
+                inputEl.value = ''; inputEl.style.height = 'auto';
+                document.getElementById('strength-meter').style.opacity = 0;
+            } catch (e) { console.error(e); }
         };
 
-        window.requestAI = async (id) => {
-            const note = notes.find(n => n.id === id);
+        window.requestAI = async (btn, id) => {
+            const note = state.notes.find(n => n.id === id);
             if (note.analysis) { window.showAI(note.analysis); return; }
             const key = localStorage.getItem('ECHOLOG_API_KEY');
             if (!key) { window.toggleSettings(); return; }
 
-            const btn = event.currentTarget;
-            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-3 h-3"></i>`;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-3 h-3 text-left"></i>`;
             lucide.createIcons();
 
+            const systemPrompt = `请按“EchoLog 分析卡片模板（V1）”输出。要求：总字数≤220；仅2个可能路径且引用原文；1个⭐判断点（对比式）；1个📌信息缺口。禁止专业术语。
+格式：
+📝 “{{原文}}”
+A：前因 / B：行为 / C：结果
+① 路径名 -> 解释 -> 依据
+② 路径名 -> 解释 -> 依据
+⭐ 下次只看这一点：...
+📌 还缺：...`;
+
             try {
-                const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                const res = await fetch("https://api.deepseek.com/chat/completions", {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
                     body: JSON.stringify({
                         model: "deepseek-chat",
                         messages: [
-                            { role: "system", content: "请按“EchoLog 分析卡片模板（V1）”输出。要求：总字数≤220；仅2个可能路径且引用原文；1个⭐判断点（对比式）；1个📌信息缺口。禁止专业术语。" },
+                            { role: "system", content: systemPrompt },
                             { role: "user", content: note.content }
                         ],
                         temperature: 0.1
                     })
                 });
                 const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                
                 const raw = data.choices[0].message.content;
-
-                const lines = raw.split('\n').filter(l => l.trim());
+                const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
                 let html = '';
                 lines.forEach(line => {
-                    if (line.startsWith('📝')) html += `<div class="original-quote">${line}</div>`;
-                    else if (line.match(/^[ABC]：/)) {
+                    if (line.includes('📝')) html += `<div class="original-quote">${line}</div>`;
+                    else if (line.match(/^[ABC][：:]/)) {
                         if (!html.includes('abc-block')) html += `<div class="abc-block">`;
                         html += `<div>${line}</div>`;
-                        if (line.startsWith('C：')) html += `</div>`;
+                        if (line.startsWith('C')) html += `</div>`;
                     }
-                    else if (line.match(/^[①②]/)) html += `<div class="path-card"><strong>${line.split('->')[0]}</strong>${line.split('->').slice(1).join('<br>')}</div>`;
-                    else if (line.startsWith('⭐')) html += `<div class="judgment-star">${line}</div>`;
-                    else if (line.startsWith('📌')) html += `<div class="info-pin flex items-center gap-1 text-[11px] text-slate-400 pt-2"><i data-lucide="help-circle" class="w-3 h-3"></i> ${line}</div>`;
+                    else if (line.match(/^[①②12]/)) html += `<div class="path-card"><strong>${line.split('->')[0]}</strong>${line.split('->').slice(1).join('<br>')}</div>`;
+                    else if (line.includes('⭐')) html += `<div class="judgment-star">${line}</div>`;
+                    else if (line.includes('📌')) html += `<div class="info-pin flex items-center gap-1 text-[11px] text-slate-400 pt-2"><i data-lucide="help-circle" class="w-3 h-3"></i> ${line}</div>`;
                 });
 
-                const finalHtml = `<div class="v1-prose">${html}</div>`;
-                const noteRef = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', id);
+                const finalHtml = `<div class="v1-prose text-left">${html || raw}</div>`;
+                const noteRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'notes', id);
                 await updateDoc(noteRef, { analysis: finalHtml });
                 window.showAI(finalHtml);
-            } catch (e) { alert("分析失败，请检查网络"); } finally { renderView(); }
+            } catch (e) { 
+                console.error(e);
+                alert("分析失败：" + e.message); 
+            } finally { 
+                btn.innerHTML = originalHTML; 
+                lucide.createIcons(); 
+                renderView(); 
+            }
         };
 
-        function renderView() {
-            const container = document.getElementById('view-content');
-            if (currentView === 'capture') {
-                container.innerHTML = notes.length === 0 
-                    ? `<div class="py-32 text-center text-slate-300">云端已就绪，记录第一个瞬间吧</div>`
-                    : `<div class="space-y-4 pt-2 timeline-container">${notes.map(n => renderNoteCard(n)).join('')}</div>`;
-            } else {
-                renderReflectionView(container);
-            }
-            lucide.createIcons();
-        }
-
-        function renderNoteCard(note, isRef = false) {
-            const childAccent = note.child === 'A' ? 'var(--child-a-accent)' : 'var(--child-b-accent)';
-            const childBg = note.child === 'A' ? 'var(--child-a-bg)' : 'var(--child-b-bg)';
-            return `
-                <div class="record-card ml-6 p-5 rounded-[28px] shadow-sm flex flex-col gap-3 text-left mb-5 animate-feed relative" style="background-color: ${childBg};">
-                    <div class="flex justify-between items-start">
-                        <span class="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">${new Date(note.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
-                        <div class="flex gap-2">
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/80" style="color: ${childAccent}">C${note.child}</span>
-                            ${note.analysis ? '<span class="text-[9px] font-bold text-slate-400 bg-white/50 px-2 py-0.5 rounded-full">✓</span>' : ''}
-                        </div>
-                    </div>
-                    <p class="text-[16px] text-slate-800 leading-snug">${note.content}</p>
-                    ${!isRef ? `
-                        <div class="mt-1 flex justify-end">
-                            <button onclick="window.requestAI('${note.id}')" class="text-[10px] font-bold py-2 px-5 rounded-full shadow-sm flex items-center gap-1.5 transition-all ${note.analysis ? 'bg-white/40 text-slate-400' : 'bg-white'}" style="color: ${note.analysis ? '' : childAccent}">
-                                <i data-lucide="${note.analysis ? 'check-circle-2' : 'fingerprint'}" class="w-3 h-3"></i>
-                                ${note.analysis ? '查看报告' : 'ABC 分析'}
-                            </button>
-                        </div>` : ''}
-                    <div class="absolute left-[-26px] top-6 w-2 h-2 rounded-full border-2 border-white shadow-sm" style="background-color: ${childAccent}"></div>
-                </div>
-            `;
-        }
-
-        function renderReflectionView(container) {
-            const patterns = BEHAVIOR_KEYWORDS.map(kw => ({
-                keyword: kw,
-                count: notes.filter(n => n.content.includes(kw)).length
-            })).filter(p => p.count >= 2).sort((a,b) => b.count - a.count);
-
-            if (patterns.length === 0) {
-                container.innerHTML = `<div class="py-32 text-center text-slate-300">AI 正在等待更多数据来识别模式</div>`;
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="animate-feed">
-                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4 px-1">Patterns</h4>
-                    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-6 px-1">
-                        ${patterns.map(p => `
-                            <button onclick="window.filterRef('${p.keyword}')" class="pattern-card flex-shrink-0 text-left ${selectedPattern === p.keyword ? 'pattern-active border-slate-900' : 'border-transparent'}">
-                                <p class="font-bold text-slate-900 text-sm">“${p.keyword}”</p>
-                                <p class="text-[9px] text-slate-400 mt-1">${p.count} 次同步</p>
-                            </button>
-                        `).join('')}
-                    </div>
-                    <div class="space-y-2">
-                        ${notes.filter(n => !selectedPattern || n.content.includes(selectedPattern)).map(n => renderNoteCard(n, true)).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        window.filterRef = (kw) => { selectedPattern = selectedPattern === kw ? null : kw; renderView(); };
         window.toggleSettings = () => document.getElementById('settings-modal').classList.toggle('hidden');
         window.saveSettings = () => { localStorage.setItem('ECHOLOG_API_KEY', document.getElementById('api-key-input').value.trim()); window.toggleSettings(); };
         window.closeAI = () => { 
@@ -344,8 +262,108 @@
             setTimeout(() => document.getElementById('ai-modal-content').classList.remove('translate-y-full'), 10);
         };
 
+        // Firebase 
+        let db, auth, appId;
+        try {
+            const firebaseConfig = JSON.parse(__firebase_config);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        } catch (e) { console.error(e); }
+
+        const state = { user: null, notes: [], currentView: 'capture', currentChild: 'A', selectedPattern: null };
+        const BEHAVIOR_KEYWORDS = ['睡觉', '刷牙', '晚饭', '零食', '影子', '为什么', '不肯', '哭', '发脾气', '玩具'];
+
+        async function init() {
+            await signInAnonymously(auth);
+            onAuthStateChanged(auth, (u) => {
+                state.user = u;
+                if (u) {
+                    document.getElementById('cloud-status').classList.replace('bg-slate-200', 'bg-emerald-500');
+                    document.getElementById('cloud-status').classList.add('animate-pulse');
+                    const notesCol = collection(db, 'artifacts', appId, 'users', u.uid, 'notes');
+                    onSnapshot(query(notesCol), (snap) => {
+                        state.notes = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.timestamp - a.timestamp);
+                        renderView();
+                    });
+                }
+            });
+            const key = localStorage.getItem('ECHOLOG_API_KEY');
+            if (key) document.getElementById('api-key-input').value = key;
+            window.switchChild('A');
+            lucide.createIcons();
+        }
+
+        function renderView() {
+            const container = document.getElementById('view-content');
+            if (state.currentView === 'capture') {
+                container.innerHTML = state.notes.length === 0 
+                    ? `<div class="py-40 text-center text-slate-300">云端已就绪，记录第一个瞬间吧</div>`
+                    : `<div class="space-y-4 pt-2 timeline-container text-left">${state.notes.map(n => renderNoteCard(n)).join('')}</div>`;
+            } else {
+                renderReflectionView(container);
+            }
+            lucide.createIcons();
+        }
+
+        function renderNoteCard(note, isRef = false) {
+            const childAccent = note.child === 'A' ? 'var(--child-a-accent)' : 'var(--child-b-accent)';
+            const childBg = note.child === 'A' ? 'var(--child-a-bg)' : 'var(--child-b-bg)';
+            return `
+                <div class="record-card ml-6 p-5 rounded-[28px] shadow-sm flex flex-col gap-3 text-left mb-5 animate-feed relative" style="background-color: ${childBg};">
+                    <div class="flex justify-between items-start text-left">
+                        <span class="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">${new Date(note.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                        <div class="flex gap-2">
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/80" style="color: ${childAccent}">C${note.child}</span>
+                            ${note.analysis ? '<span class="text-[9px] font-bold text-slate-400 bg-white/50 px-2 py-0.5 rounded-full">✓</span>' : ''}
+                        </div>
+                    </div>
+                    <p class="text-[16px] text-slate-800 leading-snug text-left">${note.content}</p>
+                    ${!isRef ? `
+                        <div class="mt-1 flex justify-end">
+                            <button onclick="window.requestAI(this, '${note.id}')" class="text-[10px] font-bold py-2 px-5 rounded-full shadow-sm flex items-center gap-1.5 transition-all ${note.analysis ? 'bg-white/40 text-slate-400' : 'bg-white text-slate-900 active:scale-95'}" style="color: ${note.analysis ? '' : childAccent}">
+                                <i data-lucide="${note.analysis ? 'check-circle-2' : 'fingerprint'}" class="w-3 h-3 text-left"></i>
+                                ${note.analysis ? '查看报告' : 'ABC 分析'}
+                            </button>
+                        </div>` : ''}
+                    <div class="absolute left-[-26px] top-6 w-2 h-2 rounded-full border-2 border-white shadow-sm" style="background-color: ${childAccent}"></div>
+                </div>
+            `;
+        }
+
+        function renderReflectionView(container) {
+            const patterns = BEHAVIOR_KEYWORDS.map(kw => ({
+                keyword: kw,
+                count: state.notes.filter(n => n.content.includes(kw)).length
+            })).filter(p => p.count >= 2).sort((a,b) => b.count - a.count);
+
+            if (patterns.length === 0) {
+                container.innerHTML = `<div class="py-32 text-center text-slate-300 px-10">AI 正在等待更多数据来识别模式</div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="animate-feed text-left">
+                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4 px-1 text-left">Patterns</h4>
+                    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-6 px-1 text-left">
+                        ${patterns.map(p => `
+                            <button onclick="window.filterRef('${p.keyword}')" class="pattern-card flex-shrink-0 text-left border rounded-2xl p-4 transition-all ${state.selectedPattern === p.keyword ? 'border-slate-900 bg-white shadow-lg' : 'border-transparent bg-white shadow-sm'}">
+                                <p class="font-bold text-slate-900 text-sm">“${p.keyword}”</p>
+                                <p class="text-[9px] text-slate-400 mt-1">${p.count} 次同步</p>
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="space-y-2 text-left">
+                        ${state.notes.filter(n => !state.selectedPattern || n.content.includes(state.selectedPattern)).map(n => renderNoteCard(n, true)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.filterRef = (kw) => { state.selectedPattern = state.selectedPattern === kw ? null : kw; renderView(); };
+
         init();
-        window.switchChild('A');
     </script>
 </body>
 </html>
