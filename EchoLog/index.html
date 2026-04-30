@@ -5,23 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>EchoLog | ells 的观察实验室</title>
     
-    <!-- 1. 加载必要的运行环境 (React, Tailwind, Lucide, Babel) -->
+    <!-- 1. 加载运行环境 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- 2. 导入 Firebase SDK -->
-    <script type="importmap">
-    {
-      "imports": {
-        "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-        "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
-      }
-    }
-    </script>
+    <!-- 2. 改用 Firebase Compat 版本：修复运行环境冲突，确保全局可用 -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
@@ -40,11 +34,8 @@
 <body class="bg-slate-50">
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import { initializeApp } from 'firebase/app';
-        import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-        import { getFirestore, collection, addDoc, query, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-
+    <!-- 3. 应用核心逻辑：删除所有 import，改用全局 API -->
+    <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         // --- 1. ells 的私有云端配置 ---
@@ -57,12 +48,13 @@
             appId: "1:997697883214:web:87869e4cd9b73292c0071f"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // 替换初始化代码：使用 Compat 风格
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
         const appId = 'ells-lab-v1';
 
-        // --- 2. 工具组件：Icon (修复 Error #130) ---
+        // --- 2. 工具组件：Icon ---
         const Icon = ({ name, size = 20, className = "" }) => {
             const iconKey = name.toLowerCase().replace(/-/g, '');
             const iconData = lucide.icons[name] || lucide.icons[iconKey];
@@ -165,15 +157,17 @@
             const textareaRef = useRef(null);
 
             useEffect(() => {
-                signInAnonymously(auth).catch(e => console.error("Auth Error", e));
-                const unsubscribeAuth = onAuthStateChanged(auth, (u) => setUser(u));
+                // 替换 Auth 调用为全局风格
+                auth.signInAnonymously().catch(e => console.error("Auth Error", e));
+                const unsubscribeAuth = auth.onAuthStateChanged((u) => setUser(u));
                 return () => unsubscribeAuth();
             }, []);
 
             useEffect(() => {
                 if (!user) return;
-                const q = query(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'));
-                const unsubscribe = onSnapshot(q, (snap) => {
+                // 替换 Firestore 调用：artifacts/appId/users/userId/notes
+                const notesRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes');
+                const unsubscribe = notesRef.onSnapshot((snap) => {
                     const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     setNotes(data.sort((a, b) => b.timestamp - a.timestamp));
                 });
@@ -183,7 +177,8 @@
             const handleSend = async () => {
                 if (!input.trim() || !user) return;
                 try {
-                    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'notes'), {
+                    const notesRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes');
+                    await notesRef.add({
                         child, content: input.trim(), timestamp: Date.now(), analysis: null
                     });
                     setInput('');
@@ -192,11 +187,18 @@
             };
 
             const requestAnalysis = async (note) => {
+                // 修复分析判空与兼容性逻辑
+                let parsedData = null;
                 if (note.analysis) {
-                    const parsedData = typeof note.analysis === 'string' ? parseAI(note.analysis) : note.analysis.parsed;
+                    if (typeof note.analysis === 'string') {
+                        parsedData = parseAI(note.analysis);
+                    } else {
+                        parsedData = note.analysis.parsed;
+                    }
                     setAnalysisModal({ open: true, data: parsedData });
                     return;
                 }
+                
                 if (!apiKey) { setIsSettingsOpen(true); return; }
                 setIsAnalyzing(note.id);
                 
@@ -216,8 +218,10 @@
                     if (result.error) throw new Error(result.error.message);
                     const rawText = result.choices[0].message.content;
                     const parsed = parseAI(rawText);
-                    const noteRef = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', note.id);
-                    await updateDoc(noteRef, { analysis: { raw: rawText, parsed: parsed } });
+                    
+                    // 替换更新调用：使用 doc(id).update()
+                    const noteRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('notes').doc(note.id);
+                    await noteRef.update({ analysis: { raw: rawText, parsed: parsed } });
                     setAnalysisModal({ open: true, data: parsed });
                 } catch (e) { alert("分析失败：" + e.message); } finally { setIsAnalyzing(null); }
             };
@@ -242,7 +246,7 @@
                                     <span className="text-lg">👦</span><span className="text-[10px] font-black uppercase">孩子 A</span>
                                 </button>
                                 <button onClick={() => setChild('B')} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border transition-all ${child === 'B' ? 'bg-white border-purple-500 text-purple-500 shadow-lg scale-[1.02]' : 'bg-slate-50 border-transparent text-slate-400'}`}>
-                                    <span className="text-lg">👧</span><span className="text-[10px] font-black uppercase">孩子 B</span>
+                                    <span className="text-lg text-center">👧</span><span className="text-[10px] font-black uppercase">孩子 B</span>
                                 </button>
                             </div>
                         )}
@@ -310,7 +314,7 @@
                     )}
 
                     {/* Analysis Modal */}
-                    {analysisModal.open && (
+                    {analysisModal.open && analysisModal.data && (
                         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
                             <div className="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] shadow-2xl flex flex-col overflow-hidden">
                                 <div className="p-10 pb-6 text-left v1-prose overflow-y-auto max-h-[75vh]">
