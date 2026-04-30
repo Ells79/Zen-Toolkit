@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EchoLog | ells 的行为实验室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        
+        :root {
+            --child-a-bg: #f0f7ff;
+            --child-a-accent: #3b82f6;
+            --child-b-bg: #faf5ff;
+            --child-b-accent: #a855f7;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #fdfdfd;
+        }
+
+        .ios-blur {
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+        }
+
+        /* Tab 切换 */
+        .tab-btn { position: relative; transition: all 0.3s ease; }
+        .tab-active { color: #0f172a; font-weight: 700; }
+        .tab-active::after { content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 12px; height: 3px; background: #0f172a; border-radius: 10px; }
+
+        /* 时间轴线 */
+        .timeline-container { position: relative; }
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 0; bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, #e2e8f0 10%, #e2e8f0 90%, transparent);
+            z-index: 0;
+        }
+
+        /* 模式卡片 */
+        .pattern-card { 
+            background: white; 
+            border: 1px solid rgba(0,0,0,0.04); 
+            border-radius: 24px; 
+            padding: 20px; 
+            min-width: 160px; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .pattern-active { border-color: #0f172a; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+
+        /* V1 报告渲染 */
+        .v1-prose .original-quote { font-size: 1.125rem; font-weight: 700; color: #0f172a; border-left: 4px solid #e2e8f0; padding-left: 1rem; margin-bottom: 1.25rem; line-height: 1.6; }
+        .v1-prose .abc-block { font-size: 0.875rem; color: #475569; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 1.25rem; }
+        .v1-prose .path-card { font-size: 0.75rem; background: #f1f5f9; padding: 0.875rem; border-radius: 0.875rem; margin-bottom: 0.5rem; color: #64748b; }
+        .v1-prose .judgment-star { background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 1rem; border-radius: 1.25rem; font-size: 0.93rem; font-weight: 600; margin: 1.5rem 0; }
+        .v1-prose .info-pin { font-size: 0.75rem; color: #94a3b8; display: flex; items: center; gap: 0.5rem; }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-feed { animation: fadeInUp 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="text-slate-900 h-screen flex flex-col overflow-hidden text-left">
+
+    <!-- 顶部状态与导航 -->
+    <nav class="ios-blur bg-white/70 sticky top-0 z-20 pt-8 pb-4 px-6 shrink-0">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex gap-6 items-baseline">
+                <button onclick="window.switchView('capture')" id="tab-capture" class="tab-btn tab-active text-slate-400 text-xl">捕获</button>
+                <button onclick="window.switchView('reflection')" id="tab-reflection" class="tab-btn text-slate-400 text-xl">回顾</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <div id="cloud-status" class="w-2 h-2 rounded-full bg-slate-200"></div>
+                <button onclick="window.toggleSettings()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:bg-slate-50 transition-colors">
+                    <i data-lucide="settings-2" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 孩子选择 (仅捕获模式) -->
+        <div id="child-selectors" class="flex gap-4">
+            <button onclick="window.switchChild('A')" id="selector-A" class="flex-1 border-2 border-transparent bg-slate-50 rounded-[24px] p-3 flex flex-col items-center gap-1 transition-all">
+                <span class="text-xl">👦</span>
+                <span class="text-[11px] font-bold">孩子 A</span>
+            </button>
+            <button onclick="window.switchChild('B')" id="selector-B" class="flex-1 border-2 border-transparent bg-slate-50 rounded-[24px] p-3 flex flex-col items-center gap-1 transition-all">
+                <span class="text-xl">👧</span>
+                <span class="text-[11px] font-bold">孩子 B</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 记录流内容区 -->
+    <main id="main-flow" class="flex-grow overflow-y-auto no-scrollbar pb-48 px-6">
+        <div id="view-content" class="pt-4"></div>
+    </main>
+
+    <!-- 底部输入框 (仅捕获模式) -->
+    <footer id="input-footer" class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-20">
+        <div class="max-w-2xl mx-auto">
+            <div id="strength-meter" class="text-[9px] font-black text-slate-300 mb-2 px-6 opacity-0 uppercase tracking-widest text-left">Observation Condition</div>
+            <div class="bg-white/80 ios-blur rounded-[35px] shadow-2xl border border-white p-2 flex items-end gap-2 ring-1 ring-black/[0.03]">
+                <textarea id="note-input" rows="1" class="flex-grow py-4 px-5 text-slate-700 bg-transparent focus:outline-none resize-none max-h-40 text-[16px] leading-relaxed text-left" placeholder="发生前 → 做了什么 → 后来怎样" oninput="window.handleInput(this)"></textarea>
+                <button id="submit-btn" onclick="window.handleSubmit()" class="bg-slate-900 text-white w-14 h-14 rounded-full flex items-center justify-center active:scale-90 transition-all shadow-xl shrink-0 mb-1 mr-1">
+                    <i data-lucide="arrow-up" class="w-7 h-7"></i>
+                </button>
+            </div>
+            <div class="h-6"></div>
+        </div>
+    </footer>
+
+    <!-- 设置与分析弹窗 -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md">
+        <div class="bg-white w-full max-w-sm rounded-[40px] shadow-2xl p-8 animate-feed">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="font-bold text-xl">API 配置</h3>
+                <button onclick="window.toggleSettings()" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="password" id="api-key-input" class="w-full bg-slate-50 border-none rounded-[20px] px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none mb-6" placeholder="DeepSeek API Key (sk-...)">
+            <button onclick="window.saveSettings()" class="w-full py-5 bg-slate-900 text-white rounded-[25px] font-bold shadow-xl">保存</button>
+        </div>
+    </div>
+
+    <div id="ai-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl">
+        <div class="bg-white w-full max-w-lg rounded-t-[50px] sm:rounded-[50px] shadow-2xl transform transition-all translate-y-full flex flex-col overflow-hidden" id="ai-modal-content">
+            <div id="ai-body" class="flex-grow overflow-y-auto px-10 py-10 custom-scrollbar text-slate-600 v1-prose text-left"></div>
+            <div class="p-10 pt-4 shrink-0"><button onclick="window.closeAI()" class="w-full py-5 bg-slate-900 text-white rounded-[28px] font-bold active:scale-90 shadow-2xl">了解完毕</button></div>
+        </div>
+    </div>
+
+    <!-- Firebase 逻辑 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 注入配置
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let user = null;
+        let notes = [];
+        let currentView = 'capture';
+        let currentChild = 'A';
+        let selectedPattern = null;
+
+        const BEHAVIOR_KEYWORDS = ['睡觉', '刷牙', '晚饭', '零食', '影子', '为什么', '不肯', '哭', '发脾气', '玩具'];
+
+        // --- 核心同步逻辑 ---
+        async function init() {
+            await signInAnonymously(auth);
+            onAuthStateChanged(auth, (u) => {
+                user = u;
+                if (user) {
+                    document.getElementById('cloud-status').className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                    const notesCol = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+                    onSnapshot(query(notesCol), (snap) => {
+                        notes = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.timestamp - a.timestamp);
+                        renderView();
+                    });
+                }
+            });
+            const key = localStorage.getItem('ECHOLOG_API_KEY');
+            if (key) document.getElementById('api-key-input').value = key;
+        }
+
+        // --- 全局交互函数 ---
+        window.switchView = (v) => {
+            currentView = v;
+            document.getElementById('tab-capture').className = `tab-btn text-xl ${v === 'capture' ? 'tab-active' : 'text-slate-400'}`;
+            document.getElementById('tab-reflection').className = `tab-btn text-xl ${v === 'reflection' ? 'tab-active' : 'text-slate-400'}`;
+            document.getElementById('child-selectors').classList.toggle('hidden', v !== 'capture');
+            document.getElementById('input-footer').classList.toggle('hidden', v !== 'capture');
+            renderView();
+        };
+
+        window.switchChild = (c) => {
+            currentChild = c;
+            document.getElementById('selector-A').className = `flex-1 border-2 rounded-[24px] p-3 flex flex-col items-center gap-1 ${c === 'A' ? 'bg-white border-blue-500 text-blue-500 shadow-lg scale-105' : 'bg-slate-50 border-transparent text-slate-400'}`;
+            document.getElementById('selector-B').className = `flex-1 border-2 rounded-[24px] p-3 flex flex-col items-center gap-1 ${c === 'B' ? 'bg-white border-purple-500 text-purple-500 shadow-lg scale-105' : 'bg-slate-50 border-transparent text-slate-400'}`;
+        };
+
+        window.handleInput = (t) => {
+            t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px';
+            const meter = document.getElementById('strength-meter');
+            meter.style.opacity = t.value.length > 0 ? 1 : 0;
+            meter.innerText = t.value.includes('→') && t.value.length > 20 ? "强度: 已具备分析条件" : "强度: 建议补全前后环节";
+            meter.className = `text-[9px] font-black mb-2 px-6 uppercase tracking-widest text-left transition-all ${t.value.includes('→') ? 'text-emerald-500' : 'text-slate-300'}`;
+        };
+
+        window.handleSubmit = async () => {
+            const inputEl = document.getElementById('note-input');
+            const text = inputEl.value.trim();
+            if (!text || !user) return;
+            const notesCol = collection(db, 'artifacts', appId, 'users', user.uid, 'notes');
+            await addDoc(notesCol, {
+                child: currentChild,
+                content: text,
+                timestamp: Date.now(),
+                analysis: null,
+                strength: text.length < 15 ? 'low' : (text.includes('→') ? 'high' : 'medium')
+            });
+            inputEl.value = ''; inputEl.style.height = 'auto';
+        };
+
+        window.requestAI = async (id) => {
+            const note = notes.find(n => n.id === id);
+            if (note.analysis) { window.showAI(note.analysis); return; }
+            const key = localStorage.getItem('ECHOLOG_API_KEY');
+            if (!key) { window.toggleSettings(); return; }
+
+            const btn = event.currentTarget;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-3 h-3"></i> 正在解码...`;
+            lucide.createIcons();
+
+            try {
+                const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            { role: "system", content: "请按“EchoLog 分析卡片模板（V1）”输出。要求：总字数≤220；仅2个可能路径且引用原文；1个⭐判断点（对比式）；1个📌信息缺口。禁止专业术语。" },
+                            { role: "user", content: note.content }
+                        ],
+                        temperature: 0.1
+                    })
+                });
+                const data = await res.json();
+                const raw = data.choices[0].message.content;
+
+                // 解析输出
+                const lines = raw.split('\n').filter(l => l.trim());
+                let html = '';
+                lines.forEach(line => {
+                    if (line.startsWith('📝')) html += `<div class="original-quote">${line}</div>`;
+                    else if (line.match(/^[ABC]：/)) {
+                        if (!html.includes('abc-block')) html += `<div class="abc-block">`;
+                        html += `<div>${line}</div>`;
+                        if (line.startsWith('C：')) html += `</div>`;
+                    }
+                    else if (line.match(/^[①②]/)) html += `<div class="path-card"><strong>${line.split('->')[0]}</strong>${line.split('->').slice(1).join('<br>')}</div>`;
+                    else if (line.startsWith('⭐')) html += `<div class="judgment-star">${line}</div>`;
+                    else if (line.startsWith('📌')) html += `<div class="info-pin"><i data-lucide="help-circle" class="w-3 h-3"></i> ${line}</div>`;
+                });
+
+                const finalHtml = `<div class="v1-prose">${html}</div>`;
+                const noteRef = doc(db, 'artifacts', appId, 'users', user.uid, 'notes', id);
+                await updateDoc(noteRef, { analysis: finalHtml });
+                window.showAI(finalHtml);
+            } catch (e) { alert("API 调用失败，请检查 Key 或网络"); } finally { renderView(); }
+        };
+
+        // --- 视图渲染 ---
+        function renderView() {
+            const container = document.getElementById('view-content');
+            if (currentView === 'capture') {
+                container.innerHTML = notes.length === 0 
+                    ? `<div class="py-40 text-center text-slate-300">云端已就绪，记录第一个瞬间吧</div>`
+                    : `<div class="space-y-6 pt-4 timeline-container">${notes.map(n => renderNoteCard(n)).join('')}</div>`;
+            } else {
+                renderReflectionView(container);
+            }
+            lucide.createIcons();
+        }
+
+        function renderNoteCard(note, isRef = false) {
+            const childAccent = note.child === 'A' ? 'var(--child-a-accent)' : 'var(--child-b-accent)';
+            const childBg = note.child === 'A' ? 'var(--child-a-bg)' : 'var(--child-b-bg)';
+            return `
+                <div class="record-card ml-6 p-6 rounded-[35px] shadow-sm flex flex-col gap-4 text-left mb-6 animate-feed relative" style="background-color: ${childBg};">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">${new Date(note.timestamp).toLocaleString()}</span>
+                        <div class="flex gap-2">
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white shadow-sm" style="color: ${childAccent}">Child ${note.child}</span>
+                            ${note.analysis ? '<span class="text-[9px] font-bold text-slate-400 bg-white/50 px-2 py-0.5 rounded-full">✓ 已分析</span>' : ''}
+                        </div>
+                    </div>
+                    <p class="text-[17px] text-slate-800 leading-relaxed font-medium">${note.content}</p>
+                    ${!isRef ? `
+                        <div class="mt-2 flex justify-end">
+                            <button onclick="window.requestAI('${note.id}')" class="text-[11px] font-bold py-2.5 px-6 rounded-full shadow-sm flex items-center gap-2 transition-all ${note.analysis ? 'bg-white/40 text-slate-400' : 'bg-white'}" style="color: ${note.analysis ? '' : childAccent}">
+                                <i data-lucide="${note.analysis ? 'clipboard-check' : 'fingerprint'}" class="w-3.5 h-3.5"></i>
+                                ${note.analysis ? '回顾分析' : '👉 开启 ABC 分析'}
+                            </button>
+                        </div>` : ''}
+                    <div class="absolute left-[-29px] top-7 w-2.5 h-2.5 rounded-full border-2 border-white shadow-sm" style="background-color: ${childAccent}"></div>
+                </div>
+            `;
+        }
+
+        function renderReflectionView(container) {
+            const patterns = BEHAVIOR_KEYWORDS.map(kw => ({
+                keyword: kw,
+                count: notes.filter(n => n.content.includes(kw)).length
+            })).filter(p => p.count >= 2).sort((a,b) => b.count - a.count);
+
+            if (patterns.length === 0) {
+                container.innerHTML = `<div class="py-40 text-center text-slate-300 px-10">还没有发现重复模式...<br><span class="text-[10px] uppercase mt-2 block">AI 正在等待更多数据点</span></div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="animate-feed">
+                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4 px-2">模式识别 Patterns</h4>
+                    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-6">
+                        ${patterns.map(p => `
+                            <button onclick="window.filterRef('${p.keyword}')" class="pattern-card flex-shrink-0 text-left ${selectedPattern === p.keyword ? 'pattern-active' : ''}">
+                                <p class="font-bold text-slate-900 mb-1">“${p.keyword}”</p>
+                                <p class="text-[10px] text-slate-400 font-bold">${p.count} 次记录</p>
+                            </button>
+                        `).join('')}
+                    </div>
+                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-4 mb-4 px-2">证据链 Evidence</h4>
+                    <div class="space-y-4">
+                        ${notes.filter(n => !selectedPattern || n.content.includes(selectedPattern)).map(n => renderNoteCard(n, true)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 窗口挂载函数 ---
+        window.filterRef = (kw) => { selectedPattern = selectedPattern === kw ? null : kw; renderView(); };
+        window.toggleSettings = () => document.getElementById('settings-modal').classList.toggle('hidden');
+        window.saveSettings = () => { localStorage.setItem('ECHOLOG_API_KEY', document.getElementById('api-key-input').value.trim()); window.toggleSettings(); };
+        window.closeAI = () => document.getElementById('ai-modal').classList.add('hidden');
+        window.showAI = (html) => { 
+            document.getElementById('ai-body').innerHTML = html; 
+            lucide.createIcons();
+            document.getElementById('ai-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('ai-modal-content').classList.remove('translate-y-full'), 10);
+        };
+
+        // 启动
+        init();
+        window.switchChild('A');
+        window.switchView('capture');
+    </script>
+</body>
+</html>
