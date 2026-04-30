@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EchoLog | ells 的行为实验室</title>
-    <!-- 修复 CDN 链接格式 -->
+    <title>EchoLog | ells 的观察实验室</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* 修复字体导入链接格式 */
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
         
         :root {
@@ -24,11 +22,13 @@
             background-color: #fdfdfd;
             height: 100vh;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .ios-blur {
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
         .tab-btn { position: relative; transition: all 0.3s ease; }
@@ -38,110 +38,208 @@
             width: 14px; height: 3px; background: #0f172a; border-radius: 10px; 
         }
 
-        .child-selector { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
-        .active-A { background-color: white; border-color: var(--child-a-accent); color: var(--child-a-accent); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12); }
-        .active-B { background-color: white; border-color: var(--child-b-accent); color: var(--child-b-accent); box-shadow: 0 4px 12px rgba(168, 85, 247, 0.12); }
+        .child-selector { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
+        .active-A { background-color: white; border-color: var(--child-a-accent); color: var(--child-a-accent); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1); }
+        .active-B { background-color: white; border-color: var(--child-b-accent); color: var(--child-b-accent); box-shadow: 0 4px 10px rgba(168, 85, 247, 0.1); }
 
-        .timeline-container { position: relative; }
-        .timeline-container::before {
-            content: ''; position: absolute; left: 20px; top: 0; bottom: 0; width: 1px;
-            background: linear-gradient(to bottom, transparent, #f1f5f9 10%, #f1f5f9 90%, transparent);
-            z-index: 0;
-        }
-
-        .record-card { position: relative; z-index: 1; border: 1px solid rgba(0,0,0,0.015); }
-        .record-card::before {
-            content: ''; position: absolute; left: -26px; top: 22px; width: 10px; height: 10px;
-            border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 0 1px #f1f5f9;
-        }
-
+        .record-card { position: relative; z-index: 1; border: 1px solid rgba(0,0,0,0.01); }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-feed { animation: fadeInUp 0.4s ease-out forwards; }
 
         .v1-prose .original-quote { font-size: 1.1rem; font-weight: 700; color: #1e293b; border-left: 4px solid #f1f5f9; padding-left: 1rem; margin-bottom: 1.25rem; line-height: 1.5; }
-        .v1-prose .abc-block { font-size: 0.85rem; color: #475569; background: #f8fafc; padding: 0.75rem; border-radius: 1rem; margin-bottom: 1rem; }
-        .v1-prose .path-card { font-size: 0.8rem; background: #f1f5f9; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 0.5rem; color: #64748b; }
+        
+        /* 弱化 ABC 模块视觉 */
+        .v1-prose .abc-block { font-size: 0.75rem; color: #94a3b8; background: transparent; border-left: 2px solid #e2e8f0; padding-left: 0.75rem; margin-bottom: 1.25rem; line-height: 1.6; }
+        
+        .v1-prose .path-card { font-size: 0.8rem; background: #f1f5f9; padding: 0.875rem; border-radius: 0.875rem; margin-bottom: 0.5rem; color: #64748b; }
         .v1-prose .judgment-star { background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 1rem; border-radius: 1.25rem; font-size: 0.9rem; font-weight: 600; margin: 1.25rem 0; line-height: 1.5; }
+        .v1-prose .info-pin { font-size: 0.75rem; color: #94a3b8; display: flex; items: center; gap: 0.5rem; padding-top: 0.5rem; }
+
+        .safe-bottom-padding { padding-bottom: calc(env(safe-area-inset-bottom, 1rem) + 0.5rem); }
     </style>
 </head>
-<body class="text-slate-900 h-screen flex flex-col overflow-hidden text-left bg-[#fdfdfd]">
+<body class="text-slate-900 text-left">
 
     <!-- Header -->
-    <nav class="ios-blur bg-white/80 sticky top-0 z-30 pt-4 pb-3 px-5 shrink-0 border-b border-slate-50 text-left">
+    <nav class="ios-blur bg-white/80 sticky top-0 z-30 pt-4 pb-2 px-5 shrink-0 border-b border-slate-50">
         <div class="flex justify-between items-center mb-4">
-            <div class="flex gap-5 items-baseline">
+            <div class="flex gap-6 items-baseline">
                 <button onclick="window.switchView('capture')" id="tab-capture" class="tab-btn tab-active text-slate-400 text-lg">捕获</button>
                 <button onclick="window.switchView('reflection')" id="tab-reflection" class="tab-btn text-slate-400 text-lg">回顾</button>
             </div>
-            <div class="flex items-center gap-3">
-                <div id="cloud-status" class="w-1.5 h-1.5 rounded-full bg-slate-200 transition-colors duration-500"></div>
-                <button onclick="window.toggleSettings()" class="text-slate-300 active:text-slate-900 transition-colors p-1">
-                    <i data-lucide="settings-2" class="w-5 h-5 text-left"></i>
+            <div class="flex items-center gap-4">
+                <div id="cloud-status" class="w-2 h-2 rounded-full bg-slate-300 transition-colors duration-700"></div>
+                <button onclick="window.toggleSettings()" class="text-slate-300 active:text-slate-900 p-1">
+                    <i data-lucide="settings-2" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
 
-        <div id="child-selectors" class="flex gap-3">
-            <button onclick="window.switchChild('A')" id="selector-A" class="child-selector flex-1 border border-transparent bg-slate-50/50 rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all">
-                <span class="text-lg leading-none">👦</span>
+        <div id="child-selectors" class="flex gap-3 mb-2">
+            <button onclick="window.switchChild('A')" id="selector-A" class="child-selector flex-1 border border-transparent bg-slate-50/50 rounded-2xl py-2 flex items-center justify-center gap-2">
+                <span class="text-lg">👦</span>
                 <span class="text-[11px] font-bold">孩子 A</span>
             </button>
-            <button onclick="window.switchChild('B')" id="selector-B" class="child-selector flex-1 border border-transparent bg-slate-50/50 rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all">
-                <span class="text-lg leading-none">👧</span>
+            <button onclick="window.switchChild('B')" id="selector-B" class="child-selector flex-1 border border-transparent bg-slate-50/50 rounded-2xl py-2 flex items-center justify-center gap-2">
+                <span class="text-lg">👧</span>
                 <span class="text-[11px] font-bold">孩子 B</span>
             </button>
         </div>
     </nav>
 
-    <!-- 主列表 -->
-    <main id="main-flow" class="flex-grow overflow-y-auto no-scrollbar pb-32 px-5">
-        <div id="view-content" class="pt-4"></div>
+    <!-- Main Flow -->
+    <main id="main-flow" class="flex-grow overflow-y-auto no-scrollbar px-5">
+        <div id="view-content" class="pt-4 pb-40"></div>
     </main>
 
-    <!-- 底部输入框 -->
-    <footer id="input-footer" class="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-white via-white to-transparent px-5 pt-6 pb-[env(safe-area-inset-bottom,1.5rem)]">
+    <!-- Footer -->
+    <footer id="input-footer" class="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-white via-white/95 to-transparent px-5 safe-bottom-padding">
         <div class="max-w-2xl mx-auto">
-            <div id="strength-meter" class="text-[9px] font-black text-slate-300 mb-2 px-4 opacity-0 uppercase tracking-widest text-left transition-all">Strength</div>
-            <div class="bg-white rounded-[28px] shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-slate-100 p-1.5 flex items-end gap-2 text-left">
-                <textarea id="note-input" rows="1" 
-                    class="flex-grow py-3 px-4 text-slate-700 bg-transparent focus:outline-none resize-none max-h-32 text-[16px] leading-relaxed text-left" 
-                    placeholder="发生前 → 做了什么 → 后来怎样" 
+            <div id="strength-meter" class="text-[9px] font-black text-slate-300 mb-1 px-4 opacity-0 uppercase tracking-widest text-left transition-all">Strength</div>
+            <div class="bg-white rounded-[26px] shadow-[0_10px_35px_rgba(0,0,0,0.07)] border border-slate-100 p-1.5 flex items-end gap-2">
+                <!-- 修改输入框的 placeholder 与 rows -->
+                <textarea id="note-input" rows="3" 
+                    class="flex-grow py-3 px-4 text-slate-700 bg-transparent focus:outline-none resize-none max-h-32 text-[15px] leading-relaxed text-left" 
+                    placeholder="发生前（A）：&#10;做了什么（B）：&#10;后来怎样（C）：" 
                     oninput="window.handleInput(this)"></textarea>
                 <button id="submit-btn" onclick="window.handleSubmit()" 
-                    class="bg-slate-900 text-white w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-all shrink-0">
-                    <i data-lucide="arrow-up" class="w-6 h-6 text-white text-left"></i>
+                    class="bg-slate-900 text-white w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-all shrink-0 shadow-lg">
+                    <i data-lucide="arrow-up" class="w-6 h-6 stroke-[3px]"></i>
                 </button>
             </div>
         </div>
     </footer>
 
-    <!-- 弹窗 -->
-    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 bg-slate-900/30 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-[32px] shadow-2xl p-7 animate-feed">
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-[32px] shadow-2xl p-7 animate-feed text-left">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-lg">API 配置</h3>
-                <button onclick="window.toggleSettings()" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5 text-left"></i></button>
+                <h3 class="font-bold text-lg">系统设置</h3>
+                <button onclick="window.toggleSettings()" class="text-slate-400 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <input type="password" id="api-key-input" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none mb-5" placeholder="DeepSeek API Key (sk-...)">
-            <button onclick="window.saveSettings()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all text-left">保存设置</button>
+            <div class="space-y-5">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">DeepSeek API Key</label>
+                    <input type="password" id="api-key-input" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none" placeholder="sk-...">
+                </div>
+                <button onclick="window.saveSettings()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all">保存并关闭</button>
+                <p id="debug-info" class="text-[9px] text-slate-300 text-center uppercase tracking-tighter">V1.5 · Prompt Downgrade Implemented</p>
+            </div>
         </div>
     </div>
 
+    <!-- AI Analysis Modal -->
     <div id="ai-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md">
-        <div class="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[32px] shadow-2xl transform transition-all translate-y-full flex flex-col overflow-hidden text-left" style="max-height: 90vh;" id="ai-modal-content">
+        <div class="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[32px] shadow-2xl transform transition-all translate-y-full flex flex-col overflow-hidden" style="max-height: 90vh;" id="ai-modal-content">
             <div id="ai-body" class="flex-grow overflow-y-auto px-8 py-10 custom-scrollbar text-slate-600 v1-prose text-left"></div>
-            <div class="p-8 pt-0 shrink-0"><button onclick="window.closeAI()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold active:scale-95 shadow-xl transition-all text-left">了解完毕</button></div>
+            <div class="p-8 pt-0 shrink-0"><button onclick="window.closeAI()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold active:scale-95 shadow-xl transition-all">确定</button></div>
         </div>
     </div>
 
+    <!-- 脚本部分 -->
     <script type="module">
-        // 修复导入路径中的 Markdown 格式错误
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 立即挂载全局函数
+        const BEHAVIOR_PATTERNS = [
+            { key: 'sleep', title: '睡眠模式', words: ['睡觉', '睡前', '起床', '梦', '被子'] },
+            { key: 'food', title: '饮食行为', words: ['吃', '零食', '晚饭', '挑食', '糖'] },
+            { key: 'emotion', title: '情绪反应', words: ['哭', '发脾气', '闹', '生气', '伤心'] },
+            { key: 'study', title: '学习/专注', words: ['作业', '积木', '阅读', '专注', '玩'] },
+            { key: 'curiosity', title: '好奇/探索', words: ['问', '为什么', '影子', '光', '太阳'] },
+            { key: 'social', title: '社交互动', words: ['打', '抢', '分享', '哥哥', '妹妹', '抱'] }
+        ];
+
+        function matchPattern(noteContent) {
+            const found = BEHAVIOR_PATTERNS.find(p => p.words.some(word => noteContent.includes(word)));
+            return found ? found.key : null;
+        }
+
+        // 解析函数：支持可选的判断点
+        function parseAI(rawText) {
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+            const data = {
+                quote: '',
+                abc: { a: '未提供', b: '未提供', c: '未提供' },
+                paths: [],
+                judgment: '', // 改为可空
+                missing: '暂无'
+            };
+
+            lines.forEach(line => {
+                if (line.includes('📝')) data.quote = line.replace(/📝\s*["“]|["”]/g, '').trim();
+                else if (line.match(/^A[：:]/)) data.abc.a = line.replace(/^A[：:]\s*/, '').trim();
+                else if (line.match(/^B[：:]/)) data.abc.b = line.replace(/^B[：:]\s*/, '').trim();
+                else if (line.match(/^C[：:]/)) data.abc.c = line.replace(/^C[：:]\s*/, '').trim();
+                else if (line.match(/^[①②12]/)) data.paths.push(line);
+                else if (line.includes('⭐')) data.judgment = line.replace(/⭐\s*/, '').trim();
+                else if (line.includes('📌')) data.missing = line.replace(/📌\s*/, '').trim();
+            });
+
+            return data;
+        }
+
+        // 渲染函数：引入视觉极弱的 ABC 模块
+        function renderAI(parsed) {
+            if (!parsed) return '<p class="text-slate-400">解析失败</p>';
+            
+            let html = `
+                <div class="original-quote">📝 “${parsed.quote || '记录内容'}”</div>
+                <div class="abc-block">
+                    <div class="font-bold mb-1 flex items-center gap-1.5 opacity-60"><i data-lucide="puzzle" class="w-3 h-3"></i> 行为拆解</div>
+                    <div>A：${parsed.abc.a}</div>
+                    <div>B：${parsed.abc.b}</div>
+                    <div>C：${parsed.abc.c}</div>
+                </div>
+            `;
+            
+            parsed.paths.forEach(p => {
+                const parts = p.split('->');
+                if(parts.length > 1){
+                    html += `<div class="path-card"><strong>${parts[0]}</strong>${parts.slice(1).join('<br>')}</div>`;
+                } else {
+                    html += `<div class="path-card">${p}</div>`;
+                }
+            });
+
+            // 如果满足条件产生了 judgment，才进行渲染
+            if (parsed.judgment) {
+                html += `<div class="judgment-star">⭐ ${parsed.judgment}</div>`;
+            }
+            
+            if (parsed.missing) {
+                html += `
+                    <div class="info-pin flex items-center gap-1 text-[11px] text-slate-400 pt-1">
+                        <i data-lucide="help-circle" class="inline w-3 h-3 mr-1"></i> ${parsed.missing}
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        let firebaseConfig;
+        try {
+            firebaseConfig = JSON.parse(__firebase_config);
+        } catch (e) {
+            firebaseConfig = { /* 用户自定义配置 */ };
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        const state = {
+            user: null,
+            notes: [],
+            currentView: 'capture',
+            currentChild: 'A',
+            selectedPatternKey: null
+        };
+
         window.switchView = (v) => {
             state.currentView = v;
             document.getElementById('tab-capture').className = `tab-btn text-lg ${v === 'capture' ? 'tab-active' : 'text-slate-400'}`;
@@ -153,23 +251,25 @@
 
         window.switchChild = (c) => {
             state.currentChild = c;
-            document.getElementById('selector-A').className = `child-selector flex-1 border rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all ${c === 'A' ? 'active-A border-blue-500' : 'bg-slate-50/50 border-transparent text-slate-400'}`;
-            document.getElementById('selector-B').className = `child-selector flex-1 border rounded-2xl py-2 px-3 flex items-center justify-center gap-2 transition-all ${c === 'B' ? 'active-B border-purple-500' : 'bg-slate-50/50 border-transparent text-slate-400'}`;
+            document.getElementById('selector-A').className = `child-selector flex-1 border rounded-2xl py-2 flex items-center justify-center gap-2 transition-all ${c === 'A' ? 'active-A border-blue-500' : 'bg-slate-50/50 border-transparent text-slate-400'}`;
+            document.getElementById('selector-B').className = `child-selector flex-1 border rounded-2xl py-2 flex items-center justify-center gap-2 transition-all ${c === 'B' ? 'active-B border-purple-500' : 'bg-slate-50/50 border-transparent text-slate-400'}`;
         };
 
         window.handleInput = (t) => {
             t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px';
             const meter = document.getElementById('strength-meter');
-            const isHigh = t.value.includes('→') && t.value.length > 15;
+            const isHigh = t.value.length > 20 || t.value.split('\n').length >= 3;
             meter.style.opacity = t.value.length > 0 ? 1 : 0;
-            meter.innerText = isHigh ? "强度: 已具备分析条件" : "强度: 建议补全前后环节";
-            meter.className = `text-[9px] font-black mb-2 px-4 uppercase tracking-widest text-left transition-all ${isHigh ? 'text-emerald-500' : 'text-slate-300'}`;
+            meter.innerText = isHigh ? "强度: 已具备分析条件" : "强度: 建议补全细节";
+            meter.className = `text-[9px] font-black mb-1 px-4 uppercase tracking-widest text-left transition-all ${isHigh ? 'text-emerald-500' : 'text-slate-300'}`;
         };
 
         window.handleSubmit = async () => {
+            if (!state.user) { alert("云端连接中..."); return; }
             const inputEl = document.getElementById('note-input');
             const text = inputEl.value.trim();
-            if (!text || !state.user) return;
+            if (!text) return;
+
             try {
                 const notesCol = collection(db, 'artifacts', appId, 'users', state.user.uid, 'notes');
                 await addDoc(notesCol, {
@@ -177,30 +277,46 @@
                     content: text,
                     timestamp: Date.now(),
                     analysis: null,
-                    strength: text.length < 15 ? 'low' : (text.includes('→') ? 'high' : 'medium')
+                    strength: text.split('\n').length >= 3 || text.length > 20 ? 'high' : 'low'
                 });
                 inputEl.value = ''; inputEl.style.height = 'auto';
                 document.getElementById('strength-meter').style.opacity = 0;
-            } catch (e) { console.error(e); }
+            } catch (e) { alert("保存失败"); }
         };
 
         window.requestAI = async (btn, id) => {
             const note = state.notes.find(n => n.id === id);
-            if (note.analysis) { window.showAI(note.analysis); return; }
+            if (note.analysis) {
+                const html = typeof note.analysis === 'string' ? note.analysis : renderAI(note.analysis.parsed);
+                window.showAI(html); 
+                return; 
+            }
             const key = localStorage.getItem('ECHOLOG_API_KEY');
             if (!key) { window.toggleSettings(); return; }
 
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-3 h-3 text-left"></i>`;
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-3 h-3"></i>`;
             lucide.createIcons();
 
-            const systemPrompt = `请按“EchoLog 分析卡片模板（V1）”输出。要求：总字数≤220；仅2个可能路径且引用原文；1个⭐判断点（对比式）；1个📌信息缺口。禁止专业术语。
-格式：
+            // 新增严厉降级规则的 Prompt
+            const systemPrompt = `请按“EchoLog 分析卡片模板（V1.5）”输出。要求：总字数≤220；禁止专业术语。
+规则：
+1. 从记录中提取A(前因)、B(行为,须引用原文)、C(结果)。无法识别写“未提供”，禁推测。
+2. 降级机制（核心）：
+ - 若 B 不清晰：不允许解释，只重述。
+ - 若 A 或 C 缺失：只输出最多2个可能理解（每条1句，须引用原文或写“信息不足”），不输出“⭐ 如何判断”。
+ - 仅当 ABC 基本成立时：才允许输出“⭐ 下次只看这一点：”。
+3. 📌信息缺口只允许1条。
+
+格式要求：
 📝 “{{原文}}”
-A：前因 / B：行为 / C：结果
+🧩 行为拆解
+A：... / 未提供
+B：...
+C：... / 未提供
 ① 路径名 -> 解释 -> 依据
 ② 路径名 -> 解释 -> 依据
-⭐ 下次只看这一点：...
+⭐ 下次只看这一点：... (仅ABC完整时)
 📌 还缺：...`;
 
             try {
@@ -217,39 +333,23 @@ A：前因 / B：行为 / C：结果
                     })
                 });
                 const data = await res.json();
-                if (data.error) throw new Error(data.error.message);
-                
                 const raw = data.choices[0].message.content;
-                const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
-                let html = '';
-                lines.forEach(line => {
-                    if (line.includes('📝')) html += `<div class="original-quote">${line}</div>`;
-                    else if (line.match(/^[ABC][：:]/)) {
-                        if (!html.includes('abc-block')) html += `<div class="abc-block">`;
-                        html += `<div>${line}</div>`;
-                        if (line.startsWith('C')) html += `</div>`;
-                    }
-                    else if (line.match(/^[①②12]/)) html += `<div class="path-card"><strong>${line.split('->')[0]}</strong>${line.split('->').slice(1).join('<br>')}</div>`;
-                    else if (line.includes('⭐')) html += `<div class="judgment-star">${line}</div>`;
-                    else if (line.includes('📌')) html += `<div class="info-pin flex items-center gap-1 text-[11px] text-slate-400 pt-2"><i data-lucide="help-circle" class="w-3 h-3"></i> ${line}</div>`;
-                });
+                
+                const parsed = parseAI(raw);
+                const analysisData = { raw: raw, parsed: parsed };
 
-                const finalHtml = `<div class="v1-prose text-left">${html || raw}</div>`;
                 const noteRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'notes', id);
-                await updateDoc(noteRef, { analysis: finalHtml });
-                window.showAI(finalHtml);
-            } catch (e) { 
-                console.error(e);
-                alert("分析失败：" + e.message); 
-            } finally { 
-                btn.innerHTML = originalHTML; 
-                lucide.createIcons(); 
-                renderView(); 
-            }
+                await updateDoc(noteRef, { analysis: analysisData });
+                window.showAI(renderAI(parsed));
+            } catch (e) { alert("AI分析暂时不可用"); } finally { btn.innerHTML = oldHtml; lucide.createIcons(); renderView(); }
         };
 
         window.toggleSettings = () => document.getElementById('settings-modal').classList.toggle('hidden');
-        window.saveSettings = () => { localStorage.setItem('ECHOLOG_API_KEY', document.getElementById('api-key-input').value.trim()); window.toggleSettings(); };
+        window.saveSettings = () => {
+            const val = document.getElementById('api-key-input').value.trim();
+            if(val) localStorage.setItem('ECHOLOG_API_KEY', val);
+            window.toggleSettings();
+        };
         window.closeAI = () => { 
             const inner = document.getElementById('ai-modal-content');
             inner.classList.add('translate-y-full');
@@ -262,45 +362,12 @@ A：前因 / B：行为 / C：结果
             setTimeout(() => document.getElementById('ai-modal-content').classList.remove('translate-y-full'), 10);
         };
 
-        // Firebase 
-        let db, auth, appId;
-        try {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        } catch (e) { console.error(e); }
-
-        const state = { user: null, notes: [], currentView: 'capture', currentChild: 'A', selectedPattern: null };
-        const BEHAVIOR_KEYWORDS = ['睡觉', '刷牙', '晚饭', '零食', '影子', '为什么', '不肯', '哭', '发脾气', '玩具'];
-
-        async function init() {
-            await signInAnonymously(auth);
-            onAuthStateChanged(auth, (u) => {
-                state.user = u;
-                if (u) {
-                    document.getElementById('cloud-status').classList.replace('bg-slate-200', 'bg-emerald-500');
-                    document.getElementById('cloud-status').classList.add('animate-pulse');
-                    const notesCol = collection(db, 'artifacts', appId, 'users', u.uid, 'notes');
-                    onSnapshot(query(notesCol), (snap) => {
-                        state.notes = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.timestamp - a.timestamp);
-                        renderView();
-                    });
-                }
-            });
-            const key = localStorage.getItem('ECHOLOG_API_KEY');
-            if (key) document.getElementById('api-key-input').value = key;
-            window.switchChild('A');
-            lucide.createIcons();
-        }
-
         function renderView() {
             const container = document.getElementById('view-content');
             if (state.currentView === 'capture') {
                 container.innerHTML = state.notes.length === 0 
-                    ? `<div class="py-40 text-center text-slate-300">云端已就绪，记录第一个瞬间吧</div>`
-                    : `<div class="space-y-4 pt-2 timeline-container text-left">${state.notes.map(n => renderNoteCard(n)).join('')}</div>`;
+                    ? `<div class="py-40 text-center text-slate-300 text-sm">云端已就绪，记录第一个瞬间吧</div>`
+                    : `<div class="space-y-4 pt-2 border-l border-slate-100 ml-5">${state.notes.map(n => renderNoteCard(n)).join('')}</div>`;
             } else {
                 renderReflectionView(container);
             }
@@ -310,32 +377,33 @@ A：前因 / B：行为 / C：结果
         function renderNoteCard(note, isRef = false) {
             const childAccent = note.child === 'A' ? 'var(--child-a-accent)' : 'var(--child-b-accent)';
             const childBg = note.child === 'A' ? 'var(--child-a-bg)' : 'var(--child-b-bg)';
+            const hasAnalysis = !!note.analysis;
+            
             return `
-                <div class="record-card ml-6 p-5 rounded-[28px] shadow-sm flex flex-col gap-3 text-left mb-5 animate-feed relative" style="background-color: ${childBg};">
-                    <div class="flex justify-between items-start text-left">
+                <div class="record-card p-5 rounded-[26px] shadow-sm flex flex-col gap-3 text-left mb-4 animate-feed relative" style="background-color: ${childBg};">
+                    <div class="flex justify-between items-start">
                         <span class="text-[9px] font-bold text-slate-300 uppercase tracking-tighter">${new Date(note.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
                         <div class="flex gap-2">
-                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/80" style="color: ${childAccent}">C${note.child}</span>
-                            ${note.analysis ? '<span class="text-[9px] font-bold text-slate-400 bg-white/50 px-2 py-0.5 rounded-full">✓</span>' : ''}
+                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/80" style="color: ${childAccent}">Child ${note.child}</span>
+                            ${hasAnalysis ? '<span class="text-[9px] font-bold text-emerald-500 bg-white/80 px-1 rounded-full"><i data-lucide="check" class="w-2.5 h-2.5"></i></span>' : ''}
                         </div>
                     </div>
-                    <p class="text-[16px] text-slate-800 leading-snug text-left">${note.content}</p>
+                    <p class="text-[16px] text-slate-800 leading-snug whitespace-pre-wrap">${note.content}</p>
                     ${!isRef ? `
                         <div class="mt-1 flex justify-end">
-                            <button onclick="window.requestAI(this, '${note.id}')" class="text-[10px] font-bold py-2 px-5 rounded-full shadow-sm flex items-center gap-1.5 transition-all ${note.analysis ? 'bg-white/40 text-slate-400' : 'bg-white text-slate-900 active:scale-95'}" style="color: ${note.analysis ? '' : childAccent}">
-                                <i data-lucide="${note.analysis ? 'check-circle-2' : 'fingerprint'}" class="w-3 h-3 text-left"></i>
-                                ${note.analysis ? '查看报告' : 'ABC 分析'}
+                            <button onclick="window.requestAI(this, '${note.id}')" class="text-[10px] font-bold py-2 px-5 rounded-full shadow-sm flex items-center gap-1.5 transition-all ${hasAnalysis ? 'bg-white/40 text-slate-400' : 'bg-white text-slate-900'}" style="color: ${hasAnalysis ? '' : childAccent}">
+                                <i data-lucide="${hasAnalysis ? 'file-text' : 'sparkles'}" class="w-3 h-3"></i>
+                                ${hasAnalysis ? '查看报告' : 'ABC分析'}
                             </button>
                         </div>` : ''}
-                    <div class="absolute left-[-26px] top-6 w-2 h-2 rounded-full border-2 border-white shadow-sm" style="background-color: ${childAccent}"></div>
                 </div>
             `;
         }
 
         function renderReflectionView(container) {
-            const patterns = BEHAVIOR_KEYWORDS.map(kw => ({
-                keyword: kw,
-                count: state.notes.filter(n => n.content.includes(kw)).length
+            const patterns = BEHAVIOR_PATTERNS.map(p => ({
+                ...p,
+                count: state.notes.filter(n => matchPattern(n.content) === p.key).length
             })).filter(p => p.count >= 2).sort((a,b) => b.count - a.count);
 
             if (patterns.length === 0) {
@@ -344,26 +412,48 @@ A：前因 / B：行为 / C：结果
             }
 
             container.innerHTML = `
-                <div class="animate-feed text-left">
-                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4 px-1 text-left">Patterns</h4>
-                    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-6 px-1 text-left">
+                <div class="animate-feed">
+                    <h4 class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-4">Patterns</h4>
+                    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-6">
                         ${patterns.map(p => `
-                            <button onclick="window.filterRef('${p.keyword}')" class="pattern-card flex-shrink-0 text-left border rounded-2xl p-4 transition-all ${state.selectedPattern === p.keyword ? 'border-slate-900 bg-white shadow-lg' : 'border-transparent bg-white shadow-sm'}">
-                                <p class="font-bold text-slate-900 text-sm">“${p.keyword}”</p>
-                                <p class="text-[9px] text-slate-400 mt-1">${p.count} 次同步</p>
+                            <button onclick="window.filterRef('${p.key}')" class="flex-shrink-0 text-left border rounded-2xl p-4 transition-all bg-white shadow-sm ${state.selectedPatternKey === p.key ? 'border-slate-900 ring-2 ring-slate-100' : 'border-transparent'}">
+                                <p class="font-bold text-slate-900 text-sm">“${p.title}”</p>
+                                <p class="text-[9px] text-slate-400 mt-1">${p.count} 次记录</p>
                             </button>
                         `).join('')}
                     </div>
-                    <div class="space-y-2 text-left">
-                        ${state.notes.filter(n => !state.selectedPattern || n.content.includes(state.selectedPattern)).map(n => renderNoteCard(n, true)).join('')}
+                    <div class="space-y-2">
+                        ${state.notes.filter(n => !state.selectedPatternKey || matchPattern(n.content) === state.selectedPatternKey).map(n => renderNoteCard(n, true)).join('')}
                     </div>
                 </div>
             `;
         }
 
-        window.filterRef = (kw) => { state.selectedPattern = state.selectedPattern === kw ? null : kw; renderView(); };
+        window.filterRef = (key) => { state.selectedPatternKey = state.selectedPatternKey === key ? null : key; renderView(); };
 
-        init();
+        async function start() {
+            try {
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (u) => {
+                    state.user = u;
+                    if (u) {
+                        document.getElementById('cloud-status').classList.replace('bg-slate-300', 'bg-emerald-500');
+                        document.getElementById('debug-info').innerText = "Cloud Active: " + u.uid.substring(0,4);
+                        const notesCol = collection(db, 'artifacts', appId, 'users', u.uid, 'notes');
+                        onSnapshot(query(notesCol), (snap) => {
+                            state.notes = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.timestamp - a.timestamp);
+                            renderView();
+                        });
+                    }
+                });
+            } catch (e) { document.getElementById('debug-info').innerText = "Auth Error"; }
+            const key = localStorage.getItem('ECHOLOG_API_KEY');
+            if (key) document.getElementById('api-key-input').value = key;
+            window.switchChild('A');
+            lucide.createIcons();
+        }
+
+        start();
     </script>
 </body>
 </html>
