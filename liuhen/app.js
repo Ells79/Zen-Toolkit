@@ -4,7 +4,7 @@ element.addEventListener(event, handler);
 }
 }
 
-const STORAGE_KEY = "fragment-writing-system:v0.2";
+const STORAGE_KEY = "fragment-writing-system:v0.3";
 const API_SETTINGS_KEY = "fragment-writing-system:deepseek";
 
 const state = {
@@ -22,14 +22,17 @@ clearInputBtn: document.querySelector("#clearInputBtn"),
 fragmentList: document.querySelector("#fragmentList"),
 tightenBtn: document.querySelector("#tightenBtn"),
 outputView: document.querySelector("#outputView"),
+
 choiceDialog: document.querySelector("#choiceDialog"),
 choiceInput: document.querySelector("#choiceInput"),
 addChoiceBtn: document.querySelector("#addChoiceBtn"),
 keepAsIsBtn: document.querySelector("#keepAsIsBtn"),
+
 apiStatus: document.querySelector("#apiStatus"),
 apiKeyInput: document.querySelector("#apiKeyInput"),
 saveApiBtn: document.querySelector("#saveApiBtn"),
 clearApiBtn: document.querySelector("#clearApiBtn"),
+
 fragmentTemplate: document.querySelector("#fragmentTemplate"),
 };
 
@@ -113,9 +116,11 @@ renderOutput("");
 
 function loadFragments() {
 try {
-return JSON.parse(
+return (
+JSON.parse(
 localStorage.getItem(STORAGE_KEY)
-) ?? [];
+) ?? []
+);
 } catch {
 return [];
 }
@@ -132,7 +137,10 @@ function saveFragment() {
 const text =
 elements.fragmentInput.value.trim();
 
-if (!text) return;
+if (!text) {
+elements.fragmentInput.focus();
+return;
+}
 
 const now = new Date().toISOString();
 
@@ -234,6 +242,19 @@ state.selectedIds.has(fragment.id)
 return selected.length > 0
 ? selected
 : state.fragments.slice(0, 1);
+}
+
+function buildLocalTightening(
+fragments
+) {
+return fragments
+.map((fragment) =>
+fragment.text
+.split("\n")
+.slice(0, 3)
+.join("\n")
+)
+.join("\n\n");
 }
 
 async function tightenWithApi(
@@ -341,7 +362,10 @@ method: "POST",
 const payload =
 await response.json();
 
-console.log(payload);
+console.log(
+"DeepSeek payload:",
+payload
+);
 
 if (!response.ok) {
 throw new Error(
@@ -446,19 +470,6 @@ return "";
   .join("");
 ```
 
-}
-
-function buildLocalTightening(
-fragments
-) {
-return fragments
-.map((fragment) =>
-fragment.text
-.split("\n")
-.slice(0, 3)
-.join("\n")
-)
-.join("\n\n");
 }
 
 function firstLine(text) {
