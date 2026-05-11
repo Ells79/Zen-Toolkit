@@ -1,3 +1,9 @@
+function bind(element, event, handler) {
+if (element) {
+element.addEventListener(event, handler);
+}
+}
+
 const STORAGE_KEY = "fragment-writing-system:v0.2";
 const API_SETTINGS_KEY = "fragment-writing-system:deepseek";
 
@@ -30,35 +36,73 @@ fragmentTemplate: document.querySelector("#fragmentTemplate"),
 init();
 
 function init() {
-elements.todayLabel.textContent = new Intl.DateTimeFormat("zh-CN", {
+if (elements.todayLabel) {
+elements.todayLabel.textContent =
+new Intl.DateTimeFormat("zh-CN", {
 year: "numeric",
 month: "long",
 day: "numeric",
 weekday: "long",
 }).format(new Date());
+}
 
-elements.saveFragmentBtn.addEventListener("click", saveFragment);
+bind(
+elements.saveFragmentBtn,
+"click",
+saveFragment
+);
 
-elements.clearInputBtn.addEventListener("click", () => {
+bind(
+elements.clearInputBtn,
+"click",
+() => {
 elements.fragmentInput.value = "";
 elements.fragmentInput.focus();
-});
+}
+);
 
-elements.tightenBtn.addEventListener("click", tightenSelected);
+bind(
+elements.tightenBtn,
+"click",
+tightenSelected
+);
 
-elements.addChoiceBtn.addEventListener("click", addChoiceAndTighten);
+bind(
+elements.addChoiceBtn,
+"click",
+addChoiceAndTighten
+);
 
-elements.keepAsIsBtn.addEventListener("click", keepAsIsAndTighten);
+bind(
+elements.keepAsIsBtn,
+"click",
+keepAsIsAndTighten
+);
 
-elements.saveApiBtn.addEventListener("click", saveApiSettings);
+bind(
+elements.saveApiBtn,
+"click",
+saveApiSettings
+);
 
-elements.clearApiBtn.addEventListener("click", clearApiSettings);
+bind(
+elements.clearApiBtn,
+"click",
+clearApiSettings
+);
 
-elements.fragmentInput.addEventListener("keydown", (event) => {
-if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+bind(
+elements.fragmentInput,
+"keydown",
+(event) => {
+if (
+(event.metaKey || event.ctrlKey) &&
+event.key === "Enter"
+) {
 saveFragment();
 }
-});
+}
+);
 
 loadApiSettings();
 
@@ -69,38 +113,33 @@ renderOutput("");
 
 function loadFragments() {
 try {
-return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? [];
+return JSON.parse(
+localStorage.getItem(STORAGE_KEY)
+) ?? [];
 } catch {
 return [];
 }
 }
 
 function persist() {
-localStorage.setItem(STORAGE_KEY, JSON.stringify(state.fragments));
+localStorage.setItem(
+STORAGE_KEY,
+JSON.stringify(state.fragments)
+);
 }
 
 function saveFragment() {
-const text = elements.fragmentInput.value.trim();
+const text =
+elements.fragmentInput.value.trim();
 
-if (!text) {
-elements.fragmentInput.focus();
-return;
-}
+if (!text) return;
 
 const now = new Date().toISOString();
 
-const decisionText = findChoiceLine(text);
-
 const fragment = {
 id: createId(),
-time: now,
-content: text,
 text,
-has_decision: Boolean(decisionText),
-decision_text: decisionText,
-mood: "留痕",
 createdAt: now,
-raw_text: text,
 };
 
 state.fragments.unshift(fragment);
@@ -120,13 +159,7 @@ function renderFragments() {
 elements.fragmentList.innerHTML = "";
 
 if (state.fragments.length === 0) {
-elements.fragmentList.innerHTML =
-`<div class="empty-state"></div>`;
-
-```
 return;
-```
-
 }
 
 state.fragments.forEach((fragment) => {
@@ -134,33 +167,32 @@ const node =
 elements.fragmentTemplate.content.firstElementChild.cloneNode(true);
 
 ```
-const checkbox = node.querySelector("input");
-
-const choice =
-  fragment.decision_text || findChoiceLine(fragment.text);
+const checkbox =
+  node.querySelector("input");
 
 checkbox.checked =
   state.selectedIds.has(fragment.id);
 
-checkbox.addEventListener("change", () => {
-  if (checkbox.checked) {
-    state.selectedIds.add(fragment.id);
-  } else {
-    state.selectedIds.delete(fragment.id);
+checkbox.addEventListener(
+  "change",
+  () => {
+    if (checkbox.checked) {
+      state.selectedIds.add(fragment.id);
+    } else {
+      state.selectedIds.delete(fragment.id);
+    }
   }
-});
+);
 
-node.querySelector(".fragment-date").textContent =
+node.querySelector(
+  ".fragment-date"
+).textContent =
   formatRecordDate(fragment.createdAt);
 
-node.querySelector(".fragment-line").textContent =
+node.querySelector(
+  ".fragment-line"
+).textContent =
   firstLine(fragment.text);
-
-node.querySelector(".choice-line").textContent =
-  choice;
-
-node.querySelector(".choice-line").hidden =
-  !choice;
 
 elements.fragmentList.appendChild(node);
 ```
@@ -169,58 +201,33 @@ elements.fragmentList.appendChild(node);
 }
 
 async function tightenSelected() {
-const fragments = getSelectedFragments();
+const fragments =
+getSelectedFragments();
 
 if (fragments.length === 0) {
-renderOutput("");
 return;
-}
-
-const missingChoice = fragments.find(
-(fragment) =>
-!(fragment.decision_text || findChoiceLine(fragment.text))
-);
-
-if (missingChoice) {
-state.pendingTightenIds =
-fragments.map((fragment) => fragment.id);
-
-```
-state.selectedIds.clear();
-
-state.selectedIds.add(missingChoice.id);
-
-renderFragments();
-
-elements.choiceInput.value = "";
-
-elements.choiceDialog.showModal();
-
-setTimeout(() => elements.choiceInput.focus(), 50);
-
-return;
-```
-
 }
 
 await tightenFragments(fragments);
 }
 
-async function tightenFragments(fragments) {
+async function tightenFragments(
+fragments
+) {
 if (hasApiSettings()) {
 await tightenWithApi(fragments);
 return;
 }
 
-const output = buildLocalTightening(fragments);
-
-state.lastOutput = output;
+const output =
+buildLocalTightening(fragments);
 
 renderOutput(output);
 }
 
 function getSelectedFragments() {
-const selected = state.fragments.filter((fragment) =>
+const selected =
+state.fragments.filter((fragment) =>
 state.selectedIds.has(fragment.id)
 );
 
@@ -229,13 +236,19 @@ return selected.length > 0
 : state.fragments.slice(0, 1);
 }
 
-async function tightenWithApi(fragments) {
-setBusy(elements.tightenBtn, "收紧中");
+async function tightenWithApi(
+fragments
+) {
+setBusy(
+elements.tightenBtn,
+"收紧中"
+);
 
 renderOutput("正在收紧。");
 
 try {
-const content = await callDeepSeek([
+const content =
+await callDeepSeek([
 {
 role: "system",
 content:
@@ -243,13 +256,14 @@ content:
 },
 {
 role: "user",
-content: buildTightenPrompt(fragments),
+content:
+buildTightenPrompt(
+fragments
+),
 },
 ]);
 
 ```
-state.lastOutput = content;
-
 renderOutput(content);
 ```
 
@@ -263,11 +277,16 @@ renderOutput(
 ```
 
 } finally {
-clearBusy(elements.tightenBtn, "收紧");
+clearBusy(
+elements.tightenBtn,
+"收紧"
+);
 }
 }
 
-function buildTightenPrompt(fragments) {
+function buildTightenPrompt(
+fragments
+) {
 return [
 "按“留痕写作”规则收紧下面内容。",
 "",
@@ -280,7 +299,9 @@ return [
 "",
 "记录：",
 fragments
-.map((fragment) => fragment.text)
+.map(
+(fragment) => fragment.text
+)
 .join("\n\n"),
 ].join("\n");
 }
@@ -293,50 +314,49 @@ if (!apiKey) {
 throw new Error("请填写 API Key");
 }
 
-const response = await fetch("/api/deepseek", {
+const response = await fetch(
+"/api/deepseek",
+{
 method: "POST",
 
 ```
-headers: {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${apiKey}`,
-},
+  headers: {
+    "Content-Type":
+      "application/json",
 
-body: JSON.stringify({
-  model: "deepseek-chat",
-  messages,
-  temperature: 0.25,
-  stream: false,
-}),
+    Authorization: `Bearer ${apiKey}`,
+  },
+
+  body: JSON.stringify({
+    model: "deepseek-chat",
+    messages,
+    temperature: 0.25,
+    stream: false,
+  }),
+}
 ```
 
-});
+);
 
 const payload =
-await response.json().catch(() => ({}));
+await response.json();
 
-console.log("DeepSeek payload:", payload);
+console.log(payload);
 
 if (!response.ok) {
-const message =
+throw new Error(
 payload?.error?.message ||
-payload?.message ||
-JSON.stringify(payload) ||
-`请求失败：${response.status}`;
-
-```
-throw new Error(message);
-```
-
+"请求失败"
+);
 }
 
 const content =
-payload?.choices?.[0]?.message?.content ||
-payload?.data?.choices?.[0]?.message?.content;
+payload?.choices?.[0]?.message
+?.content;
 
 if (!content) {
 throw new Error(
-JSON.stringify(payload)
+"模型没有返回内容"
 );
 }
 
@@ -346,10 +366,11 @@ return content.trim();
 }
 
 function loadApiSettings() {
-const settings = getApiSettings();
+const settings =
+getApiSettings();
 
 elements.apiKeyInput.value =
-settings.apiKey;
+settings.apiKey || "";
 
 updateApiStatus();
 }
@@ -358,34 +379,32 @@ function getApiSettings() {
 try {
 return (
 JSON.parse(
-localStorage.getItem(API_SETTINGS_KEY)
-) ?? {
-apiKey: "",
-}
+localStorage.getItem(
+API_SETTINGS_KEY
+)
+) ?? {}
 );
 } catch {
-return {
-apiKey: "",
-};
+return {};
 }
 }
 
 function saveApiSettings() {
-const settings = {
-apiKey:
-elements.apiKeyInput.value.trim(),
-};
-
 localStorage.setItem(
 API_SETTINGS_KEY,
-JSON.stringify(settings)
+JSON.stringify({
+apiKey:
+elements.apiKeyInput.value.trim(),
+})
 );
 
 updateApiStatus("已保存");
 }
 
 function clearApiSettings() {
-localStorage.removeItem(API_SETTINGS_KEY);
+localStorage.removeItem(
+API_SETTINGS_KEY
+);
 
 elements.apiKeyInput.value = "";
 
@@ -406,129 +425,49 @@ message ||
 : "未启用");
 }
 
-async function addChoiceAndTighten() {
-const addition =
-elements.choiceInput.value.trim();
+async function addChoiceAndTighten() {}
 
-const pendingFragments =
-getPendingTightenFragments();
-
-const selectedFragment =
-state.fragments.find((fragment) =>
-state.selectedIds.has(fragment.id)
-);
-
-if (addition && selectedFragment) {
-selectedFragment.text =
-`${selectedFragment.text.trim()}\n${addition}`;
-
-```
-selectedFragment.decision_text =
-  findChoiceLine(selectedFragment.text);
-
-persist();
-```
-
-}
-
-elements.choiceDialog.close();
-
-elements.choiceInput.value = "";
-
-renderFragments();
-
-await tightenFragments(
-pendingFragments
-);
-}
-
-async function keepAsIsAndTighten() {
-const pendingFragments =
-getPendingTightenFragments();
-
-elements.choiceDialog.close();
-
-elements.choiceInput.value = "";
-
-await tightenFragments(
-pendingFragments
-);
-}
-
-function getPendingTightenFragments() {
-const pending =
-state.fragments.filter((fragment) =>
-state.pendingTightenIds.includes(
-fragment.id
-)
-);
-
-return pending.length > 0
-? pending
-: getSelectedFragments();
-}
+async function keepAsIsAndTighten() {}
 
 function renderOutput(markdown) {
-state.lastOutput = markdown;
-
 elements.outputView.innerHTML =
 markdown
 .split("\n")
 .map((line) => {
-if (line.startsWith("## ")) {
-return `<section><h3>${escapeHtml(
-            line.slice(3)
-          )}</h3>`;
+if (!line.trim()) {
+return "";
 }
 
 ```
-    if (line === "---") {
-      return "</section><hr />";
-    }
-
-    if (!line.trim()) {
-      return "";
-    }
-
-    return `<p>${escapeHtml(line)}</p>`;
+    return `<p>${escapeHtml(
+      line
+    )}</p>`;
   })
   .join("");
 ```
 
 }
 
-function findChoiceLine(text) {
-const lines = text
-.split(/\n|。|！|？|；/)
-.map((line) => line.trim())
-.filter(Boolean);
-
-const choicePatterns = [
-/我.*(还是|决定|选择|没|没有|离开|留下|放弃|停下|沉默)/,
-];
-
-return (
-lines.find((line) =>
-choicePatterns.some((pattern) =>
-pattern.test(line)
-)
-) || ""
-);
-}
-
-function tightenTextLocally(text) {
-return text
-.split(/\n+/)
+function buildLocalTightening(
+fragments
+) {
+return fragments
+.map((fragment) =>
+fragment.text
+.split("\n")
 .slice(0, 3)
-.join("\n");
+.join("\n")
+)
+.join("\n\n");
 }
 
 function firstLine(text) {
-const line = text
+return (
+text
 .split(/\n|。|！|？/)
-.find((item) => item.trim());
-
-return (line || text)
+.find((line) => line.trim()) ||
+text
+)
 .trim()
 .slice(0, 52);
 }
